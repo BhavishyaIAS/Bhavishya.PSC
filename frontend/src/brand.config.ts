@@ -1,0 +1,73 @@
+/**
+ * ─────────────────────────────────────────────────────────────────────────────
+ *  BRAND — change the name, logo and colours of the whole app in this one file.
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ *  • Logo: replace /public/brand/logo.png (a square image; it is shown in a circle).
+ *  • Colours: hex values. Every button, gradient, badge and chart uses them.
+ *  • Commission cards: each commission (by slug) gets its own colour identity and
+ *    optional emblem / cover photo. Drop images into /public/brand/commissions/
+ *    and point to them here. Missing images fall back to a clean gradient.
+ */
+
+export const brand = {
+  name: "Bhavishya",
+  suffix: "PSCs",
+  tagline: "Learn · Practice · Perform",
+  subtitle: "State PSC Group 1 & Group 2 Preparation",
+  description:
+    "A structured preparation ecosystem for State Public Service Commission exams — syllabus, notes, previous-year questions and progress in one place.",
+  logo: "/brand/logo.png",
+  colors: {
+    primary: "#d90d20", // strong brand red
+    primaryDeep: "#a80716", // darker red for gradients / hover
+    secondary: "#102c5a", // deep navy
+    accent: "#1458c8", // royal blue
+  },
+};
+
+export type CommissionTheme = {
+  from: string;
+  via: string;
+  to: string;
+  ink: string; // colour of text on white buttons inside the card
+  emblem?: string; // e.g. "/brand/commissions/appsc-emblem.png"
+  cover?: string; // e.g. "/brand/commissions/appsc-cover.jpg"
+  monogram: string; // shown when there's no emblem image
+};
+
+export const commissionThemes: Record<string, CommissionTheme> = {
+  appsc: {
+    from: "#8f0613",
+    via: "#d90d20",
+    to: "#ef4444",
+    ink: "#b5091b",
+    cover: "/brand/commissions/appsc-cover.jpg",
+    emblem: "/brand/commissions/appsc-emblem.png",
+    monogram: "AP",
+  },
+  tgpsc: {
+    from: "#0b2a63",
+    via: "#1458c8",
+    to: "#3b82f6",
+    ink: "#1249a8",
+    cover: "/brand/commissions/tgpsc-cover.jpg",
+    emblem: "/brand/commissions/tgpsc-emblem.png",
+    monogram: "TG",
+  },
+};
+
+const fallbackThemes: Omit<CommissionTheme, "monogram">[] = [
+  { from: "#064e3b", via: "#0f766e", to: "#14b8a6", ink: "#0f766e" },
+  { from: "#4c1d95", via: "#6d28d9", to: "#8b5cf6", ink: "#6d28d9" },
+  { from: "#7c2d12", via: "#c2410c", to: "#f97316", ink: "#c2410c" },
+];
+
+export function themeFor(slug: string, index = 0, shortName = ""): CommissionTheme {
+  return (
+    commissionThemes[slug] ?? {
+      ...fallbackThemes[index % fallbackThemes.length],
+      monogram: (shortName || slug).slice(0, 2).toUpperCase(),
+    }
+  );
+}
