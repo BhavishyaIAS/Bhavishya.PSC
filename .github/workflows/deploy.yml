@@ -1,0 +1,44 @@
+# Deploy every push to main to the production droplet.
+#
+# Secrets (repo → Settings → Secrets and variables → Actions):
+#   DEPLOY_HOST         the droplet's IP (or domain)
+#   DEPLOY_SSH_KEY      a private key made for this workflow alone
+#   DEPLOY_KNOWN_HOSTS  the droplet's host key line, printed by setup-server.sh
+#
+# On the droplet that key is pinned in root's authorized_keys to one forced
+# command (setup-server.sh does this from GITHUB_DEPLOY_PUBKEY):
+#
+#   command="bash /home/deploy/bhavishya-psc/deploy/deploy.sh",restrict ssh-ed25519 …
+#
+# so whatever this job sends, the server runs deploy.sh and nothing else.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# One deploy at a time, never cancelled half way (a half-done migration or build is worse than waiting).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Run deploy.sh on the droplet
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          if [ -z "$HOST" ] || [ -z "$SSH_KEY" ] || [ -z "$KNOWN_HOSTS" ]; then
+            echo "::warning::Deploy secrets are not set yet — skipping. See deploy/README.md."
+            exit 0
+          fi
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "root@$HOST" deploy

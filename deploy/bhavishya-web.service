@@ -1,0 +1,16 @@
+# /etc/systemd/system/bhavishya-web.service — the Next.js site (installed by setup-server.sh).
+[Unit]
+Description=Bhavishya PSCs web (Next.js)
+After=network.target bhavishya-api.service
+
+[Service]
+User=deploy
+WorkingDirectory=APP/frontend
+Environment=NODE_ENV=production
+Environment=API_ORIGIN=http://127.0.0.1:8000
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

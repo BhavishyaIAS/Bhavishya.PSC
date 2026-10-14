@@ -19,6 +19,9 @@ env = environ.Env(
     MATERIAL_MAX_UPLOAD_MB=(int, 25),
     IMAGE_MAX_UPLOAD_MB=(int, 5),
     DOWNLOAD_LINK_TTL_SECONDS=(int, 300),
+    CSRF_TRUSTED_ORIGINS=(list, []),
+    SECURE_SSL_REDIRECT=(bool, False),
+    SECURE_HSTS_SECONDS=(int, 0),
 )
 environ.Env.read_env(BASE_DIR / ".env")
 
@@ -123,3 +126,24 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024
 
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
+
+# ── Behind Nginx in production ──────────────────────────────────────────
+# Nginx terminates HTTPS and says so in X-Forwarded-Proto.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# The full site origin(s), e.g. https://example.com — needed for the Django admin's POSTs.
+CSRF_TRUSTED_ORIGINS = env("CSRF_TRUSTED_ORIGINS")
+# Secure cookies are never sent over plain HTTP, so these follow COOKIE_SECURE:
+# leave it false while the site is served on a bare IP, true once HTTPS is on.
+SESSION_COOKIE_SECURE = AUTH_COOKIE_SECURE
+CSRF_COOKIE_SECURE = AUTH_COOKIE_SECURE
+SECURE_SSL_REDIRECT = env("SECURE_SSL_REDIRECT")
+SECURE_HSTS_SECONDS = env("SECURE_HSTS_SECONDS")
+SECURE_REDIRECT_EXEMPT = [r"^api/"]  # the Next.js server talks to the API over local HTTP
+
+# Errors go to stderr, which systemd keeps in the journal (journalctl -u bhavishya-api).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "WARNING"},
+}

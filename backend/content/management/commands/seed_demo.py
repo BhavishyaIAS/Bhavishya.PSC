@@ -4,6 +4,7 @@ upserted on a natural key (codes / question numbers), so re-running refreshes
 the demo content instead of duplicating it.
 
     python manage.py seed_demo
+    python manage.py seed_demo --content-only   # production: no demo accounts
 
 The questions are written in the style of state PSC previous-year papers for
 demonstration; they are not reproductions of official papers.
@@ -550,9 +551,15 @@ def minimal_pdf(title, lines):
 class Command(BaseCommand):
     help = "Load (or refresh) the sample dataset: commissions, tracks, syllabus, notes, PYQs, materials and demo users."
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            "--content-only", action="store_true",
+            help="Load the sample content but not the demo accounts (whose passwords are public).",
+        )
+
     @transaction.atomic
     def handle(self, *args, **opts):
-        users = self.seed_users()
+        users = {"admin": None} if opts["content_only"] else self.seed_users()
         tracks = self.seed_tracks()
         mt_index = {}
         mt_index.update(self.seed_syllabus(tracks[("appsc", "group-1")], APPSC_G1, "appsc"))
@@ -566,7 +573,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"Seeded {len(tracks)} tracks, {len(mt_index)} micro-themes, {n} prelims + {m} mains questions."
         ))
-        self.stdout.write("Demo logins:  admin@bhavishya.app / Admin@2026   ·   student@bhavishya.app / Student@2026")
+        if not opts["content_only"]:
+            self.stdout.write("Demo logins:  admin@bhavishya.app / Admin@2026   ·   student@bhavishya.app / Student@2026")
 
     def seed_users(self):
         User = get_user_model()
