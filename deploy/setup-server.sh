@@ -52,7 +52,7 @@ fi
 echo "==> Installing packages (Python 3.12, PostgreSQL 16, nginx, Node 22)"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
-apt-get install -y -q python3-venv python3-pip postgresql postgresql-contrib nginx git curl ufw \
+apt-get install -y -q python3-venv python3-pip postgresql postgresql-contrib nginx git curl ufw cron \
   certbot python3-certbot-nginx
 if ! command -v node >/dev/null || [ "$(node -v | cut -d. -f1)" != "v22" ]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
@@ -71,8 +71,11 @@ else
 fi
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='$DB'" | grep -q 1; then
   echo "==> Creating the database"
-  sudo -u postgres psql -qc "CREATE ROLE $DB LOGIN PASSWORD '$DB_PASSWORD';"
+  sudo -u postgres psql -qc "CREATE ROLE $DB LOGIN;"
 fi
+# Always (re)set it: a first run that died before writing .env must not leave
+# the role holding a password that no file remembers.
+sudo -u postgres psql -qc "ALTER ROLE $DB WITH LOGIN PASSWORD '$DB_PASSWORD';"
 if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_database WHERE datname='$DB'" | grep -q 1; then
   sudo -u postgres psql -qc "CREATE DATABASE $DB OWNER $DB;"
 fi
@@ -136,6 +139,7 @@ fi
 ADMIN_OUT=""
 if [ -n "$ADMIN_EMAIL" ]; then
   ADMIN_OUT=$($M ensure_admin "$ADMIN_EMAIL")
+  echo "$ADMIN_OUT"   # now, too: if a later step fails, a new password isn't lost
 fi
 
 echo "==> Frontend: install and build (a few minutes)"
@@ -158,10 +162,12 @@ systemctl enable --quiet bhavishya-api bhavishya-web
 systemctl restart bhavishya-api bhavishya-web
 
 # Keep the server_name certbot may already have set; otherwise use SITE.
-NAMES=$(sed -n 's/^\s*server_name \(.*\);/\1/p' /etc/nginx/sites-available/bhavishya 2>/dev/null | head -1)
+NAMES=$({ sed -n 's/^\s*server_name \(.*\);/\1/p' /etc/nginx/sites-available/bhavishya 2>/dev/null || true; } | head -1)
 NAMES="${NAMES:-$SITE}"
 if ! grep -q 'managed by Certbot' /etc/nginx/sites-available/bhavishya 2>/dev/null; then
   sed -e "s#SERVER_NAMES#$NAMES#" -e "s#APP#$APP#g" deploy/nginx.conf > /etc/nginx/sites-available/bhavishya
+  # No IPv6 in the kernel (rare on a droplet): nginx would refuse to start on [::]:80.
+  [ -f /proc/net/if_inet6 ] || sed -i '/listen \[::\]/d' /etc/nginx/sites-available/bhavishya
 fi
 ln -sf /etc/nginx/sites-available/bhavishya /etc/nginx/sites-enabled/bhavishya
 rm -f /etc/nginx/sites-enabled/default
@@ -186,7 +192,7 @@ if [ -n "${GITHUB_DEPLOY_PUBKEY:-}" ]; then
     echo "==> GitHub Actions key authorised (it can only run deploy.sh)"
   fi
 fi
-git -C "$APP" rev-parse HEAD > /home/deploy/.deployed-commit
+run git -C "$APP" rev-parse HEAD > /home/deploy/.deployed-commit
 
 # --- 7. check ---------------------------------------------------------------------------------
 sleep 4
