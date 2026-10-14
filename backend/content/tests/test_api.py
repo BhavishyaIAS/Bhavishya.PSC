@@ -190,3 +190,20 @@ class ApiTests(TestCase):
         res = c.put(f"/api/manage/micro-themes/{mt.id}/notes/prelims/", {"body": bad, "status": "published"},
                     format="json", **XHR)
         self.assertEqual(res.status_code, 400)
+
+    def test_notes_reader_is_scoped_and_hides_drafts(self):
+        from content.models import Note
+
+        mt = MicroTheme.objects.get(code="PRE-PI-HC-001")
+        subject = mt.topic.subject_id
+        c = self.student()
+        url = f"/api/tracks/appsc/group-1/notes/?kind=comprehensive&subject={subject}"
+        codes = [r["micro_theme"]["code"] for r in c.get(url).json()["results"]]
+        self.assertIn("PRE-PI-HC-001", codes)
+        Note.objects.filter(micro_theme=mt, kind="comprehensive").update(status=Status.DRAFT)
+        codes = [r["micro_theme"]["code"] for r in c.get(url).json()["results"]]
+        self.assertNotIn("PRE-PI-HC-001", codes)
+        # Another track's URL never returns this subject's notes
+        other = f"/api/tracks/tgpsc/group-1/notes/?kind=comprehensive&subject={subject}"
+        self.assertEqual(c.get(other).json()["results"], [])
+        self.assertEqual(c.get("/api/tracks/appsc/group-1/notes/?kind=comprehensive").status_code, 400)

@@ -35,6 +35,7 @@ urlpatterns = [
     path(TRACK + "questions/", read.track_questions),
     path(TRACK + "question-facets/", read.question_facets),
     path(TRACK + "materials/", read.track_materials),
+    path(TRACK + "notes/", read.track_notes),
     path(TRACK + "micro-themes/<str:code>/", read.micro_theme_detail),
     path(TRACK + "micro-themes/<str:code>/progress/", read.micro_theme_progress),
     path("coverage/", read.coverage_overview),

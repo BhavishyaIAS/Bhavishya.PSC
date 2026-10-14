@@ -10,7 +10,7 @@ import { ThemeToggle } from "./ThemeToggle";
 
 export function Header({ user, commission }: { user: User | null; commission: string }) {
   return (
-    <header className="topbar">
+    <header className={user ? "topbar" : "topbar topbar-light"}>
       <div className="topbar-inner">
         <Link href="/" className="brand-mark" aria-label={`${brand.name} ${brand.suffix} — home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -33,10 +33,10 @@ export function Header({ user, commission }: { user: User | null; commission: st
             <LogoutButton name={user.display_name} />
           ) : (
             <>
-              <Link href="/login" className="btn btn-sm hide-mobile" style={{ background: "transparent", color: "#fff", borderColor: "rgba(255,255,255,.5)" }}>
+              <Link href="/login" className="btn btn-sm btn-ghost hide-mobile">
                 Log in
               </Link>
-              <Link href="/signup" className="btn btn-sm btn-white">
+              <Link href="/signup" className="btn btn-sm btn-primary">
                 Sign up
               </Link>
             </>

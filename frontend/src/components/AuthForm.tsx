@@ -50,7 +50,8 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <p className="muted" style={{ marginTop: 0 }}>
         {isLogin ? "Pick up where you left off — your progress is saved." : "Access syllabus-mapped notes, PYQs and progress tracking."}
       </p>
-      <form onSubmit={onSubmit} className="stack" style={{ marginTop: 22 }} noValidate>
+      {/* method="post" so a submit before hydration can never put credentials in the URL. */}
+      <form method="post" onSubmit={onSubmit} className="stack" style={{ marginTop: 22 }} noValidate>
         {error && (
           <div className="alert alert-error" role="alert">
             {error}

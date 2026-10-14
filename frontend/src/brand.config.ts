@@ -38,22 +38,34 @@ export type CommissionTheme = {
 
 export const commissionThemes: Record<string, CommissionTheme> = {
   appsc: {
-    from: "#8f0613",
-    via: "#d90d20",
-    to: "#ef4444",
-    ink: "#b5091b",
+    from: "#0a2f78",
+    via: "#1458c8",
+    to: "#3b82f6",
+    ink: "#1249a8",
     cover: "/brand/commissions/appsc-cover.jpg",
     emblem: "/brand/commissions/appsc-emblem.png",
     monogram: "AP",
   },
   tgpsc: {
-    from: "#0b2a63",
-    via: "#1458c8",
-    to: "#3b82f6",
-    ink: "#1249a8",
+    from: "#8f0613",
+    via: "#d90d20",
+    to: "#ef4444",
+    ink: "#c20a1c",
     cover: "/brand/commissions/tgpsc-cover.jpg",
     emblem: "/brand/commissions/tgpsc-emblem.png",
     monogram: "TG",
+  },
+};
+
+/** "Choose your group" blocks: one colour identity per exam group (by slug). */
+export const groupThemes: Record<string, { gradient: string; ink: string }> = {
+  "group-1": {
+    gradient: "linear-gradient(125deg, #0b2f6e 0%, #1458c8 55%, #3d86ea 100%)",
+    ink: "#1249a8",
+  },
+  "group-2": {
+    gradient: "linear-gradient(125deg, #a80716 0%, #e11d2e 50%, #6d4aa3 100%)",
+    ink: "#c20a1c",
   },
 };
 
@@ -62,6 +74,10 @@ const fallbackThemes: Omit<CommissionTheme, "monogram">[] = [
   { from: "#4c1d95", via: "#6d28d9", to: "#8b5cf6", ink: "#6d28d9" },
   { from: "#7c2d12", via: "#c2410c", to: "#f97316", ink: "#c2410c" },
 ];
+
+export function groupTheme(slug: string, index = 0) {
+  return groupThemes[slug] ?? Object.values(groupThemes)[index % Object.keys(groupThemes).length];
+}
 
 export function themeFor(slug: string, index = 0, shortName = ""): CommissionTheme {
   return (

@@ -218,6 +218,41 @@ def micro_theme_progress(request, commission, group, code):
     return Response({"studied": request.method == "POST"})
 
 
+@api_view(["GET"])
+def track_notes(request, commission, group):
+    """
+    Notes of one kind for a subject (or topic), in syllabus order — the
+    "topic-wise condensed notes" reader. `?kind=prelims&subject=<id>` or `&topic=<id>`.
+    """
+    track = get_track(commission, group)
+    user = request.user
+    kind = request.query_params.get("kind", NoteKind.COMPREHENSIVE)
+    if kind not in NoteKind.values:
+        return Response({"detail": "Unknown note kind."}, status=400)
+    notes = Note.objects.visible_to(user).filter(micro_theme__track=track, kind=kind)
+    subject, topic = request.query_params.get("subject", ""), request.query_params.get("topic", "")
+    if topic.isdigit():
+        notes = notes.filter(micro_theme__topic_id=int(topic))
+    elif subject.isdigit():
+        notes = notes.filter(micro_theme__topic__subject_id=int(subject))
+    else:
+        return Response({"detail": "Pass subject or topic."}, status=400)
+    notes = notes.select_related("micro_theme__topic").order_by(
+        "micro_theme__topic__order", "micro_theme__topic_id", "micro_theme__order", "micro_theme_id"
+    )
+    return Response({
+        "kind": kind,
+        "results": [
+            {
+                "micro_theme": {"id": n.micro_theme.id, "code": n.micro_theme.code, "title": n.micro_theme.title},
+                "topic": {"id": n.micro_theme.topic.id, "title": n.micro_theme.topic.title},
+                "note": NoteSerializer(n).data,
+            }
+            for n in notes
+        ],
+    })
+
+
 # ───────────────────────────── Coverage ─────────────────────────────
 
 

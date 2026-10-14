@@ -16,7 +16,7 @@ export function CommissionCard({ commission, index }: { commission: Commission; 
       <div
         className="tint"
         style={{
-          background: `linear-gradient(160deg, ${theme.from}f2 0%, ${theme.via}b8 45%, ${theme.to}8c 100%)`,
+          background: `linear-gradient(160deg, ${theme.from}f5 0%, ${theme.via}e0 50%, ${theme.to}cc 100%)`,
         }}
       />
       <div className="emblem">
@@ -33,7 +33,6 @@ export function CommissionCard({ commission, index }: { commission: Commission; 
         <Link href={`/exams/${commission.slug}`}>{commission.short_name}</Link>
       </h2>
       <div className="full-name">{commission.name}</div>
-      <div className="rule" />
       <div className="group-buttons">
         {commission.tracks.map((t, i) => {
           const Icon = i === 0 ? FileText : BarChart3;

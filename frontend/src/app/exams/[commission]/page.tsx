@@ -1,11 +1,12 @@
-import { ArrowRight, ArrowUpRight, BarChart3, BookOpen, FileText, Layers, Library, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { themeFor } from "@/brand.config";
-import { hasPublicAsset } from "@/lib/assets";
+import { groupTheme } from "@/brand.config";
 import { getCommissions } from "@/lib/catalog";
+import { currentUser } from "@/lib/server-api";
+import { trackPath } from "@/lib/format";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]">): Promise<Metadata> {
   const { commission } = await props.params;
@@ -13,95 +14,72 @@ export async function generateMetadata(props: PageProps<"/exams/[commission]">):
 }
 
 const MODULES = [
-  { icon: FileText, label: "Syllabus Map" },
-  { icon: BarChart3, label: "Progress Tracker" },
-  { icon: FileText, label: "Prelims PYQs" },
-  { icon: Layers, label: "Mains PYQs" },
-  { icon: BookOpen, label: "Materials" },
+  { label: "Syllabus Detailer", tab: "syllabus", adminOnly: true },
+  { label: "Progress Tracker", tab: "progress" },
+  { label: "Prelims PYQs", tab: "prelims" },
+  { label: "Mains PYQs", tab: "mains" },
+  { label: "Study Material", tab: "materials" },
 ];
+
+const BLURBS: Record<string, (c: string) => string> = {
+  "group-1": (c) =>
+    `The complete ${c} Group 1 journey — from the prelims concepts through the descriptive mains papers and the interview.`,
+  "group-2": (c) =>
+    `Structured ${c} Group 2 preparation across the screening test and the main examination, mapped subject by subject.`,
+};
 
 export default async function ChooseGroupPage(props: PageProps<"/exams/[commission]">) {
   const { commission: slug } = await props.params;
-  const commissions = await getCommissions();
-  const index = commissions.findIndex((c) => c.slug === slug);
-  if (index < 0) notFound();
-  const commission = commissions[index];
-  const theme = themeFor(commission.slug, index, commission.short_name);
-  const cover = hasPublicAsset(theme.cover) ? theme.cover : undefined;
-  // Group 1 uses the commission's identity colour, Group 2 the brand secondary — two distinct blocks.
-  const palettes = [
-    `linear-gradient(135deg, ${theme.from} 0%, ${theme.via} 60%, ${theme.to} 100%)`,
-    "linear-gradient(135deg, var(--brand-secondary) 0%, var(--brand-accent) 70%, #3b82f6 100%)",
-  ];
+  const [commissions, user] = await Promise.all([getCommissions(), currentUser()]);
+  const commission = commissions.find((c) => c.slug === slug);
+  if (!commission) notFound();
+  const isAdmin = user?.role === "admin";
 
   return (
     <div className="page">
-      <section className="group-hero">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {cover && <img className="decor" src={cover} alt="" />}
-        <div className="eyebrow">{commission.short_name} · Structured preparation ecosystem</div>
-        <h1>
-          Your Syllabus. Your Strategy. <em>Your Success.</em>
-        </h1>
-        <p>
-          A structured preparation platform for {commission.name} Group 1 and Group 2. Access syllabus mapping, track your
-          progress, practise with PYQs and learn with curated materials — all in one place.
-        </p>
-      </section>
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">{commission.name}</div>
+          <h1 className="display-light">Choose Your Group</h1>
+        </div>
+        <Link href="/" className="btn btn-secondary btn-lg">
+          <ArrowLeft size={18} aria-hidden /> All exams
+        </Link>
+      </div>
 
       <div className="grid-2">
-        {commission.tracks.map((t, i) => (
-          <Link
-            key={t.group}
-            href={`/exams/${t.commission}/${t.group}`}
-            className="group-block"
-            style={{ background: palettes[i % 2] }}
-          >
-            <span className="gb-arrow" aria-hidden>
-              <ArrowUpRight size={20} />
-            </span>
-            <div className="gb-head">
-              <span className="gb-icon" aria-hidden>
-                {i === 0 ? <BookOpen size={34} /> : <Target size={34} />}
-              </span>
-              <div>
-                <h2>{t.group_name.toUpperCase()}</h2>
-                <p>{t.tagline || `Complete preparation workspace for ${t.label}.`}</p>
+        {commission.tracks.map((t, i) => {
+          const theme = groupTheme(t.group, i);
+          const blurb = BLURBS[t.group]?.(commission.short_name) ?? t.tagline;
+          return (
+            <article key={t.group} className="group-card" style={{ background: theme.gradient }}>
+              <ArrowUpRight className="gc-arrow" size={30} aria-hidden />
+              <h2>
+                <Link href={trackPath(t.commission, t.group)} className="stretched">
+                  {commission.short_name} · {t.group_name.toUpperCase()}
+                </Link>
+              </h2>
+              <p>{blurb}</p>
+              <div className="gc-pills">
+                {MODULES.filter((m) => !m.adminOnly || isAdmin).map((m) => (
+                  <Link key={m.tab} href={trackPath(t.commission, t.group, m.tab)} className="pill">
+                    {m.label}
+                  </Link>
+                ))}
               </div>
-            </div>
-            <div className="pill-row">
-              {MODULES.map((m) => (
-                <span key={m.label} className="pill">
-                  <m.icon size={14} aria-hidden /> {m.label}
-                </span>
-              ))}
-            </div>
-            <span className="btn btn-white btn-lg enter" style={{ color: i === 0 ? theme.ink : "var(--brand-accent)" }}>
-              ENTER {t.group_name.toUpperCase()} <ArrowRight size={18} aria-hidden />
-            </span>
-            {!t.has_content && <span className="small" style={{ opacity: 0.9 }}>Content for this track is being prepared.</span>}
-          </Link>
-        ))}
+              {!t.has_content && <span className="gc-soon">Content for this track is being prepared</span>}
+              <span className="gc-enter" aria-hidden>
+                ENTER {t.group_name.toUpperCase()} <ArrowRight size={20} />
+              </span>
+            </article>
+          );
+        })}
       </div>
 
-      <div className="feature-strip">
-        {[
-          { icon: Target, t: "Structured Syllabus Coverage", s: "Topic-wise mapping and resources" },
-          { icon: BarChart3, t: "Track Your Progress", s: "Stay consistent and measure your preparation" },
-          { icon: FileText, t: "Practice with PYQs", s: "Year-wise, paper-wise, subject-wise questions" },
-          { icon: Library, t: "Curated Study Materials", s: "Comprehensive, Prelims and Mains notes" },
-        ].map((f) => (
-          <div key={f.t}>
-            <span className="fi" aria-hidden>
-              <f.icon size={20} />
-            </span>
-            <div>
-              <b>{f.t}</b>
-              <span>{f.s}</span>
-            </div>
-          </div>
-        ))}
-      </div>
+      <nav aria-label="Breadcrumb" className="crumbs crumbs-center">
+        <Link href="/">Home</Link> / <span>PSC</span> / <span>{commission.short_name}</span> / <span>Groups</span> /{" "}
+        <span aria-current="page">Choose Your Group</span>
+      </nav>
     </div>
   );
 }
