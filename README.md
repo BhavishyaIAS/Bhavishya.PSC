@@ -193,6 +193,10 @@ frontend/src/
 `frontend/.env.local`: `API_ORIGIN` (where Next.js reaches Django) and
 `NEXT_PUBLIC_SHOW_DEMO_LOGINS` (set `false` in production).
 
-For production: run Django under Gunicorn and Next.js with `npm run build && npm start`
-behind a reverse proxy that sends everything to Next.js. Set `DEBUG=false`, a real
-`SECRET_KEY` and `COOKIE_SECURE=true`, and keep `MEDIA_ROOT` on persistent storage.
+## Deployment
+
+**See [`deploy/README.md`](deploy/README.md).** One Ubuntu 24.04 droplet (Nginx +
+Gunicorn + Next.js under systemd + PostgreSQL 16) is set up by
+`deploy/setup-server.sh`. After that, every push to `main` deploys through
+GitHub Actions (`deploy/deploy.sh`), and `deploy/enable-https.sh` adds a domain
+with HTTPS.

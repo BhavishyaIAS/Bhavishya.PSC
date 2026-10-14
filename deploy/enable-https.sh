@@ -16,7 +16,7 @@ NAMES="$DOMAIN"; CERT_ARGS=(-d "$DOMAIN")
 if [ "${WWW:-0}" = 1 ]; then NAMES="$DOMAIN www.$DOMAIN"; CERT_ARGS+=(-d "www.$DOMAIN"); fi
 
 IP=$(curl -fsS --max-time 5 http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address 2>/dev/null || hostname -I | awk '{print $1}')
-RESOLVED=$(getent ahostsv4 "$DOMAIN" | awk 'NR==1{print $1}')
+RESOLVED=$({ getent ahostsv4 "$DOMAIN" || true; } | awk 'NR==1{print $1}')
 if [ "$RESOLVED" != "$IP" ]; then
   echo "$DOMAIN resolves to '${RESOLVED:-nothing}', not this server ($IP). Fix DNS first (it can take a while to propagate)."
   exit 1
