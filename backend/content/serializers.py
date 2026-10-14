@@ -169,7 +169,7 @@ class QuestionReadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = [
-            "id", "stage", "year", "paper_label", "question_no", "text", "options",
+            "id", "track", "stage", "year", "paper_label", "question_no", "text", "options",
             "correct_option", "explanation", "directive", "marks", "model_answer",
             "keywords", "tags", "micro_theme", "status",
         ]
