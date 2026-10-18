@@ -3,11 +3,13 @@ Create (or promote) an admin account without typing a password into a script.
 
     python manage.py ensure_admin you@example.com
 
-A new account gets a random password, printed once; sign in and change it
+A new account gets the password in $ADMIN_PASSWORD if set (e.g. on Render),
+otherwise a random one, printed once; sign in and change it
 under Django admin, or run `manage.py changepassword you@example.com`. An
 existing account is promoted to admin and its password is left alone.
 """
 
+import os
 import secrets
 
 from django.contrib.auth import get_user_model
@@ -34,13 +36,15 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.filter(username__iexact=email).first()
         if user is None:
-            password = secrets.token_urlsafe(12)
+            chosen = os.environ.get("ADMIN_PASSWORD", "")
+            password = chosen or secrets.token_urlsafe(12)
             user = User.objects.create_user(
                 username=email, email=email, password=password, is_staff=True, is_superuser=True
             )
             Profile.objects.update_or_create(user=user, defaults={"role": Role.ADMIN, "display_name": name})
             self.stdout.write(self.style.SUCCESS(f"Created admin {email}"))
-            self.stdout.write(f"  password: {password}   (shown once — change it after signing in)")
+            if not chosen:
+                self.stdout.write(f"  password: {password}   (shown once — change it after signing in)")
         else:
             user.is_staff = user.is_superuser = True
             user.save(update_fields=["is_staff", "is_superuser"])

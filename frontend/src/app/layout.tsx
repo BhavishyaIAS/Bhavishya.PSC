@@ -13,6 +13,9 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], variable: "--font-jakarta", display: "swap" });
 
+// Allow time for a sleeping API to wake (Render's free plan takes up to a minute).
+export const maxDuration = 60;
+
 export const metadata: Metadata = {
   title: { default: `${brand.name} ${brand.suffix} — ${brand.subtitle}`, template: `%s · ${brand.name} ${brand.suffix}` },
   description: brand.description,

@@ -517,6 +517,21 @@ TGPSC_MAINS = [
 ]
 
 
+# (title, category, description, filename, lines of the generated PDF)
+SAMPLE_MATERIALS = [
+    ("Fundamental Rights — one-page revision sheet", MaterialCategory.PRELIMS,
+     "Articles 12–35 at a glance with the five writs.", "fundamental-rights-revision.pdf",
+     ["Right to Equality: Art. 14-18", "Right to Freedom: Art. 19-22", "Right against Exploitation: Art. 23-24",
+      "Freedom of Religion: Art. 25-28", "Cultural & Educational Rights: Art. 29-30", "Constitutional Remedies: Art. 32"]),
+    ("History & Culture — complete reference notes", MaterialCategory.COMPREHENSIVE,
+     "Ancient, Andhra and Modern Indian history in one document.", "history-culture-reference.pdf",
+     ["Ancient India: IVC, Vedic Age, Mauryas", "Andhra: Satavahanas, Ikshvakus", "Modern India: Revolt of 1857"]),
+    ("Governance answer-writing templates", MaterialCategory.MAINS,
+     "Intro-body-conclusion frameworks for constitutional bodies.", "governance-answer-templates.pdf",
+     ["Intro: define the body and its article", "Body: powers, functions, issues", "Conclusion: reforms / way forward"]),
+]
+
+
 def minimal_pdf(title, lines):
     """A tiny, valid one-page PDF (so the demo has a real downloadable file)."""
     def esc(s):
@@ -553,12 +568,18 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            "--repair-files", action="store_true",
+            help="Only re-create the sample PDFs whose files are missing (hosts with a wiped disk), then stop.",
+        )
+        parser.add_argument(
             "--content-only", action="store_true",
             help="Load the sample content but not the demo accounts (whose passwords are public).",
         )
 
     @transaction.atomic
     def handle(self, *args, **opts):
+        if opts["repair_files"]:
+            return self.repair_files()
         users = {"admin": None} if opts["content_only"] else self.seed_users()
         tracks = self.seed_tracks()
         mt_index = {}
@@ -686,21 +707,30 @@ class Command(BaseCommand):
             }, tags)
         return len(rows)
 
+    def repair_files(self):
+        """Sample PDFs live on disk; a host that wipes its disk on restart loses them. Recreate those."""
+        fixed = 0
+        for m in StudyMaterial.objects.filter(title__in=[s[0] for s in SAMPLE_MATERIALS]):
+            if m.file and m.file.storage.exists(m.file.name):
+                continue
+            spec = next(s for s in SAMPLE_MATERIALS if s[0] == m.title)
+            pdf = minimal_pdf(m.title, spec[4])
+            m.file.save(spec[3], ContentFile(pdf), save=False)
+            m.size_bytes = len(pdf)
+            m.save(update_fields=["file", "size_bytes"])
+            fixed += 1
+        self.stdout.write(f"Sample files: {fixed} restored.")
+
     def seed_materials(self, track, mt_index, admin):
-        specs = [
-            ("Fundamental Rights — one-page revision sheet", MaterialCategory.PRELIMS, ("micro_theme", mt_index[("appsc", "PRE-PI-PO-002")]),
-             "Articles 12–35 at a glance with the five writs.", "fundamental-rights-revision.pdf",
-             ["Right to Equality: Art. 14-18", "Right to Freedom: Art. 19-22", "Right against Exploitation: Art. 23-24",
-              "Freedom of Religion: Art. 25-28", "Cultural & Educational Rights: Art. 29-30", "Constitutional Remedies: Art. 32"]),
-            ("History & Culture — complete reference notes", MaterialCategory.COMPREHENSIVE,
-             ("subject", mt_index[("appsc", "PRE-PI-HC-001")].topic.subject),
-             "Ancient, Andhra and Modern Indian history in one document.", "history-culture-reference.pdf",
-             ["Ancient India: IVC, Vedic Age, Mauryas", "Andhra: Satavahanas, Ikshvakus", "Modern India: Revolt of 1857"]),
-            ("Governance answer-writing templates", MaterialCategory.MAINS,
-             ("topic", mt_index[("appsc", "MNS-PIII-GV-001")].topic),
-             "Intro-body-conclusion frameworks for constitutional bodies.", "governance-answer-templates.pdf",
-             ["Intro: define the body and its article", "Body: powers, functions, issues", "Conclusion: reforms / way forward"]),
-        ]
+        def mt(code):
+            return mt_index[("appsc", code)]
+
+        levels = {
+            "fundamental-rights-revision.pdf": ("micro_theme", mt("PRE-PI-PO-002")),
+            "history-culture-reference.pdf": ("subject", mt("PRE-PI-HC-001").topic.subject),
+            "governance-answer-templates.pdf": ("topic", mt("MNS-PIII-GV-001").topic),
+        }
+        specs = [(t, c, levels[f], d, f, lines) for t, c, d, f, lines in SAMPLE_MATERIALS]
         for title, category, (level, node), desc, filename, lines in specs:
             m = StudyMaterial.objects.filter(track=track, title=title).first()
             if m is None:

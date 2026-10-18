@@ -46,6 +46,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "config.middleware.ApiTrailingSlashMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Serves the Django admin's static files where there's no nginx in front (e.g. Render).
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -94,6 +96,10 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
 
 # Media is split in two: `public/` (note images — safe to serve directly) and
 # `private/` (study material files — only reachable through signed links).

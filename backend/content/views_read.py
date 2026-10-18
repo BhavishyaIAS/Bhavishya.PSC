@@ -362,6 +362,8 @@ def track_materials(request, commission, group):
 def material_link(request, pk):
     """Issue a short-lived, user-bound download link for a material the caller may see."""
     material = get_object_or_404(StudyMaterial.objects.visible_to(request.user), pk=pk)
+    if not material.file or not material.file.storage.exists(material.file.name):
+        return Response({"detail": "This file is no longer available on the server. Ask an admin to re-upload it."}, status=410)
     token = signing.dumps({"m": material.pk, "u": request.user.pk}, salt=DOWNLOAD_SALT)
     return Response({
         "url": f"/api/files/m/{token}/",
@@ -387,6 +389,9 @@ def material_download(request, token):
     material = StudyMaterial.objects.visible_to(user).filter(pk=payload.get("m")).first()
     if material is None or not material.file:
         raise Http404
+    if not material.file.storage.exists(material.file.name):
+        # e.g. a host whose disk was wiped by a restart (Render's free tier).
+        return Response({"detail": "This file is no longer available on the server. Ask an admin to re-upload it."}, status=410)
     content_type = material.content_type or mimetypes.guess_type(material.original_filename)[0]
     response = FileResponse(
         material.file.open("rb"),

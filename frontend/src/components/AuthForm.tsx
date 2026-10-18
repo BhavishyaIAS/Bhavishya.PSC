@@ -96,7 +96,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           {isLogin ? "Create an account" : "Log in"}
         </Link>
       </p>
-      {isLogin && process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS !== "false" && (
+      {isLogin && process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS === "true" && (
         <div className="demo-creds">
           <b>Demo accounts</b> (from the seed data)
           <br />

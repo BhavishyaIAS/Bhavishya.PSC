@@ -200,3 +200,6 @@ Gunicorn + Next.js under systemd + PostgreSQL 16) is set up by
 `deploy/setup-server.sh`. After that, every push to `main` deploys through
 GitHub Actions (`deploy/deploy.sh`), and `deploy/enable-https.sh` adds a domain
 with HTTPS.
+
+**Temporary free hosting** (website on Vercel, API + database on Render's free
+plan, with its limits): see [`deploy/VERCEL-RENDER.md`](deploy/VERCEL-RENDER.md).

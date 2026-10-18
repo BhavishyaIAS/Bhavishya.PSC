@@ -1,0 +1,25 @@
+# Keeps the free Render API from sleeping (it spins down after 15 idle minutes,
+# and waking takes ~1 minute — longer than students should wait). One service
+# running all month stays within Render's 750 free instance hours.
+#
+# Set the repository variable RENDER_API_URL (Settings → Secrets and variables →
+# Actions → Variables), e.g. https://bhavishya-api.onrender.com. Delete this
+# workflow once the site moves off the free plan.
+name: Keep API awake
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping the API
+        env:
+          URL: ${{ vars.RENDER_API_URL }}
+        run: |
+          if [ -z "$URL" ]; then echo "RENDER_API_URL not set — nothing to ping."; exit 0; fi
+          curl -fsS --max-time 120 -o /dev/null -w "%{http_code} in %{time_total}s\n" "$URL/api/commissions/"
