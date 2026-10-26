@@ -38,7 +38,7 @@ class Command(BaseCommand):
         User = get_user_model()
         user = User.objects.filter(username__iexact=email).first()
         if user is None:
-            chosen = os.environ.get("ADMIN_PASSWORD", "")
+            chosen = os.environ.get("ADMIN_PASSWORD", "").strip()  # a pasted value often brings a stray space
             password = chosen or secrets.token_urlsafe(12)
             user = User.objects.create_user(
                 username=email, email=email, password=password, is_staff=True, is_superuser=True
@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 self.stdout.write(f"  password: {password}   (shown once — change it after signing in)")
         else:
             user.is_staff = user.is_superuser = user.is_active = True
-            chosen = os.environ.get("ADMIN_PASSWORD", "")
+            chosen = os.environ.get("ADMIN_PASSWORD", "").strip()  # a pasted value often brings a stray space
             if chosen:
                 user.set_password(chosen)
             user.save()
