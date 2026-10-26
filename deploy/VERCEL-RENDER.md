@@ -79,8 +79,10 @@ it's refused, uploads that big have to wait for the droplet (smaller ones are fi
 ## After that
 
 - **Updates:** anything merged into `main` redeploys both automatically.
-- **Forgot the admin password?** Render → bhavishya-api → **Shell**:
-  `python manage.py changepassword you@example.com`
+- **Can't log in / forgot the admin password?** Render → bhavishya-api →
+  **Environment** → check `ADMIN_EMAIL`, set a new `ADMIN_PASSWORD` →
+  **Save, rebuild, and deploy**. Every deploy sets that account's password to
+  `ADMIN_PASSWORD` (the free plan has no shell to do it by hand).
 - **Logs:** Render → bhavishya-api → **Logs**; Vercel → project → **Logs**.
 - **Moving to the droplet later:** follow [`README.md`](README.md); content added
   here would need exporting first (ask for help). Then delete the Render services
