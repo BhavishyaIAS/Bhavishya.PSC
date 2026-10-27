@@ -5,15 +5,12 @@ import { getCommissions } from "@/lib/catalog";
 
 export default async function LandingPage() {
   const commissions = await getCommissions();
-  const words = brand.heroTitle.split(" ");
   const live = commissions.flatMap((c) => c.tracks.filter((t) => t.has_content).map((t) => t.label));
   return (
     <div className="landing-hero">
       <div className="page">
         <div className="hero-brand">
-          <h1>
-            {words.slice(0, -1).join(" ")} <em>{words[words.length - 1]}</em>
-          </h1>
+          <h1>{brand.heroTitle}</h1>
         </div>
 
         {commissions.length === 0 ? (

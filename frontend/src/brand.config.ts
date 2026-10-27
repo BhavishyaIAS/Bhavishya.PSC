@@ -11,10 +11,10 @@
  */
 
 export const brand = {
-  name: "The Bhavishya", // full name = name + " " + suffix (suffix shown lighter in the top bar)
-  suffix: "Academy",
-  tagline: "Learn · Practice · Perform",
-  heroTitle: "The Bhavishya Academy", // the home page heading (last word in the brand colour)
+  name: "Bhavishya", // full name = name + " " + suffix
+  suffix: "IAS",
+  tagline: "Prepare · Practice · Perform",
+  heroTitle: "Bhavishya IAS", // the home page heading (brand red)
   subtitle: "State PSC Group 1 & Group 2 Preparation",
   description:
     "A structured preparation ecosystem for State Public Service Commission exams — syllabus, notes, previous-year questions and progress in one place.",
