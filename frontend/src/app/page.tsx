@@ -11,8 +11,6 @@ export default async function LandingPage() {
     <div className="landing-hero">
       <div className="page">
         <div className="hero-brand">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={brand.logo} alt="" className="hero-logo" width={116} height={116} />
           <h1>
             {words.slice(0, -1).join(" ")} <em>{words[words.length - 1]}</em>
           </h1>
