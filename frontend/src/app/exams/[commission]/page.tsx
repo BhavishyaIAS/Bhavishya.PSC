@@ -15,10 +15,10 @@ export async function generateMetadata(props: PageProps<"/exams/[commission]">):
 
 const MODULES = [
   { label: "Syllabus Detailer", tab: "syllabus", adminOnly: true },
-  { label: "Progress Tracker", tab: "progress" },
+  { label: "Study Material", tab: "materials" },
   { label: "Prelims PYQs", tab: "prelims" },
   { label: "Mains PYQs", tab: "mains" },
-  { label: "Study Material", tab: "materials" },
+  { label: "Progress Tracker", tab: "progress" },
 ];
 
 const BLURBS: Record<string, (c: string) => string> = {

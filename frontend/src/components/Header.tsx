@@ -16,7 +16,7 @@ export function Header({ user }: { user: User | null }) {
       <div className="topbar-inner">
         <Link href="/" className="brand-mark" aria-label={`${brand.name} ${brand.suffix} — home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={brand.logo} alt="" className="brand-logo" width={58} height={58} />
+          <img src={brand.logo} alt="" className="brand-logo" width={72} height={72} />
           <div className="brand-words">
             <div className="brand-name">
               {brand.name}

@@ -44,7 +44,7 @@
   --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
 
-  --topbar-h: 86px;
+  --topbar-h: 100px;
   --bottom-nav-h: 64px;
   color-scheme: light;
 }
@@ -242,10 +242,10 @@ main {
   border-bottom: 1px solid var(--border);
 }
 .topbar-inner {
-  max-width: 1440px;
+  max-width: 1720px;
   margin: 0 auto;
   min-height: var(--topbar-h);
-  padding: 12px 28px;
+  padding: 14px 36px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -258,8 +258,8 @@ main {
   border-radius: 999px;
 }
 .brand-logo {
-  width: 58px;
-  height: 58px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: #fff;
   /* white gap + thin brand ring + warm glow: the one highlighted thing in the bar */
@@ -277,7 +277,7 @@ main {
 .brand-name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 24px;
+  font-size: 27px;
   line-height: 1.1;
   letter-spacing: -0.01em;
   white-space: nowrap;
@@ -2331,7 +2331,7 @@ button.option:hover {
 
 @media (max-width: 900px) {
   :root {
-    --topbar-h: 64px;
+    --topbar-h: 76px;
   }
   .topbar-search,
   .hide-mobile {
@@ -2344,8 +2344,8 @@ button.option:hover {
     padding: 8px 16px;
   }
   .brand-logo {
-    width: 46px;
-    height: 46px;
+    width: 52px;
+    height: 52px;
   }
   .brand-name {
     font-size: 20px;

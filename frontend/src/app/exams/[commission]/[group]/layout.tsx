@@ -32,7 +32,7 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
         <div className="spacer" />
         <div className="segmented" role="group" aria-label="Switch group">
           {track.siblings.map((s) => (
-            <Link key={s.group} href={`/exams/${s.commission}/${s.group}/progress`} aria-current={s.group === group ? "page" : undefined}>
+            <Link key={s.group} href={`/exams/${s.commission}/${s.group}`} aria-current={s.group === group ? "page" : undefined}>
               {s.group_name}
             </Link>
           ))}
