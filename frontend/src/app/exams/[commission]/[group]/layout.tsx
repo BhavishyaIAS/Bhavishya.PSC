@@ -1,7 +1,6 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
-import { groupTheme } from "@/brand.config";
 import { WorkspaceTabs } from "@/components/WorkspaceTabs";
 import { load, requireUser } from "@/lib/server-api";
 import type { TrackDetail } from "@/lib/types";
@@ -15,16 +14,11 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
     load<TrackDetail>(`/tracks/${commission}/${group}/`, base),
   ]);
   const isAdmin = user.role === "admin";
-  const theme = groupTheme(group, track.siblings.findIndex((s) => s.group === group));
 
   return (
     <div className="page">
       <div className="ws-head">
-        <div className="ws-badge" style={{ background: theme.gradient }} aria-hidden>
-          {track.group_name.replace(/\D/g, "") || track.group_name[0]}
-        </div>
         <div>
-          <div className="eyebrow">{track.commission_full_name} · Preparation workspace</div>
           <h1>
             {track.commission_name} · {track.group_name}
           </h1>

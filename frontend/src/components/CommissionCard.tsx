@@ -47,12 +47,11 @@ export function CommissionCard({ commission, index }: { commission: Commission; 
               href={`/exams/${t.commission}/${t.group}`}
               className="group-button"
               style={{ color: theme.ink }}
-              aria-label={`${commission.short_name} ${t.group_name}${t.has_content ? "" : " (content coming soon)"}`}
+              aria-label={`${commission.short_name} ${t.group_name}`}
             >
               <Icon size={24} aria-hidden />
               <span>
                 {t.group_name.replace(" ", " - ")}
-                {!t.has_content && <span className="soon">Ready for upload</span>}
               </span>
               <ChevronRight className="chev" size={22} aria-hidden />
             </Link>
