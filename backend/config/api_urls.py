@@ -44,6 +44,7 @@ urlpatterns = [
     path("files/m/<str:token>/", read.material_download),
     # Admin
     path("manage/stats/", manage.stats),
+    path("manage/commissions/<int:pk>/", manage.commission_status),
     path("manage/reorder/", manage.reorder),
     path("manage/status/", manage.set_status),
     path("manage/questions/import/", manage.import_questions),

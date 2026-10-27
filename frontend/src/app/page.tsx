@@ -27,7 +27,7 @@ export default async function LandingPage() {
             The exam catalogue couldn&apos;t be loaded. If you&apos;re running locally, make sure the API is up and seeded.
           </EmptyState>
         ) : (
-          <div className="commission-grid">
+          <div className={`commission-grid ${commissions.length === 1 ? "single" : ""}`}>
             {commissions.map((c, i) => (
               <CommissionCard key={c.slug} commission={c} index={i} />
             ))}

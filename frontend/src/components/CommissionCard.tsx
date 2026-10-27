@@ -1,4 +1,4 @@
-import { BarChart3, ChevronRight, FileText } from "lucide-react";
+import { BarChart3, ChevronRight, EyeOff, FileText } from "lucide-react";
 import Link from "next/link";
 
 import { themeFor } from "@/brand.config";
@@ -11,6 +11,11 @@ export function CommissionCard({ commission, index }: { commission: Commission; 
   const emblem = hasPublicAsset(theme.emblem) ? theme.emblem : undefined;
   return (
     <article className="commission-card" aria-labelledby={`c-${commission.slug}`}>
+      {commission.status === "draft" && (
+        <span className="hidden-badge" title="Only admins can see this. Show it to students from Manage → Dashboard.">
+          <EyeOff size={14} aria-hidden /> Hidden from students
+        </span>
+      )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {cover && <img className="cover" src={cover} alt="" />}
       <div

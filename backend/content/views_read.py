@@ -51,11 +51,11 @@ STAGE_RANK = Case(
 )
 
 
-def get_track(commission: str, group: str) -> Track:
+def get_track(commission: str, group: str, user) -> Track:
+    """The track at commission/group, if `user` may see it (a hidden commission is a 404 for students)."""
     return get_object_or_404(
-        Track.objects.select_related("commission", "group"),
+        Track.objects.visible_to(user).select_related("commission", "group"),
         commission__slug=commission,
-        commission__is_active=True,
         group__slug=group,
     )
 
@@ -70,7 +70,7 @@ def visible_mt_ids(user, track):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def commissions(request):
-    qs = Commission.objects.filter(is_active=True).prefetch_related(
+    qs = Commission.objects.visible_to(request.user).prefetch_related(
         Prefetch("tracks", queryset=Track.objects.select_related("commission", "group"))
     )
     # "has content" = any published micro-theme or question in the track.
@@ -86,7 +86,7 @@ def commissions(request):
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def track_detail(request, commission, group):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     siblings = Track.objects.filter(commission=track.commission).select_related("commission", "group")
     return Response({
         **track_ref(track),
@@ -102,7 +102,7 @@ def track_detail(request, commission, group):
 @api_view(["GET"])
 def syllabus_tree(request, commission, group):
     """Paper → Subject → Topic → MicroTheme, with per-micro-theme content flags."""
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     user = request.user
     stage = request.query_params.get("stage")
 
@@ -150,7 +150,7 @@ def syllabus_tree(request, commission, group):
 
 @api_view(["GET"])
 def micro_theme_detail(request, commission, group, code):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     user = request.user
     mt = get_object_or_404(
         MicroTheme.objects.visible_to(user).select_related("topic__subject__paper"),
@@ -209,7 +209,7 @@ def micro_theme_detail(request, commission, group, code):
 
 @api_view(["POST", "DELETE"])
 def micro_theme_progress(request, commission, group, code):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     mt = get_object_or_404(MicroTheme.objects.visible_to(request.user), track=track, code=code.upper())
     if request.method == "POST":
         StudyProgress.objects.get_or_create(user=request.user, micro_theme=mt)
@@ -224,7 +224,7 @@ def track_notes(request, commission, group):
     Notes of one kind for a subject (or topic), in syllabus order — the
     "topic-wise condensed notes" reader. `?kind=prelims&subject=<id>` or `&topic=<id>`.
     """
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     user = request.user
     kind = request.query_params.get("kind", NoteKind.COMPREHENSIVE)
     if kind not in NoteKind.values:
@@ -258,12 +258,12 @@ def track_notes(request, commission, group):
 
 @api_view(["GET"])
 def coverage(request, commission, group):
-    return Response(track_coverage(get_track(commission, group), request.user))
+    return Response(track_coverage(get_track(commission, group, request.user), request.user))
 
 
 @api_view(["GET"])
 def coverage_overview(request):
-    tracks = Track.objects.filter(commission__is_active=True).select_related("commission", "group")
+    tracks = Track.objects.visible_to(request.user).select_related("commission", "group")
     return Response({"results": [track_coverage(t, request.user, include_papers=False) for t in tracks]})
 
 
@@ -302,7 +302,7 @@ def filter_questions(qs, params):
 
 @api_view(["GET"])
 def track_questions(request, commission, group):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     stage = request.query_params.get("stage", Stage.PRELIMS)
     if stage not in Stage.values:
         return Response({"detail": "stage must be prelims or mains"}, status=400)
@@ -324,7 +324,7 @@ def track_questions(request, commission, group):
 
 @api_view(["GET"])
 def question_facets(request, commission, group):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     stage = request.query_params.get("stage", Stage.PRELIMS)
     qs = Question.objects.visible_to(request.user).filter(track=track, stage=stage)
     return Response({
@@ -346,7 +346,7 @@ def question_facets(request, commission, group):
 
 @api_view(["GET"])
 def track_materials(request, commission, group):
-    track = get_track(commission, group)
+    track = get_track(commission, group, request.user)
     qs = StudyMaterial.objects.visible_to(request.user).filter(track=track).select_related(
         "track__commission", "track__group", "paper", "subject__paper", "topic__subject__paper",
         "micro_theme__topic__subject__paper",
@@ -431,7 +431,7 @@ def search(request):
     if scope := request.query_params.get("track"):
         parts = scope.split("/")
         if len(parts) == 2:
-            track = Track.objects.filter(commission__slug=parts[0], group__slug=parts[1]).first()
+            track = Track.objects.visible_to(user).filter(commission__slug=parts[0], group__slug=parts[1]).first()
     limit = 12
 
     def scoped(qs, field="track"):
