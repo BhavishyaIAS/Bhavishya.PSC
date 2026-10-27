@@ -308,8 +308,9 @@ main {
   justify-content: center;
   min-width: 0;
 }
-/* Wide screens: equal side columns, so the search box sits dead centre. */
-@media (min-width: 1240px) {
+/* Wide screens: equal side columns, so the search box sits dead centre
+   (needs room for the full name on the left). */
+@media (min-width: 1500px) {
   .topbar-inner {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   }
@@ -994,23 +995,8 @@ main {
 }
 /* Home: logo + name lockup above the exam cards */
 .hero-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 40px 0 34px;
-  flex-wrap: wrap;
-}
-.hero-logo {
-  width: 116px;
-  height: 116px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow:
-    0 0 0 4px var(--bg),
-    0 0 0 7px color-mix(in srgb, var(--brand-primary) 28%, transparent),
-    0 14px 36px color-mix(in srgb, var(--brand-primary) 30%, transparent);
-  flex-shrink: 0;
+  text-align: center;
+  padding: 44px 0 36px;
 }
 .hero-brand h1 {
   font-size: clamp(40px, 6.5vw, 72px);
@@ -1024,13 +1010,7 @@ main {
 }
 @media (max-width: 560px) {
   .hero-brand {
-    flex-direction: column;
-    gap: 16px;
-    padding: 24px 0 26px;
-  }
-  .hero-logo {
-    width: 92px;
-    height: 92px;
+    padding: 22px 0 24px;
   }
 }
 .commission-grid {
@@ -2769,8 +2749,11 @@ ol.steps {
   min-height: 40px;
 }
 @media (max-width: 560px) {
-  .brand-name .suffix {
-    display: none;
+  /* "The Bhavishya / Academy" on two lines so it fits beside the buttons */
+  .brand-name {
+    white-space: normal;
+    max-width: 140px;
+    font-size: 17px;
   }
   .topbar-inner {
     gap: 10px;
