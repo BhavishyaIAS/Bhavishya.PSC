@@ -229,122 +229,181 @@ main {
 
 /* ─────────────────────────── Top bar ─────────────────────────── */
 
+/* Monochrome bar in the page's own colour: the logo is the only colour in it,
+   centred between the navigation (left) and the account actions (right). */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: linear-gradient(105deg, var(--brand-primary-deep) 0%, var(--brand-primary) 38%, var(--brand-secondary) 100%);
-  color: #fff;
-  border-bottom: 3px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 5px 20px rgba(16, 44, 90, 0.2);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+  color: var(--text-strong);
+  border-bottom: 1px solid var(--border);
 }
 .topbar-inner {
   max-width: 1440px;
   margin: 0 auto;
   min-height: var(--topbar-h);
-  padding: 10px 28px;
-  display: flex;
+  padding: 8px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 20px;
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  min-width: 0;
 }
 .brand-mark {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-width: 0;
+  gap: 14px;
+  justify-self: center;
+  border-radius: 999px;
 }
 .brand-logo {
-  width: 54px;
-  height: 54px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: #fff;
-  border: 3px solid #fff;
-  box-shadow: 0 2px 12px rgba(64, 0, 0, 0.35);
+  box-shadow: 0 0 0 1px var(--border), 0 6px 18px rgba(16, 36, 62, 0.14);
   object-fit: cover;
   flex-shrink: 0;
+  transition: transform 0.2s;
+}
+.brand-mark:hover .brand-logo {
+  transform: scale(1.04);
 }
 .brand-name {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 22px;
+  font-size: 24px;
   line-height: 1.1;
   letter-spacing: -0.01em;
   white-space: nowrap;
+  color: var(--heading);
 }
 .brand-name .suffix {
-  opacity: 0.9;
-  font-weight: 700;
+  color: var(--muted);
+  font-weight: 600;
 }
 .brand-sub {
-  font-size: 10.5px;
-  letter-spacing: 0.12em;
+  margin-top: 3px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: #fde3e6;
+  color: var(--muted);
   font-weight: 600;
   white-space: nowrap;
 }
 .mainnav {
   display: flex;
-  gap: 8px;
-  flex: 1;
-  justify-content: center;
+  gap: 2px;
+  min-width: 0;
 }
 .mainnav a {
-  padding: 10px 16px;
-  border-radius: 11px;
-  font-weight: 700;
+  position: relative;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 650;
   font-size: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: var(--muted);
   white-space: nowrap;
   transition: background 0.15s, color 0.15s;
 }
 .mainnav a:hover {
-  background: rgba(255, 255, 255, 0.14);
+  color: var(--text-strong);
+  background: color-mix(in srgb, var(--text-strong) 6%, transparent);
 }
 .mainnav a[aria-current="page"] {
-  background: #fff;
-  color: var(--brand-primary-deep);
-  box-shadow: 0 3px 12px rgba(57, 0, 11, 0.18);
+  color: var(--text-strong);
+}
+.mainnav a[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--text-strong);
+}
+.mainnav .short {
+  display: none;
 }
 .topbar-actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
-  margin-left: auto;
+  min-width: 0;
 }
 .topbar-search {
   position: relative;
 }
 .topbar-search input {
-  width: 220px;
-  background: rgba(255, 255, 255, 0.14);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 11px;
-  padding: 9px 12px 9px 34px;
-  color: #fff;
+  width: 224px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px 8px 34px;
+  color: var(--text);
 }
 .topbar-search input::placeholder {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--muted);
+}
+.topbar-search input:focus {
+  outline: none;
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-strong) 10%, transparent);
 }
 .topbar-search svg {
   position: absolute;
-  left: 10px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
-  opacity: 0.85;
+  color: var(--muted);
 }
 .icon-btn {
   display: inline-grid;
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  background: transparent;
-  color: #fff;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
 }
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--surface-3);
+}
+.search-link {
+  display: none;
+}
+/* Keep the three zones from colliding as the bar narrows. */
+@media (max-width: 1320px) {
+  .topbar-search,
+  .mainnav .full,
+  .brand-sub {
+    display: none;
+  }
+  .search-link {
+    display: inline-grid;
+  }
+  .mainnav .short {
+    display: inline;
+  }
+  .mainnav a {
+    padding: 10px 10px;
+  }
+}
+@media (max-width: 1100px) and (min-width: 901px) {
+  /* Menu still on top: the logo alone holds the centre. */
+  .brand-words {
+    display: none;
+  }
 }
 
 /* ─────────────────────────── Bottom nav (mobile) ─────────────────────────── */
@@ -2282,12 +2341,6 @@ button.option:hover {
 /* ─────────────────────────── Responsive ─────────────────────────── */
 
 @media (max-width: 1100px) {
-  .topbar-search input {
-    width: 160px;
-  }
-  .mainnav a {
-    padding: 9px 12px;
-  }
   .mt-layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -2318,11 +2371,11 @@ button.option:hover {
     padding: 8px 16px;
   }
   .brand-logo {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
   }
   .brand-name {
-    font-size: 19px;
+    font-size: 20px;
   }
   .page {
     padding: 22px 16px calc(var(--bottom-nav-h) + 36px);
@@ -2353,7 +2406,8 @@ button.option:hover {
     color: var(--muted);
   }
   .bottom-nav a[aria-current="page"] {
-    color: var(--brand-primary);
+    color: var(--text-strong);
+    box-shadow: inset 0 2px 0 var(--text-strong);
   }
   .site-footer {
     padding-bottom: calc(var(--bottom-nav-h) + 22px);
@@ -2560,34 +2614,6 @@ button.option:hover {
   margin-top: 28px;
 }
 
-/* Public (signed-out) header: white, as on the marketing pages */
-.topbar-light {
-  background: var(--surface);
-  color: var(--text-strong);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 4px 18px rgba(16, 36, 62, 0.06);
-}
-.topbar-light .brand-name {
-  color: var(--heading);
-}
-.topbar-light .brand-name .suffix {
-  color: var(--brand-primary);
-}
-.topbar-light .brand-sub {
-  color: var(--muted);
-  letter-spacing: 0.28em;
-}
-.topbar-light .brand-logo {
-  border-color: var(--surface);
-  box-shadow: 0 2px 10px rgba(120, 0, 10, 0.25);
-}
-.topbar-light .icon-btn {
-  color: var(--text);
-  border-color: var(--border);
-}
-.topbar-light .icon-btn:hover {
-  background: var(--surface-3);
-}
 .commission-card .full-name{margin-bottom:26px}
 .editor-toolbar .tb-select {
   height: 32px;
@@ -2754,5 +2780,27 @@ ol.steps {
   }
   .ws-head .spacer {
     display: none;
+  }
+}
+
+/* Top bar: dark solid button (monochrome counterpart of btn-primary) */
+.btn-dark {
+  background: var(--text-strong);
+  color: var(--bg);
+}
+.btn-dark:hover {
+  filter: brightness(1.15);
+}
+.logout-btn {
+  background: var(--surface);
+  min-height: 40px;
+}
+@media (max-width: 560px) {
+  /* Phones: the logo alone, dead centre; the name is on the logo itself. */
+  .brand-words {
+    display: none;
+  }
+  .topbar-inner {
+    gap: 10px;
   }
 }

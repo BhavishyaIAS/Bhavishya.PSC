@@ -20,7 +20,7 @@ export function HeaderSearch() {
       <label htmlFor="global-search" className="sr-only">
         Search notes, glossary and PYQs
       </label>
-      <input id="global-search" type="search" placeholder="Search notes, PYQs…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <input id="global-search" type="search" placeholder="Search notes & PYQs" value={q} onChange={(e) => setQ(e.target.value)} />
     </form>
   );
 }
