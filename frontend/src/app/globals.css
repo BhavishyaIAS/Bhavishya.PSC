@@ -303,11 +303,28 @@ main {
   gap: 8px;
   min-width: 0;
 }
+.topbar-center {
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+/* Wide screens: equal side columns, so the search box sits dead centre. */
+@media (min-width: 1240px) {
+  .topbar-inner {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+  .topbar-center .topbar-search {
+    width: 520px;
+  }
+}
 .topbar-search {
   position: relative;
+  width: 100%;
+  max-width: 520px;
 }
 .topbar-search input {
-  width: 224px;
+  width: 100%;
+  min-height: 44px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 10px;

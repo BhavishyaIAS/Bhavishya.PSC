@@ -9,7 +9,7 @@ import { LogoutButton } from "./LogoutButton";
 import { ManageLink } from "./ManageLink";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Logo (highlighted) left · account actions right. Phones navigate with the bottom bar. */
+/** Logo (highlighted) left · search centre · account actions right. Phones navigate with the bottom bar. */
 export function Header({ user }: { user: User | null }) {
   return (
     <header className="topbar">
@@ -26,16 +26,13 @@ export function Header({ user }: { user: User | null }) {
           </div>
         </Link>
 
-        <div />
+        <div className="topbar-center">{user && <HeaderSearch />}</div>
 
         <div className="topbar-actions">
           {user && (
-            <>
-              <HeaderSearch />
-              <Link href="/search" className="icon-btn search-link" aria-label="Search notes, glossary and PYQs">
-                <Search size={18} aria-hidden />
-              </Link>
-            </>
+            <Link href="/search" className="icon-btn search-link" aria-label="Search notes, glossary and PYQs">
+              <Search size={18} aria-hidden />
+            </Link>
           )}
           {user?.role === "admin" && <ManageLink />}
           <ThemeToggle />
