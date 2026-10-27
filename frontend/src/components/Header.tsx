@@ -9,16 +9,14 @@ import { LogoutButton } from "./LogoutButton";
 import { MainNav } from "./MainNav";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Navigation left · logo centre stage · account actions right. */
+/** Logo (highlighted) left · navigation centre · account actions right. */
 export function Header({ user, commission }: { user: User | null; commission: string }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
-        <div className="topbar-left">{user && <MainNav commission={commission} isAdmin={user.role === "admin"} />}</div>
-
         <Link href="/" className="brand-mark" aria-label={`${brand.name} ${brand.suffix} — home`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={brand.logo} alt="" className="brand-logo" width={60} height={60} />
+          <img src={brand.logo} alt="" className="brand-logo" width={58} height={58} />
           <div className="brand-words">
             <div className="brand-name">
               {brand.name}
@@ -27,6 +25,8 @@ export function Header({ user, commission }: { user: User | null; commission: st
             <div className="brand-sub">{brand.tagline}</div>
           </div>
         </Link>
+
+        <div className="topbar-nav">{user && <MainNav commission={commission} isAdmin={user.role === "admin"} />}</div>
 
         <div className="topbar-actions">
           {user && (
