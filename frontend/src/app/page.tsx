@@ -2,24 +2,20 @@ import { brand } from "@/brand.config";
 import { CommissionCard } from "@/components/CommissionCard";
 import { EmptyState } from "@/components/ui/bits";
 import { getCommissions } from "@/lib/catalog";
-import { currentUser } from "@/lib/server-api";
 
 export default async function LandingPage() {
-  const [commissions, user] = await Promise.all([getCommissions(), currentUser()]);
+  const commissions = await getCommissions();
+  const words = brand.heroTitle.split(" ");
   const live = commissions.flatMap((c) => c.tracks.filter((t) => t.has_content).map((t) => t.label));
   return (
     <div className="landing-hero">
       <div className="page">
-        <div className="hero-title">
-          <div className="eyebrow">{user ? `Welcome back, ${user.display_name}` : "Your partner for State PSC exams"}</div>
+        <div className="hero-brand">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={brand.logo} alt="" className="hero-logo" width={116} height={116} />
           <h1>
-            Choose Your <em>Exam</em>
+            {words.slice(0, -1).join(" ")} <em>{words[words.length - 1]}</em>
           </h1>
-          <div className="hero-points">
-            <span>Structured Learning</span>
-            <span>Quality Content</span>
-            <span>Exam-Focused Practice</span>
-          </div>
         </div>
 
         {commissions.length === 0 ? (

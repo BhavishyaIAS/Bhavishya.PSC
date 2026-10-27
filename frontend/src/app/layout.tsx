@@ -52,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <ToastProvider>
-          <Header user={user} commission={commission} />
+          <Header user={user} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             {brand.name} {brand.suffix} · {brand.tagline} · Structured preparation for State PSC exams

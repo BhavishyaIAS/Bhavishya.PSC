@@ -6,11 +6,11 @@ import type { User } from "@/lib/types";
 
 import { HeaderSearch } from "./HeaderSearch";
 import { LogoutButton } from "./LogoutButton";
-import { MainNav } from "./MainNav";
+import { ManageLink } from "./ManageLink";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Logo (highlighted) left · navigation centre · account actions right. */
-export function Header({ user, commission }: { user: User | null; commission: string }) {
+/** Logo (highlighted) left · account actions right. Phones navigate with the bottom bar. */
+export function Header({ user }: { user: User | null }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -26,7 +26,7 @@ export function Header({ user, commission }: { user: User | null; commission: st
           </div>
         </Link>
 
-        <div className="topbar-nav">{user && <MainNav commission={commission} isAdmin={user.role === "admin"} />}</div>
+        <div />
 
         <div className="topbar-actions">
           {user && (
@@ -37,6 +37,7 @@ export function Header({ user, commission }: { user: User | null; commission: st
               </Link>
             </>
           )}
+          {user?.role === "admin" && <ManageLink />}
           <ThemeToggle />
           {user ? (
             <LogoutButton name={user.display_name} />

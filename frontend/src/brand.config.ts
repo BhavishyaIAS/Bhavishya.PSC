@@ -14,6 +14,7 @@ export const brand = {
   name: "Bhavishya",
   suffix: "PSCs",
   tagline: "Learn · Practice · Perform",
+  heroTitle: "Bhavishya IAS", // the big lockup on the home page (last word in the brand colour)
   subtitle: "State PSC Group 1 & Group 2 Preparation",
   description:
     "A structured preparation ecosystem for State Public Service Commission exams — syllabus, notes, previous-year questions and progress in one place.",

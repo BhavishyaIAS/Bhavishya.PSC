@@ -251,11 +251,6 @@ main {
   align-items: center;
   gap: 20px;
 }
-.topbar-nav {
-  display: flex;
-  justify-content: center;
-  min-width: 0;
-}
 .brand-mark {
   display: flex;
   align-items: center;
@@ -300,41 +295,6 @@ main {
   color: var(--muted);
   font-weight: 600;
   white-space: nowrap;
-}
-.mainnav {
-  display: flex;
-  gap: 2px;
-  min-width: 0;
-}
-.mainnav a {
-  position: relative;
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-weight: 650;
-  font-size: 14px;
-  color: var(--muted);
-  white-space: nowrap;
-  transition: background 0.15s, color 0.15s;
-}
-.mainnav a:hover {
-  color: var(--text-strong);
-  background: color-mix(in srgb, var(--text-strong) 6%, transparent);
-}
-.mainnav a[aria-current="page"] {
-  color: var(--text-strong);
-}
-.mainnav a[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 3px;
-  height: 2px;
-  border-radius: 2px;
-  background: var(--text-strong);
-}
-.mainnav .short {
-  display: none;
 }
 .topbar-actions {
   display: flex;
@@ -385,28 +345,9 @@ main {
 .search-link {
   display: none;
 }
-/* Keep the three zones from colliding as the bar narrows. */
-@media (max-width: 1320px) {
-  .topbar-search,
-  .mainnav .full,
-  .brand-sub {
-    display: none;
-  }
-  .search-link {
-    display: inline-grid;
-  }
-  .mainnav .short {
-    display: inline;
-  }
-  .mainnav a {
-    padding: 10px 10px;
-  }
-}
-@media (max-width: 1000px) and (min-width: 901px) {
-  /* Menu still on top: make room by showing the logo without its wordmark. */
-  .brand-words {
-    display: none;
-  }
+.manage-link[aria-current="page"] {
+  border-color: var(--text-strong);
+  color: var(--text-strong);
 }
 
 /* ─────────────────────────── Bottom nav (mobile) ─────────────────────────── */
@@ -1034,36 +975,46 @@ main {
     radial-gradient(1200px 400px at 50% -10%, color-mix(in srgb, var(--brand-accent) 12%, transparent), transparent 70%),
     radial-gradient(800px 300px at 90% 100%, color-mix(in srgb, var(--brand-primary) 9%, transparent), transparent 70%);
 }
-.hero-title {
-  text-align: center;
-  padding: 44px 0 30px;
+/* Home: logo + name lockup above the exam cards */
+.hero-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 0 34px;
+  flex-wrap: wrap;
 }
-.hero-title .eyebrow {
-  letter-spacing: 0.32em;
-  color: var(--muted);
+.hero-logo {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    0 0 0 4px var(--bg),
+    0 0 0 7px color-mix(in srgb, var(--brand-primary) 28%, transparent),
+    0 14px 36px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  flex-shrink: 0;
 }
-.hero-title h1 {
-  font-size: clamp(36px, 6vw, 64px);
+.hero-brand h1 {
+  font-size: clamp(40px, 6.5vw, 72px);
   font-weight: 800;
   letter-spacing: -0.03em;
-  margin: 12px 0 10px;
+  line-height: 1;
 }
-.hero-title h1 em {
+.hero-brand h1 em {
   font-style: normal;
   color: var(--brand-primary);
 }
-.hero-points {
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-weight: 600;
-}
-.hero-points span + span::before {
-  content: "|";
-  margin-right: 18px;
-  opacity: 0.5;
+@media (max-width: 560px) {
+  .hero-brand {
+    flex-direction: column;
+    gap: 16px;
+    padding: 24px 0 26px;
+  }
+  .hero-logo {
+    width: 92px;
+    height: 92px;
+  }
 }
 .commission-grid {
   display: grid;
@@ -2365,10 +2316,12 @@ button.option:hover {
   :root {
     --topbar-h: 64px;
   }
-  .mainnav,
   .topbar-search,
   .hide-mobile {
     display: none !important;
+  }
+  .search-link {
+    display: inline-grid;
   }
   .topbar-inner {
     padding: 8px 16px;
