@@ -23,7 +23,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: brand.colors.primary,
+  // The browser's own toolbar matches the (monochrome) top bar.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f7fc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1220" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
@@ -48,7 +52,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         <ToastProvider>
-          <Header user={user} commission={commission} />
+          <Header user={user} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             {brand.name} {brand.suffix} · {brand.tagline} · Structured preparation for State PSC exams

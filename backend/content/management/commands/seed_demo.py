@@ -628,7 +628,13 @@ class Command(BaseCommand):
         tracks = {}
         for slug, short, name, order, desc in commissions:
             c, _ = Commission.objects.update_or_create(
-                slug=slug, defaults={"short_name": short, "name": name, "order": order, "description": desc, "is_active": True}
+                slug=slug,
+                defaults={"short_name": short, "name": name, "order": order, "description": desc, "is_active": True},
+                # Only on first creation, so an admin's later show/hide choice survives a re-seed.
+                create_defaults={
+                    "short_name": short, "name": name, "order": order, "description": desc, "is_active": True,
+                    "status": PUB if slug == "appsc" else DRAFT,
+                },
             )
             for gslug, group in groups.items():
                 t, _ = Track.objects.update_or_create(

@@ -47,7 +47,7 @@ class CommissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commission
-        fields = ["id", "slug", "short_name", "name", "description", "tracks"]
+        fields = ["id", "slug", "short_name", "name", "description", "status", "tracks"]
 
     def get_tracks(self, obj):
         counts = self.context.get("track_counts", {})

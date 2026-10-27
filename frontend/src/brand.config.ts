@@ -14,6 +14,7 @@ export const brand = {
   name: "Bhavishya",
   suffix: "PSCs",
   tagline: "Learn · Practice · Perform",
+  heroTitle: "Bhavishya IAS", // the big lockup on the home page (last word in the brand colour)
   subtitle: "State PSC Group 1 & Group 2 Preparation",
   description:
     "A structured preparation ecosystem for State Public Service Commission exams — syllabus, notes, previous-year questions and progress in one place.",
@@ -38,19 +39,19 @@ export type CommissionTheme = {
 
 export const commissionThemes: Record<string, CommissionTheme> = {
   appsc: {
-    from: "#0a2f78",
-    via: "#1458c8",
-    to: "#3b82f6",
-    ink: "#1249a8",
+    from: "#8f0613",
+    via: "#d90d20",
+    to: "#ef4444",
+    ink: "#b5091b",
     cover: "/brand/commissions/appsc-cover.jpg",
     emblem: "/brand/commissions/appsc-emblem.png",
     monogram: "AP",
   },
   tgpsc: {
-    from: "#8f0613",
-    via: "#d90d20",
-    to: "#ef4444",
-    ink: "#c20a1c",
+    from: "#0b2a63",
+    via: "#1458c8",
+    to: "#3b82f6",
+    ink: "#1249a8",
     cover: "/brand/commissions/tgpsc-cover.jpg",
     emblem: "/brand/commissions/tgpsc-emblem.png",
     monogram: "TG",

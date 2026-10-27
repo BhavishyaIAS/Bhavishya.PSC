@@ -24,6 +24,7 @@ from accounts.permissions import IsAdminRole
 
 from .importer import MAX_ROWS, columns_for, commit_rows, validate_rows
 from .models import (
+    Commission,
     GlossaryTerm,
     MicroTheme,
     Note,
@@ -121,6 +122,19 @@ def stats(request):
             many=True,
         ).data,
     })
+
+
+@api_view(["PATCH"])
+@permission_classes(ADMIN)
+def commission_status(request, pk):
+    """Show (published) or hide (draft) a whole commission from students."""
+    new_status = request.data.get("status")
+    if new_status not in Status.values:
+        return Response({"status": ["draft or published"]}, status=400)
+    commission = get_object_or_404(Commission, pk=pk)
+    commission.status = new_status
+    commission.save(update_fields=["status", "updated_at"])
+    return Response({"id": commission.id, "slug": commission.slug, "status": commission.status})
 
 
 # ───────────────────────────── Syllabus ─────────────────────────────
@@ -309,7 +323,7 @@ def import_questions(request):
         c, g = d["track"].split("/", 1)
     except ValueError:
         return Response({"track": ["Expected commission/group"]}, status=400)
-    track = get_track(c, g)
+    track = get_track(c, g, request.user)
     results = validate_rows(track, d["stage"], d["rows"], d["default_status"])
     payload = {
         "track": track_ref(track),

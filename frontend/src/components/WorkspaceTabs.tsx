@@ -8,10 +8,10 @@ import { trackPath } from "@/lib/format";
 
 export const WORKSPACE_TABS = [
   { slug: "syllabus", label: "Syllabus Detailer", icon: ListTree, adminOnly: true },
-  { slug: "progress", label: "Progress Tracker", icon: BarChart3 },
+  { slug: "materials", label: "Material / Notes", icon: BookOpen },
   { slug: "prelims", label: "Prelims PYQs", icon: FileText },
   { slug: "mains", label: "Mains PYQs", icon: Layers },
-  { slug: "materials", label: "Material / Notes", icon: BookOpen },
+  { slug: "progress", label: "Progress Tracker", icon: BarChart3 },
 ];
 
 export function WorkspaceTabs({ commission, group, isAdmin }: { commission: string; group: string; isAdmin: boolean }) {

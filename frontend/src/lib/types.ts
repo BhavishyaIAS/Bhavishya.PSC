@@ -30,6 +30,7 @@ export interface Commission {
   short_name: string;
   name: string;
   description: string;
+  status: Status; // "draft" = hidden from students (admins only ever receive those)
   tracks: CatalogTrack[];
 }
 

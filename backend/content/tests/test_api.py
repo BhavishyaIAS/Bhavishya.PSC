@@ -5,7 +5,7 @@ from django.core.management import call_command
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
-from content.models import MicroTheme, Question, Stage, Status, StudyMaterial
+from content.models import Commission, MicroTheme, Question, Stage, Status, StudyMaterial
 
 XHR = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 TMP_MEDIA = tempfile.mkdtemp()
@@ -90,6 +90,7 @@ class ApiTests(TestCase):
     # ── segregation ──────────────────────────────────────────────────
 
     def test_tracks_do_not_leak(self):
+        Commission.objects.filter(slug="tgpsc").update(status=Status.PUBLISHED)
         c = self.student()
         appsc = c.get("/api/tracks/appsc/group-1/questions/?stage=prelims&page_size=100").json()
         tg = c.get("/api/tracks/tgpsc/group-1/questions/?stage=prelims&page_size=100").json()
@@ -204,6 +205,38 @@ class ApiTests(TestCase):
         codes = [r["micro_theme"]["code"] for r in c.get(url).json()["results"]]
         self.assertNotIn("PRE-PI-HC-001", codes)
         # Another track's URL never returns this subject's notes
+        Commission.objects.filter(slug="tgpsc").update(status=Status.PUBLISHED)
         other = f"/api/tracks/tgpsc/group-1/notes/?kind=comprehensive&subject={subject}"
         self.assertEqual(c.get(other).json()["results"], [])
         self.assertEqual(c.get("/api/tracks/appsc/group-1/notes/?kind=comprehensive").status_code, 400)
+
+    # ── hidden commission (admin-only) ───────────────────────────────
+
+    def test_hidden_commission_is_admin_only(self):
+        self.assertEqual(Commission.objects.get(slug="tgpsc").status, Status.DRAFT)  # seeded hidden
+        c = self.student()
+        slugs = [x["slug"] for x in c.get("/api/commissions/").json()["results"]]
+        self.assertEqual(slugs, ["appsc"])
+        self.assertEqual(APIClient().get("/api/commissions/").json()["results"][0]["slug"], "appsc")
+        for url in [
+            "/api/tracks/tgpsc/group-1/",
+            "/api/tracks/tgpsc/group-1/syllabus/",
+            "/api/tracks/tgpsc/group-1/questions/?stage=prelims",
+            "/api/tracks/tgpsc/group-1/coverage/",
+            "/api/tracks/tgpsc/group-1/micro-themes/TG-PRE-TH-001/",
+        ]:
+            self.assertEqual(c.get(url).status_code, 404, url)
+        overview = [r["track"]["commission"] for r in c.get("/api/coverage/").json()["results"]]
+        self.assertNotIn("tgpsc", overview)
+        # "Nayankara" / "Mission Kakatiya" only occur in TGPSC content.
+        for q in ("Nayankara", "Mission Kakatiya"):
+            self.assertEqual(c.get(f"/api/search/?q={q}").json()["total"], 0, q)
+        # Admins see everything, and can show it to students again.
+        a = self.admin()
+        self.assertEqual(a.get("/api/tracks/tgpsc/group-1/syllabus/").status_code, 200)
+        self.assertGreater(a.get("/api/search/?q=Nayankara").json()["total"], 0)
+        tg = Commission.objects.get(slug="tgpsc")
+        self.assertEqual(c.patch(f"/api/manage/commissions/{tg.id}/", {"status": "published"}, format="json", **XHR).status_code, 403)
+        res = a.patch(f"/api/manage/commissions/{tg.id}/", {"status": "published"}, format="json", **XHR)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(c.get("/api/tracks/tgpsc/group-1/syllabus/").status_code, 200)

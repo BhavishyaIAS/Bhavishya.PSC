@@ -1,8 +1,10 @@
 import { FileQuestion, FileUp, FolderOpen, GraduationCap, ListTree, NotebookText, PenLine } from "lucide-react";
 import Link from "next/link";
 
+import { CommissionVisibility } from "@/components/manage/CommissionVisibility";
 import { QuestionCard } from "@/components/pyq/QuestionCard";
 import { StatTile } from "@/components/ui/bits";
+import { getCommissions } from "@/lib/catalog";
 import { load } from "@/lib/server-api";
 import type { Question, TrackRef } from "@/lib/types";
 
@@ -13,7 +15,7 @@ type Stats = {
 };
 
 export default async function Dashboard() {
-  const s = await load<Stats>("/manage/stats/", "/manage");
+  const [s, commissions] = await Promise.all([load<Stats>("/manage/stats/", "/manage"), getCommissions()]);
   const t = s.totals;
   return (
     <div className="stack" style={{ gap: 22 }}>
@@ -39,6 +41,14 @@ export default async function Dashboard() {
         <StatTile icon={FileQuestion} value={t.questions} label={`PYQs (${t.draft_questions} draft)`} />
         <StatTile icon={FolderOpen} value={t.materials} label="Study files" />
       </div>
+
+      <section className="panel">
+        <div className="panel-head">
+          <h2>Exams shown to students</h2>
+          <span className="muted small">A hidden commission — every group, note and PYQ in it — is visible to admins only.</span>
+        </div>
+        <CommissionVisibility commissions={commissions} />
+      </section>
 
       <section className="panel">
         <div className="panel-head">

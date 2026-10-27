@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -15,10 +15,10 @@ export async function generateMetadata(props: PageProps<"/exams/[commission]">):
 
 const MODULES = [
   { label: "Syllabus Detailer", tab: "syllabus", adminOnly: true },
-  { label: "Progress Tracker", tab: "progress" },
+  { label: "Study Material", tab: "materials" },
   { label: "Prelims PYQs", tab: "prelims" },
   { label: "Mains PYQs", tab: "mains" },
-  { label: "Study Material", tab: "materials" },
+  { label: "Progress Tracker", tab: "progress" },
 ];
 
 const BLURBS: Record<string, (c: string) => string> = {
@@ -46,6 +46,16 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
           <ArrowLeft size={18} aria-hidden /> All exams
         </Link>
       </div>
+
+      {commission.status === "draft" && (
+        <div className="alert alert-info row" style={{ marginBottom: 18 }}>
+          <EyeOff size={16} aria-hidden /> <b>Admin preview.</b> {commission.short_name} is hidden from students. Show it from{" "}
+          <Link className="link" href="/manage">
+            Manage → Dashboard
+          </Link>
+          .
+        </div>
+      )}
 
       <div className="grid-2">
         {commission.tracks.map((t, i) => {

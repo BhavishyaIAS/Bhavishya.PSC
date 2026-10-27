@@ -70,13 +70,28 @@ class TimeStamped(models.Model):
 # ─────────────────────────────── Exams ────────────────────────────────
 
 
+class CommissionQuerySet(models.QuerySet):
+    def visible_to(self, user):
+        qs = self.filter(is_active=True)
+        return qs if is_admin(user) else qs.filter(status=P)
+
+
 class Commission(TimeStamped):
+    """
+    An examining body. `status` hides a whole commission (all its tracks and
+    content) from students — e.g. while it's being prepared — while admins keep
+    full access. `is_active=False` switches it off for everyone.
+    """
+
     slug = models.SlugField(unique=True)  # "appsc"
     short_name = models.CharField(max_length=20)  # "APPSC"
     name = models.CharField(max_length=160)  # "Andhra Pradesh Public Service Commission"
     description = models.TextField(blank=True)
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PUBLISHED)
+
+    objects = CommissionQuerySet.as_manager()
 
     class Meta:
         ordering = ["order", "short_name"]
@@ -97,12 +112,20 @@ class ExamGroup(models.Model):
         return self.name
 
 
+class TrackQuerySet(models.QuerySet):
+    def visible_to(self, user):
+        qs = self.filter(commission__is_active=True)
+        return qs if is_admin(user) else qs.filter(commission__status=P)
+
+
 class Track(models.Model):
     """One exam = commission × group. The unit of content segregation."""
 
     commission = models.ForeignKey(Commission, on_delete=models.CASCADE, related_name="tracks")
     group = models.ForeignKey(ExamGroup, on_delete=models.PROTECT, related_name="tracks")
     tagline = models.CharField(max_length=200, blank=True)
+
+    objects = TrackQuerySet.as_manager()
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["commission", "group"], name="uniq_track")]
@@ -121,20 +144,26 @@ class Track(models.Model):
 
 class PaperQuerySet(models.QuerySet):
     def visible_to(self, user):
-        return self if is_admin(user) else self.filter(status=P)
+        return self if is_admin(user) else self.filter(status=P, track__commission__status=P)
 
 
 class SubjectQuerySet(models.QuerySet):
     def visible_to(self, user):
-        return self if is_admin(user) else self.filter(status=P, paper__status=P)
+        return self if is_admin(user) else self.filter(
+            status=P, paper__status=P, paper__track__commission__status=P
+        )
 
 
 class TopicQuerySet(models.QuerySet):
     def visible_to(self, user):
-        return self if is_admin(user) else self.filter(status=P, subject__status=P, subject__paper__status=P)
+        return self if is_admin(user) else self.filter(
+            status=P, subject__status=P, subject__paper__status=P, subject__paper__track__commission__status=P
+        )
 
 
-_MT_VISIBLE_FIELDS = ("status", "topic__status", "topic__subject__status", "topic__subject__paper__status")
+_MT_VISIBLE_FIELDS = (
+    "status", "topic__status", "topic__subject__status", "topic__subject__paper__status", "track__commission__status",
+)
 
 
 def mt_visible_q(prefix: str = "") -> Q:
@@ -307,7 +336,7 @@ def question_search_vector():
 
 class QuestionQuerySet(models.QuerySet):
     def visible_to(self, user):
-        return self if is_admin(user) else self.filter(status=P)
+        return self if is_admin(user) else self.filter(status=P, track__commission__status=P)
 
     def update_search_vectors(self):
         return self.update(search_vector=question_search_vector())
@@ -401,7 +430,7 @@ def material_upload_to(instance, filename):
 
 class MaterialQuerySet(models.QuerySet):
     def visible_to(self, user):
-        return self if is_admin(user) else self.filter(status=P)
+        return self if is_admin(user) else self.filter(status=P, track__commission__status=P)
 
 
 class StudyMaterial(TimeStamped):

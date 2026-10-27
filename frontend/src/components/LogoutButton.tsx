@@ -12,8 +12,7 @@ export function LogoutButton({ name }: { name: string }) {
   return (
     <button
       type="button"
-      className="btn btn-sm"
-      style={{ background: "rgba(16,44,90,.55)", color: "#fff", borderColor: "rgba(255,255,255,.35)" }}
+      className="btn btn-sm btn-ghost logout-btn"
       disabled={busy}
       title={`Signed in as ${name}`}
       onClick={async () => {
