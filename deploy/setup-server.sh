@@ -9,6 +9,7 @@
 #   SITE=1.2.3.4            address the site is served at (default: this droplet's public IP).
 #                           Use enable-https.sh later to move to a domain + HTTPS.
 #   ADMIN_EMAIL=you@x.com   create this admin account; its password is printed once at the end.
+#   ADMIN_PASSWORD=...      use this password for that account instead (also resets an existing one).
 #   BRANCH=main             git branch to deploy (and that later deploys follow).
 #   DEMO=content            content: load the sample syllabus/notes/PYQs (no demo accounts)
 #                           none:    start empty
@@ -148,7 +149,8 @@ fi
 
 ADMIN_OUT=""
 if [ -n "$ADMIN_EMAIL" ]; then
-  ADMIN_OUT=$($M ensure_admin "$ADMIN_EMAIL")
+  # Passed explicitly: sudo drops exported variables, so ADMIN_PASSWORD would never arrive.
+  ADMIN_OUT=$(run env ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" backend/.venv/bin/python backend/manage.py ensure_admin "$ADMIN_EMAIL")
   echo "$ADMIN_OUT"   # now, too: if a later step fails, a new password isn't lost
 fi
 
