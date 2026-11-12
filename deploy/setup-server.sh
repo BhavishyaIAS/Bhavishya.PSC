@@ -23,6 +23,16 @@ set -euo pipefail
 
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
 
+# Building the website needs real memory: a 512 MB droplet runs out part way
+# through ("JavaScript heap out of memory"). Stop early with a clear message.
+MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [ "$MEM_MB" -lt 900 ]; then
+  echo "This droplet has only ${MEM_MB} MB of memory; the site needs at least 1 GB (2 GB recommended)."
+  echo "In DigitalOcean: power the droplet off -> Resize -> 'CPU and RAM only' -> 2 GB -> Resize, power on,"
+  echo "then run this script again (it is safe to re-run)."
+  exit 1
+fi
+
 REPO="${REPO:-https://github.com/BhavishyaIAS/Bhavishya.PSC.git}"
 BRANCH="${BRANCH:-main}"
 DEMO="${DEMO:-content}"
@@ -150,7 +160,8 @@ NEXT_PUBLIC_SHOW_DEMO_LOGINS=$([ "$DEMO" = full ] && echo true || echo false)
 EOF
 fi
 run npm --prefix frontend ci --no-audit --no-fund --loglevel=error
-run npm --prefix frontend run build
+# Room for the build's type-checking on small droplets (the swap file backs it).
+run env NODE_OPTIONS=--max-old-space-size=1536 npm --prefix frontend run build
 
 # --- 5. services + nginx -------------------------------------------------------------
 echo "==> Installing services and the nginx site"
