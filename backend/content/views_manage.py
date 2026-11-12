@@ -4,6 +4,7 @@ permission is checked on the server for every request, regardless of what the
 UI shows.
 """
 
+import re
 import uuid
 from pathlib import Path
 
@@ -14,7 +15,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import mixins, serializers, status, viewsets
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, parser_classes, permission_classes
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
@@ -22,6 +23,7 @@ from accounts.api import serialize_user
 from accounts.models import Profile, Role
 from accounts.permissions import IsAdminRole
 
+from .docx_import import DocxImportError, apply_import, check_conflicts, default_prefix, outline, parse_docx
 from .importer import MAX_ROWS, columns_for, commit_rows, validate_rows
 from .models import (
     Commission,
@@ -338,6 +340,58 @@ def import_questions(request):
             return Response({**payload, "detail": "No valid rows to import."}, status=400)
         counts = commit_rows(track, d["stage"], results)
         payload["result"] = {k: v for k, v in counts.items() if k != "ids"}
+    return Response(payload)
+
+
+@api_view(["POST"])
+@permission_classes(ADMIN)
+@parser_classes([MultiPartParser, FormParser])
+def import_docx(request):
+    """
+    Word (.docx) notes → syllabus + notes. Without `commit` it only previews the
+    chapter/section outline; with `commit=true` (and a paper) it writes, atomically.
+    """
+    upload = request.FILES.get("file")
+    if upload is None:
+        return Response({"file": ["Choose a Word .docx file."]}, status=400)
+    try:
+        parsed = parse_docx(upload)
+    except DocxImportError as exc:
+        return Response({"file": [str(exc)]}, status=400)
+
+    subject_title = " ".join(str(request.data.get("subject") or parsed.title or "Imported notes").split())[:255]
+    prefix = re.sub(r"[^A-Z0-9]", "", str(request.data.get("prefix") or default_prefix(subject_title)).upper())[:12] or "NOTES"
+    paper_id = str(request.data.get("paper") or "")
+    paper = Paper.objects.select_related("track__commission", "track__group").filter(pk=paper_id).first() if paper_id.isdigit() else None
+    chapters = outline(parsed, prefix)
+    payload = {
+        "title": parsed.title,
+        "subtitle": parsed.subtitle,
+        "subject": subject_title,
+        "prefix": prefix,
+        "chapters": chapters,
+        "sections": sum(len(c["sections"]) for c in chapters),
+        "words": sum(s["words"] for c in chapters for s in c["sections"]),
+        "warnings": parsed.warnings,
+        "conflicts": check_conflicts(parsed, paper, subject_title, prefix) if paper else [],
+        "existing_subject": bool(paper and Subject.objects.filter(paper=paper, title=subject_title).exists()),
+    }
+    if str(request.data.get("commit", "")).lower() in ("1", "true", "yes"):
+        if paper is None:
+            return Response({**payload, "paper": ["Choose the paper the notes belong to."]}, status=400)
+        try:
+            subject, counts = apply_import(
+                parsed,
+                paper=paper,
+                subject_title=subject_title,
+                prefix=prefix,
+                status=str(request.data.get("status") or Status.PUBLISHED),
+                kind=str(request.data.get("kind") or NoteKind.COMPREHENSIVE),
+                user=request.user,
+            )
+        except DocxImportError as exc:
+            return Response({**payload, "detail": str(exc)}, status=400)
+        payload["result"] = {**counts, "subject_id": subject.id, "track": track_ref(paper.track)}
     return Response(payload)
 
 

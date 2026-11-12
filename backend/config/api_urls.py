@@ -49,6 +49,7 @@ urlpatterns = [
     path("manage/status/", manage.set_status),
     path("manage/questions/import/", manage.import_questions),
     path("manage/import-reference/", manage.import_reference),
+    path("manage/import-docx/", manage.import_docx),
     path("manage/tags/", manage.tags),
     path("manage/uploads/image/", manage.upload_image),
     path("manage/", include(router.urls)),

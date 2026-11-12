@@ -1,7 +1,8 @@
-import { BookMarked, ExternalLink, FileStack, NotebookPen, Pencil, ScrollText, Upload } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookMarked, ExternalLink, FileStack, ListOrdered, NotebookPen, Pencil, ScrollText, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { ChapterPicker } from "@/components/ChapterPicker";
 import { MaterialList } from "@/components/MaterialList";
 import { RichText } from "@/components/rich/RichText";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
@@ -42,15 +43,23 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
   );
   const requested = subjects.find((s) => String(s.subject.id) === sp.subject);
   const current = requested ?? subjects.find((s) => s.withNotes > 0) ?? subjects[0];
-  const notes = current
-    ? await load<NotesResponse>(`${base}/notes/?kind=${kind}&subject=${current.subject.id}`)
-    : { kind, results: [] };
 
-  const byTopic = new Map<number, { title: string; items: NotesResponse["results"] }>();
-  for (const r of notes.results) {
-    if (!byTopic.has(r.topic.id)) byTopic.set(r.topic.id, { title: r.topic.title, items: [] });
-    byTopic.get(r.topic.id)!.items.push(r);
-  }
+  // Chapters (= topics) of the subject being read; one chapter is shown at a time.
+  const chapters = (current?.subject.topics ?? []).map((t) => ({
+    id: t.id,
+    label: t.title,
+    count: t.micro_themes.filter((m) => m.note_kinds.includes(kind)).length,
+    total: t.micro_themes.length,
+  }));
+  const chapter =
+    chapters.find((c) => String(c.id) === sp.topic) ?? chapters.find((c) => c.count > 0) ?? chapters[0];
+  const chapterIndex = chapter ? chapters.indexOf(chapter) : -1;
+  const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : undefined;
+  const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : undefined;
+  const notes = chapter
+    ? await load<NotesResponse>(`${base}/notes/?kind=${kind}&topic=${chapter.id}`)
+    : { kind, results: [] };
+  const chapterHref = (id: number) => `?kind=${kind}&subject=${current?.subject.id}&topic=${id}`;
 
   return (
     <div>
@@ -96,16 +105,30 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
                 {subjects
                   .filter((s) => s.paper.id === p.id)
                   .map((s) => (
-                    <Link
-                      key={s.subject.id}
-                      href={`?kind=${kind}&subject=${s.subject.id}`}
-                      aria-current={s.subject.id === current?.subject.id ? "true" : undefined}
-                    >
-                      <span>{s.subject.title}</span>
-                      <span className="count" title={`${s.withNotes} of ${s.total} micro-themes have ${kindInfo.label}`}>
-                        {s.withNotes}/{s.total}
-                      </span>
-                    </Link>
+                    <div key={s.subject.id}>
+                      <Link
+                        href={`?kind=${kind}&subject=${s.subject.id}`}
+                        aria-current={s.subject.id === current?.subject.id && chapters.length <= 1 ? "true" : undefined}
+                        className={s.subject.id === current?.subject.id ? "subject-open" : undefined}
+                      >
+                        <span>{s.subject.title}</span>
+                        <span className="count" title={`${s.withNotes} of ${s.total} micro-themes have ${kindInfo.label}`}>
+                          {s.withNotes}/{s.total}
+                        </span>
+                      </Link>
+                      {s.subject.id === current?.subject.id && chapters.length > 1 && (
+                        <div className="chapter-links">
+                          {chapters.map((c, i) => (
+                            <Link key={c.id} href={chapterHref(c.id)} aria-current={c.id === chapter?.id ? "true" : undefined}>
+                              <span>
+                                {i + 1}. {c.label}
+                              </span>
+                              <span className="count">{c.count}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
               </div>
             ))}
@@ -118,18 +141,36 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
                   <div className="eyebrow">{kindInfo.label}</div>
                   <h2 style={{ fontSize: 24, marginTop: 4 }}>{current?.subject.title}</h2>
                   <p className="muted small" style={{ margin: "4px 0 0" }}>
-                    {current?.paper.title} · arranged topic-wise, micro-theme by micro-theme
+                    {current?.paper.title}
+                    {chapters.length > 1 ? ` · ${chapters.length} chapters — choose one to read` : ""}
                   </p>
                 </div>
+                {chapter && chapters.length > 1 && (
+                  <ChapterPicker chapters={chapters} value={chapter.id} />
+                )}
               </div>
+              {chapter && <h3 className="chapter-title">{chapters.length > 1 ? `Chapter ${chapterIndex + 1}: ` : ""}{chapter.label}</h3>}
+              {notes.results.length > 2 && (
+                <details className="chapter-contents" open>
+                  <summary>
+                    <ListOrdered size={16} aria-hidden /> Contents · {notes.results.length} sections
+                  </summary>
+                  <ol>
+                    {notes.results.map(({ micro_theme: mt }) => (
+                      <li key={mt.id}>
+                        <a href={`#n-${mt.id}`}>{mt.title}</a>
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
               {notes.results.length === 0 ? (
-                <EmptyState icon={NotebookPen} title={`No ${kindInfo.label.toLowerCase()} for this subject yet`}>
+                <EmptyState icon={NotebookPen} title={`No ${kindInfo.label.toLowerCase()} for this chapter yet`}>
                   {isAdmin ? "Open a micro-theme below in the content editor to write them." : "They're being written — check back soon."}
                 </EmptyState>
               ) : (
-                [...byTopic.values()].map((topic) => (
+                [{ title: chapter?.label ?? "", items: notes.results }].map((topic) => (
                   <div key={topic.title} className="note-topic">
-                    <h3 className="note-topic-title">{topic.title}</h3>
                     {topic.items.map(({ micro_theme: mt, note }) => (
                       <article key={mt.id} className="note-block" aria-labelledby={`n-${mt.id}`}>
                         <header className="row" style={{ gap: 8, marginBottom: 6 }}>
@@ -153,8 +194,28 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
                   </div>
                 ))
               )}
-              {isAdmin && current && (
-                <MissingNotes current={current.subject} kind={kind} />
+              {chapters.length > 1 && (
+                <nav className="prevnext chapter-nav" aria-label="Previous and next chapter">
+                  {prevChapter && (
+                    <Link href={chapterHref(prevChapter.id)}>
+                      <small>
+                        <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Previous chapter
+                      </small>
+                      <b>{prevChapter.label}</b>
+                    </Link>
+                  )}
+                  {nextChapter && (
+                    <Link href={chapterHref(nextChapter.id)} className="next">
+                      <small>
+                        Next chapter <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
+                      </small>
+                      <b>{nextChapter.label}</b>
+                    </Link>
+                  )}
+                </nav>
+              )}
+              {isAdmin && current && chapter && (
+                <MissingNotes current={current.subject} topicId={chapter.id} kind={kind} />
               )}
             </section>
 
@@ -184,8 +245,18 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
   );
 }
 
-function MissingNotes({ current, kind }: { current: SyllabusTree["papers"][number]["subjects"][number]; kind: NoteKind }) {
-  const missing = current.topics.flatMap((t) => t.micro_themes.filter((m) => !m.note_kinds.includes(kind)));
+function MissingNotes({
+  current,
+  topicId,
+  kind,
+}: {
+  current: SyllabusTree["papers"][number]["subjects"][number];
+  topicId: number;
+  kind: NoteKind;
+}) {
+  const missing = current.topics
+    .filter((t) => t.id === topicId)
+    .flatMap((t) => t.micro_themes.filter((m) => !m.note_kinds.includes(kind)));
   if (!missing.length) return null;
   return (
     <div className="alert alert-info" style={{ marginTop: 18 }}>
