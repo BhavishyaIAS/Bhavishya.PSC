@@ -9,6 +9,7 @@
 #   SITE=1.2.3.4            address the site is served at (default: this droplet's public IP).
 #                           Use enable-https.sh later to move to a domain + HTTPS.
 #   ADMIN_EMAIL=you@x.com   create this admin account; its password is printed once at the end.
+#   ADMIN_PASSWORD=...      use this password for that account instead (also resets an existing one).
 #   BRANCH=main             git branch to deploy (and that later deploys follow).
 #   DEMO=content            content: load the sample syllabus/notes/PYQs (no demo accounts)
 #                           none:    start empty
@@ -22,6 +23,16 @@
 set -euo pipefail
 
 [ "$(id -u)" = 0 ] || { echo "Run as root."; exit 1; }
+
+# Building the website needs real memory: a 512 MB droplet runs out part way
+# through ("JavaScript heap out of memory"). Stop early with a clear message.
+MEM_MB=$(awk '/MemTotal/ {print int($2/1024)}' /proc/meminfo)
+if [ "$MEM_MB" -lt 900 ]; then
+  echo "This droplet has only ${MEM_MB} MB of memory; the site needs at least 1 GB (2 GB recommended)."
+  echo "In DigitalOcean: power the droplet off -> Resize -> 'CPU and RAM only' -> 2 GB -> Resize, power on,"
+  echo "then run this script again (it is safe to re-run)."
+  exit 1
+fi
 
 REPO="${REPO:-https://github.com/BhavishyaIAS/Bhavishya.PSC.git}"
 BRANCH="${BRANCH:-main}"
@@ -138,7 +149,8 @@ fi
 
 ADMIN_OUT=""
 if [ -n "$ADMIN_EMAIL" ]; then
-  ADMIN_OUT=$($M ensure_admin "$ADMIN_EMAIL")
+  # Passed explicitly: sudo drops exported variables, so ADMIN_PASSWORD would never arrive.
+  ADMIN_OUT=$(run env ADMIN_PASSWORD="${ADMIN_PASSWORD:-}" backend/.venv/bin/python backend/manage.py ensure_admin "$ADMIN_EMAIL")
   echo "$ADMIN_OUT"   # now, too: if a later step fails, a new password isn't lost
 fi
 
@@ -150,7 +162,8 @@ NEXT_PUBLIC_SHOW_DEMO_LOGINS=$([ "$DEMO" = full ] && echo true || echo false)
 EOF
 fi
 run npm --prefix frontend ci --no-audit --no-fund --loglevel=error
-run npm --prefix frontend run build
+# Room for the build's type-checking on small droplets (the swap file backs it).
+run env NODE_OPTIONS=--max-old-space-size=1536 npm --prefix frontend run build
 
 # --- 5. services + nginx -------------------------------------------------------------
 echo "==> Installing services and the nginx site"

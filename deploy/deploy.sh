@@ -83,7 +83,7 @@ if [ "$FRONTEND" = true ]; then
   echo "==> Building the frontend"
   LOG=$(mktemp /tmp/bhavishya-build.XXXXXX.log)
   chmod 666 "$LOG"
-  if ! run npm --prefix frontend run build > "$LOG" 2>&1; then
+  if ! run env NODE_OPTIONS=--max-old-space-size=1536 npm --prefix frontend run build > "$LOG" 2>&1; then
     echo "!!! BUILD FAILED — nothing restarted; the site is still on the previous build."
     tail -40 "$LOG"
     exit 1

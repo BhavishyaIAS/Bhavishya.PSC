@@ -38,7 +38,16 @@ jobs:
             echo "::warning::Deploy secrets are not set yet — skipping. See deploy/README.md."
             exit 0
           fi
+          # Forgiving about how the secrets were pasted: spaces, "http://", Windows
+          # line endings, or a known-hosts line without the IP in front. The host
+          # stays pinned to the exact key in DEPLOY_KNOWN_HOSTS.
+          HOST=$(printf '%s' "$HOST" | tr -d '[:space:]' | sed -E 's#^[a-z]+://##; s#/.*$##; s#^[^@]*@##')
+          HOST_KEY=$(printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' | grep -oE '(ssh-ed25519|ecdsa-sha2-nistp[0-9]+|ssh-rsa) [A-Za-z0-9+/=]+' | head -1)
+          if [ -z "$HOST_KEY" ]; then
+            echo "::error::DEPLOY_KNOWN_HOSTS has no host key in it. Paste the 'IP ssh-ed25519 AAAA…' line setup-server.sh printed."
+            exit 1
+          fi
           install -m 700 -d ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s %s\n' "$HOST" "$HOST_KEY" > ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "root@$HOST" deploy
