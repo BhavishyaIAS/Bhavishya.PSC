@@ -13,12 +13,10 @@ Total time: about 20 minutes, mostly waiting for the first build.
 
 ---
 
-## 1. Make sure `main` exists
+## 1. Make sure `main` is up to date
 
-Deploys follow the `main` branch. Merge the work branch into `main` on GitHub
-(open a pull request from `claude/magical-heisenberg-iou79n` → `main`, or create
-`main` from it under **Branches**), and make `main` the default branch in
-**Settings → General**.
+Deploys follow the `main` branch: merge any open pull request you want live
+first. (`main` should also be the default branch, under **Settings → General**.)
 
 ## 2. Create the droplet
 
@@ -121,3 +119,14 @@ picks up where the failed one stopped.
 
 Until then the site runs on plain HTTP: passwords cross the network unencrypted,
 so add a domain before inviting real students.
+
+## Moving off the temporary Vercel + Render hosting
+
+Once the droplet works, the free Vercel/Render setup is no longer needed:
+
+1. **Render** → bhavishya-api → Settings → **Delete Web Service**; then
+   bhavishya-db → **Delete Database**. (Its data is not copied to the droplet.)
+2. **Vercel** → the project → Settings → **Delete Project**.
+3. **GitHub** → Settings → Secrets and variables → Actions → **Variables** →
+   delete `RENDER_API_URL`.
+
