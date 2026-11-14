@@ -7,7 +7,7 @@ import { QuestionCard } from "@/components/pyq/QuestionCard";
 import { RichText } from "@/components/rich/RichText";
 import { StudiedToggle } from "@/components/StudiedToggle";
 import { EmptyState, PriorityBadge, StatusBadge } from "@/components/ui/bits";
-import { stageLabel, trackPath } from "@/lib/format";
+import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { NOTE_KINDS, type MicroThemeDetail, type NoteKind } from "@/lib/types";
 
@@ -39,8 +39,11 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">
-            <span className="badge badge-neutral">{stageLabel(d.breadcrumb.paper.stage)}</span>
-            <span>{d.breadcrumb.paper.title}</span>›<span>{d.breadcrumb.subject.title}</span>›<span>{d.breadcrumb.topic.title}</span>
+            <Link href={trackPath(commission, group, "materials")}>Material / Notes</Link>›
+            <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}`)}>{d.breadcrumb.subject.title}</Link>›
+            <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}?kind=${kind ?? "comprehensive"}&topic=${d.breadcrumb.topic.id}`)}>
+              {d.breadcrumb.topic.title}
+            </Link>
           </nav>
           <h1 style={{ fontSize: "clamp(24px, 3vw, 34px)" }}>{mt.title}</h1>
           <div className="row" style={{ marginTop: 10 }}>

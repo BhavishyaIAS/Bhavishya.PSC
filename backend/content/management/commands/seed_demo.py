@@ -103,22 +103,38 @@ def yt(query):
 # (stage, paper code, paper title, [(subject code, title, [(topic code, title, [(mt code, title, priority, minutes, dual, status)])])])
 
 APPSC_G1 = [
+    # The eleven syllabus topics students pick from in Material / Notes (same codes as migration 0004).
     (Stage.PRELIMS, "PI", "Paper I — General Studies", [
-        ("HC", "History & Culture", [
+        ("ANC", "Ancient History", [
             ("AI", "Ancient India", [
                 ("PRE-PI-HC-001", "Indus Valley Civilisation — urban planning & trade", "core", 60, False, PUB),
                 ("PRE-PI-HC-002", "Vedic Age — society, polity & literature", "important", 45, False, PUB),
                 ("PRE-PI-HC-003", "Mauryan Empire — Ashoka's Dhamma & administration", "core", 60, True, PUB),
             ]),
-            ("AH", "History of Andhra Pradesh", [
-                ("PRE-PI-HC-004", "Satavahanas — administration, trade & Amaravati art", "core", 75, True, PUB),
-                ("PRE-PI-HC-005", "Ikshvakus & Buddhist centres — Nagarjunakonda", "important", 40, False, PUB),
-            ]),
+        ]),
+        ("MED", "Medieval History", []),
+        ("MOD", "Modern History", [
             ("MI", "Modern India", [
                 ("PRE-PI-HC-006", "Revolt of 1857 — causes, leaders & outcome", "core", 50, True, PUB),
             ]),
         ]),
-        ("PO", "Indian Polity", [
+        ("APH", "AP History", [
+            ("AH", "History of Andhra Pradesh", [
+                ("PRE-PI-HC-004", "Satavahanas — administration, trade & Amaravati art", "core", 75, True, PUB),
+                ("PRE-PI-HC-005", "Ikshvakus & Buddhist centres — Nagarjunakonda", "important", 40, False, PUB),
+            ]),
+        ]),
+        ("GEO", "Geography", [
+            ("CL", "Climate", [
+                ("PRE-PI-GE-002", "Monsoon & climate of peninsular India", "supporting", 35, False, PUB),
+            ]),
+        ]),
+        ("APG", "AP Geography", [
+            ("AP", "Geography of Andhra Pradesh", [
+                ("PRE-PI-GE-001", "River systems of Andhra Pradesh", "core", 45, False, PUB),
+            ]),
+        ]),
+        ("POL", "Polity", [
             ("CF", "Constitutional Framework", [
                 ("PRE-PI-PO-001", "Making of the Constitution", "important", 40, False, PUB),
                 ("PRE-PI-PO-002", "Fundamental Rights (Part III)", "core", 90, True, PUB),
@@ -127,35 +143,29 @@ APPSC_G1 = [
             ("FD", "Federalism", [
                 ("PRE-PI-PO-004", "Centre–State legislative & financial relations", "important", 60, True, PUB),
             ]),
-        ]),
-        ("GE", "Geography", [
-            ("AP", "Geography of Andhra Pradesh", [
-                ("PRE-PI-GE-001", "River systems of Andhra Pradesh", "core", 45, False, PUB),
-                ("PRE-PI-GE-002", "Monsoon & climate of peninsular India", "supporting", 35, False, PUB),
+            ("CB", "Constitutional Bodies", [
+                ("MNS-PIII-GV-001", "Finance Commission & fiscal federalism", "core", 60, False, PUB),
+                ("MNS-PIII-GV-002", "Election Commission of India — independence & reforms", "core", 60, False, PUB),
             ]),
         ]),
+        ("ECO", "Economy", [
+            ("MP", "Money & Inflation", [
+                ("MNS-PIV-EC-002", "Inflation & monetary policy tools", "important", 60, False, PUB),
+            ]),
+        ]),
+        ("APE", "AP Economy", [
+            ("RG", "Reorganisation & Development", [
+                ("MNS-PIV-EC-001", "AP Reorganisation Act, 2014 — economic consequences", "core", 75, False, PUB),
+            ]),
+        ]),
+        ("SNT", "Science and Technology", []),
+        ("ENV", "Environment", []),
     ]),
     (Stage.PRELIMS, "PII", "Paper II — General Aptitude", [
         ("MA", "Mental Ability", [
             ("RS", "Reasoning", [
                 ("PRE-PII-MA-001", "Number series", "important", 30, False, PUB),
                 ("PRE-PII-MA-002", "Data interpretation — tables & charts", "important", 45, False, DRAFT),
-            ]),
-        ]),
-    ]),
-    (Stage.MAINS, "PIII", "Paper III — Polity, Constitution, Governance, Law & Ethics", [
-        ("GV", "Governance & Constitutional Bodies", [
-            ("CB", "Constitutional Bodies", [
-                ("MNS-PIII-GV-001", "Finance Commission & fiscal federalism", "core", 60, False, PUB),
-                ("MNS-PIII-GV-002", "Election Commission of India — independence & reforms", "core", 60, False, PUB),
-            ]),
-        ]),
-    ]),
-    (Stage.MAINS, "PIV", "Paper IV — Economy & Development of India and Andhra Pradesh", [
-        ("EC", "Economy of Andhra Pradesh", [
-            ("RG", "Reorganisation & Development", [
-                ("MNS-PIV-EC-001", "AP Reorganisation Act, 2014 — economic consequences", "core", 75, False, PUB),
-                ("MNS-PIV-EC-002", "Inflation & monetary policy tools", "important", 60, False, PUB),
             ]),
         ]),
     ]),

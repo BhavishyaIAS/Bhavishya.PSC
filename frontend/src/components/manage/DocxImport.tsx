@@ -11,6 +11,8 @@ import { NOTE_KINDS, type Commission, type NoteKind, type PaperNode, type Status
 
 import { TrackPicker } from "./TrackPicker";
 
+const NEW = "__new__";
+
 type Outline = {
   title: string;
   subtitle: string;
@@ -22,6 +24,7 @@ type Outline = {
   warnings: string[];
   conflicts: string[];
   existing_subject: boolean;
+  subjects: string[];
   result?: {
     topics_created: number;
     micro_themes_created: number;
@@ -47,6 +50,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
   const [busy, setBusy] = useState<"" | "preview" | "import">("");
   const [error, setError] = useState("");
   const [over, setOver] = useState(false);
+  const [newSubject, setNewSubject] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -81,6 +85,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
       setOutline(res);
       setSubject(res.subject);
       setPrefix(res.prefix);
+      setNewSubject(!res.subjects.includes(res.subject));
       if (commit && res.result) toast(`Imported ${res.result.notes_written} sections`, "success");
     } catch (err) {
       const b = err instanceof ClientApiError ? (err.body as Partial<Outline> & Record<string, unknown>) : null;
@@ -123,9 +128,9 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
           <div className="eyebrow">Import notes</div>
           <h1>Import a book of notes from Word</h1>
           <p>
-            Each <b>Heading 1</b> becomes a chapter (a topic in the syllabus) and each <b>Heading 2</b> a section (a micro-theme), with
-            the text underneath as its notes — word for word, with bold, lists and tables. Re-importing an edited file updates the same
-            notes.
+            Choose the syllabus topic the book belongs to (for example Medieval History). Each <b>Heading 1</b> becomes a chapter and
+            each <b>Heading 2</b> a section, with the text underneath as its notes — word for word, with bold, lists and tables.
+            Re-importing an edited file updates the same notes.
           </p>
         </div>
       </div>
@@ -214,7 +219,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
             <div className="alert alert-success" role="status" style={{ marginBottom: 14 }}>
               <b>{done.notes_written}</b> sections imported into <b>{subject}</b> ({done.topics_created} new chapters,{" "}
               {done.micro_themes_created} new sections, {done.micro_themes_updated} updated).{" "}
-              <Link className="link" href={`/exams/${done.track.commission}/${done.track.group}/materials?kind=${kind}&subject=${done.subject_id}`}>
+              <Link className="link" href={`/exams/${done.track.commission}/${done.track.group}/materials/${done.subject_id}?kind=${kind}`}>
                 Read them in Material / Notes →
               </Link>{" "}
               ·{" "}
@@ -228,12 +233,47 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
             <>
               <div className="form-grid" style={{ marginBottom: 14 }}>
                 <label className="field">
-                  <span className="label">Subject (in {paper ? paper.title : "the paper"})</span>
-                  <input className="input" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={255} />
+                  <span className="label">Syllabus topic</span>
+                  <select
+                    className="select"
+                    value={newSubject ? NEW : subject}
+                    disabled={!!busy}
+                    onChange={(e) => {
+                      if (e.target.value === NEW) {
+                        setNewSubject(true);
+                        setSubject(outline.title || "");
+                        return;
+                      }
+                      setNewSubject(false);
+                      setSubject(e.target.value);
+                      setPrefix("");
+                      void send(false, file, { subject: e.target.value, prefix: "" });
+                    }}
+                  >
+                    {outline.subjects.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                    <option value={NEW}>+ A new topic…</option>
+                  </select>
+                  {newSubject && (
+                    <input
+                      className="input"
+                      style={{ marginTop: 8 }}
+                      value={subject}
+                      onChange={(e) => setSubject(e.target.value)}
+                      maxLength={255}
+                      placeholder="Name of the new topic"
+                      aria-label="Name of the new topic"
+                    />
+                  )}
                   <span className="hint">
-                    {outline.existing_subject
-                      ? "This subject already exists — its chapters and notes will be updated."
-                      : "A new subject with this name will be created."}
+                    {newSubject
+                      ? `A new topic is added to the list${paper ? ` (in ${paper.title})` : ""}. Click “Preview again” after typing its name.`
+                      : outline.existing_subject
+                        ? "The chapters go into this topic; chapters already there with the same title are updated."
+                        : "A new topic with this name will be created."}
                   </span>
                 </label>
                 <label className="field">

@@ -2796,28 +2796,6 @@ ol.steps {
 }
 
 /* Notes reader: one chapter at a time */
-.side-list .subject-open {
-  font-weight: 800;
-  color: var(--text-strong);
-}
-.chapter-links {
-  margin: 2px 0 8px 10px;
-  padding-left: 8px;
-  border-left: 2px solid var(--border);
-}
-.side-list .chapter-links a {
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 10px;
-  align-items: flex-start;
-}
-.chapter-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 240px;
-  max-width: 420px;
-}
 .chapter-title {
   font-size: 20px;
   margin: 4px 0 14px;
@@ -2862,8 +2840,198 @@ ol.steps {
   .chapter-contents ol {
     columns: 1;
   }
-  .chapter-picker {
+}
+
+/* Notes flow: 1. syllabus topic → 2. type of notes → chapters */
+.flow-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 20px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.flow-title {
+  font-size: clamp(22px, 2.6vw, 28px);
+  margin: 4px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.flow-steps {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin: 0 0 6px;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.flow-steps li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.flow-steps li + li::before {
+  content: "→";
+  margin-right: 11px;
+  color: var(--border-strong);
+}
+.flow-steps .fs-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11px;
+  background: var(--surface-3);
+  color: var(--muted);
+}
+.flow-steps [aria-current="step"] {
+  color: var(--brand-accent);
+}
+.flow-steps [aria-current="step"] .fs-num,
+.flow-steps .done .fs-num {
+  background: var(--brand-primary);
+  color: #fff;
+}
+.topic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+.topic-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm, none);
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.topic-card:hover {
+  border-color: var(--brand-primary);
+  transform: translateY(-2px);
+}
+.topic-card .tc-icon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-soft);
+  color: var(--brand-primary);
+}
+.topic-card .tc-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+}
+.topic-card .tc-num {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.topic-card .tc-title {
+  font-size: 17px;
+  color: var(--text-strong);
+  line-height: 1.25;
+}
+.topic-card .tc-meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+.topic-card .tc-go {
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.topic-card:hover .tc-go {
+  color: var(--brand-primary);
+}
+.note-types-big .note-type {
+  padding: 24px 20px;
+}
+.note-type .nt-count {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--brand-accent);
+}
+.note-type .nt-count.nt-none {
+  color: var(--muted);
+  font-weight: 600;
+}
+.jump-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.jump-topic {
+  min-width: 200px;
+}
+.jump-chapter {
+  min-width: 240px;
+  max-width: 420px;
+}
+.chapter-overview {
+  margin: 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 6px;
+}
+@media (max-width: 700px) {
+  .flow-head > .row {
+    width: 100%;
+  }
+  .jump-topic,
+  .jump-chapter {
     min-width: 0;
     width: 100%;
+    max-width: none;
+    flex: 1;
+  }
+  .note-types {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  /* once a type is chosen, the three cards shrink to a compact switcher */
+  .note-types:not(.note-types-big) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .note-types:not(.note-types-big) .note-type {
+    padding: 10px 8px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 6px;
+  }
+  .note-types:not(.note-types-big) .nt-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .note-types:not(.note-types-big) .note-type b {
+    font-size: 13px;
+  }
+  .note-types:not(.note-types-big) .note-type span span:not(.nt-count) {
+    display: none;
+  }
+  .note-types:not(.note-types-big) .nt-count {
+    margin-top: 2px;
+    font-size: 11px;
   }
 }

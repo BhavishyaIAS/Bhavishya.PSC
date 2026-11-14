@@ -353,6 +353,11 @@ def track_materials(request, commission, group):
     )
     if (category := request.query_params.get("category")) in NoteKind.values:
         qs = qs.filter(category=category)
+    if (subject := request.query_params.get("subject", "")).isdigit():
+        sid = int(subject)
+        qs = qs.filter(
+            Q(subject_id=sid) | Q(topic__subject_id=sid) | Q(micro_theme__topic__subject_id=sid)
+        )
     if q := (request.query_params.get("q") or "").strip():
         qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q))
     return Response({"results": MaterialSerializer(qs, many=True).data})
