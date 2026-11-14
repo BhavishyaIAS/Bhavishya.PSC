@@ -47,7 +47,7 @@ class CommissionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Commission
-        fields = ["id", "slug", "short_name", "name", "description", "status", "tracks"]
+        fields = ["id", "slug", "short_name", "name", "description", "status", "theme", "order", "tracks"]
 
     def get_tracks(self, obj):
         counts = self.context.get("track_counts", {})
@@ -73,7 +73,7 @@ class PaperSerializer(serializers.ModelSerializer):
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ["id", "paper", "code", "title", "order", "status"]
+        fields = ["id", "paper", "code", "title", "order", "status", "look"]
 
 
 class TopicSerializer(serializers.ModelSerializer):

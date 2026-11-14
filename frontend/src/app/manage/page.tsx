@@ -45,7 +45,12 @@ export default async function Dashboard() {
       <section className="panel">
         <div className="panel-head">
           <h2>Exams shown to students</h2>
-          <span className="muted small">A hidden commission — every group, note and PYQ in it — is visible to admins only.</span>
+          <span className="muted small">
+            A hidden commission — every exam, note and PYQ in it — is visible to admins only.{" "}
+            <Link className="link" href="/manage/exams">
+              Add or edit exams →
+            </Link>
+          </span>
         </div>
         <CommissionVisibility commissions={commissions} />
       </section>

@@ -3,10 +3,12 @@ import Link from "next/link";
 
 import { brand } from "@/brand.config";
 import { CommissionCard } from "@/components/CommissionCard";
+import { GroupCards } from "@/components/GroupCards";
 import { EmptyState } from "@/components/ui/bits";
 import { getCommissions } from "@/lib/catalog";
 import { trackPath } from "@/lib/format";
 import { currentUser } from "@/lib/server-api";
+import { getSite } from "@/lib/site";
 
 /** The three words of the tagline are the three things a learner does here. */
 const JOURNEY = [
@@ -16,15 +18,19 @@ const JOURNEY = [
 ];
 
 export default async function LandingPage() {
-  const [commissions, user] = await Promise.all([getCommissions(), currentUser()]);
-  const first = commissions[0]?.tracks.find((t) => t.has_content) ?? commissions[0]?.tracks[0];
+  const [commissions, user, site] = await Promise.all([getCommissions(), currentUser(), getSite()]);
+  // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
+  const focus = site.focus ? commissions.find((c) => c.slug === site.focus) : undefined;
+  const lead = focus ?? commissions[0];
+  const first = lead?.tracks.find((t) => t.has_content) ?? lead?.tracks[0];
+  const isAdmin = user?.role === "admin";
   const firstName = user?.display_name?.split(" ")[0];
 
   return (
     <div className="page home">
       <section className="hero">
         <div className="hero-copy">
-          <div className="eyebrow">{brand.subtitle}</div>
+          <div className="eyebrow">{site.hero_eyebrow || (focus ? focus.name : brand.subtitle)}</div>
           <h1 className="hero-title">{brand.heroTitle}</h1>
           <p className="hero-tagline" aria-label={brand.tagline}>
             {JOURNEY.map((j) => (
@@ -33,7 +39,7 @@ export default async function LandingPage() {
           </p>
           <p className="hero-lead">
             {firstName ? <b>Welcome back, {firstName}. </b> : null}
-            Syllabus, notes, previous-year questions and your progress — in one calm place built for long hours of study.
+            {site.hero_lead || "Syllabus, notes, previous-year questions and your progress — in one calm place built for long hours of study."}
           </p>
           <div className="row hero-cta">
             {user && first ? (
@@ -60,9 +66,30 @@ export default async function LandingPage() {
         <h2 id="exams-h" className="section-title">
           Choose your exam
         </h2>
-        {commissions.length === 0 ? (
+        {focus && isAdmin && (
+          <p className="muted small" style={{ marginTop: -8 }}>
+            The platform is dedicated to {focus.short_name}; students see only this exam. Change it in{" "}
+            <Link className="link" href="/manage/site">
+              Manage → Site settings
+            </Link>
+            .
+          </p>
+        )}
+        {focus ? (
+          <GroupCards commission={focus} isAdmin={isAdmin} />
+        ) : commissions.length === 0 ? (
           <EmptyState title="No examinations yet">
-            The exam catalogue couldn&apos;t be loaded. If you&apos;re running locally, make sure the API is up and seeded.
+            {isAdmin ? (
+              <>
+                Add your first exam from{" "}
+                <Link className="link" href="/manage/exams">
+                  Manage → Exams
+                </Link>
+                .
+              </>
+            ) : (
+              "Exams are being set up. Please check back soon."
+            )}
           </EmptyState>
         ) : (
           <div className={`commission-grid ${commissions.length === 1 ? "single" : ""}`}>

@@ -520,16 +520,9 @@ function network(): Scene {
 export const SCENES = { home, institution, library, history, geography, polity, economy, science, environment, prelims, mains, progress, search, gateway, workshop, network };
 export type SceneName = keyof typeof SCENES;
 
-/** The backdrop that suits a syllabus topic, from the words in its name. */
-export function sceneForTopic(title: string): SceneName {
-  const t = title.toLowerCase();
-  if (t.includes("history") || t.includes("culture")) return "history";
-  if (t.includes("geograph")) return "geography";
-  if (t.includes("polity") || t.includes("constitution") || t.includes("governance")) return "polity";
-  if (t.includes("econom")) return "economy";
-  if (t.includes("science") || t.includes("technology")) return "science";
-  if (t.includes("environment") || t.includes("ecology")) return "environment";
-  return "library";
+/** The backdrop for a topic "look" (see lib/topics.ts). */
+export function sceneForLook(look: string): SceneName {
+  return look in SCENES && look !== "general" ? (look as SceneName) : "library";
 }
 
 /** The backdrop for a URL, when the page doesn't ask for a specific one. */

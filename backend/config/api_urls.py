@@ -6,6 +6,7 @@ from rest_framework.routers import DefaultRouter
 from accounts import api as auth_api
 from content import views_manage as manage
 from content import views_read as read
+from content import views_site as site
 
 router = DefaultRouter(trailing_slash=True)
 router.register("papers", manage.PaperViewSet, basename="papers")
@@ -28,6 +29,7 @@ urlpatterns = [
     path("auth/me/", auth_api.me),
     # Catalog (public)
     path("commissions/", read.commissions),
+    path("site/", site.site),
     path(TRACK, read.track_detail),
     # Study (authenticated)
     path(TRACK + "syllabus/", read.syllabus_tree),
@@ -45,6 +47,15 @@ urlpatterns = [
     # Admin
     path("manage/stats/", manage.stats),
     path("manage/commissions/<int:pk>/", manage.commission_status),
+    # Exams, topics catalogue and site settings
+    path("manage/site/", site.manage_site),
+    path("manage/site/dedicate/", site.dedicate),
+    path("manage/site/starter/", site.starter),
+    path("manage/exams/", site.exams),
+    path("manage/exams/<int:pk>/", site.exam_body),
+    path("manage/exams/<int:pk>/exams/", site.exam_create),
+    path("manage/exam-tracks/<int:pk>/", site.exam_detail),
+    path("manage/exam-tracks/<int:pk>/topics/", site.topic_create),
     path("manage/reorder/", manage.reorder),
     path("manage/status/", manage.set_status),
     path("manage/questions/import/", manage.import_questions),

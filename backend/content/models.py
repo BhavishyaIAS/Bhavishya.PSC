@@ -90,6 +90,8 @@ class Commission(TimeStamped):
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.PUBLISHED)
+    # Colour of its card on the site: a palette name from the frontend's brand.config ("" = automatic).
+    theme = models.CharField(max_length=20, blank=True)
 
     objects = CommissionQuerySet.as_manager()
 
@@ -124,12 +126,13 @@ class Track(models.Model):
     commission = models.ForeignKey(Commission, on_delete=models.CASCADE, related_name="tracks")
     group = models.ForeignKey(ExamGroup, on_delete=models.PROTECT, related_name="tracks")
     tagline = models.CharField(max_length=200, blank=True)
+    order = models.PositiveIntegerField(default=0)  # position among its commission's exams
 
     objects = TrackQuerySet.as_manager()
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["commission", "group"], name="uniq_track")]
-        ordering = ["commission__order", "group__order"]
+        ordering = ["commission__order", "order", "group__order"]
 
     def __str__(self):
         return f"{self.commission.short_name} {self.group.name}"
@@ -137,6 +140,36 @@ class Track(models.Model):
     @property
     def key(self):
         return f"{self.commission.slug}/{self.group.slug}"
+
+
+class SiteSettings(TimeStamped):
+    """
+    Site-wide choices an admin makes from Manage → Site settings. One row (pk=1).
+
+    `focus_commission` dedicates the platform to a single exam (say UPSC): the
+    home page opens straight on it. Hiding the others from students is done with
+    their ordinary `status`, so every visibility rule keeps working unchanged;
+    `restore_visible` remembers which commissions to show again afterwards.
+    """
+
+    focus_commission = models.ForeignKey(Commission, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    restore_visible = models.JSONField(default=list, blank=True)
+    hero_eyebrow = models.CharField(max_length=160, blank=True)  # small line above the home page title
+    hero_lead = models.CharField(max_length=320, blank=True)  # sentence under the tagline
+    # Per note type: {"prelims": {"label": "...", "blurb": "...", "enabled": true}} — missing keys use the defaults.
+    note_kinds = models.JSONField(default=dict, blank=True)
+    reader_font = models.CharField(max_length=5, choices=[("sans", "Sans"), ("serif", "Serif")], default="sans")
+    reader_size = models.PositiveSmallIntegerField(default=2)  # 1 (small) … 4 (largest)
+    show_codes = models.BooleanField(default=True)  # section codes (MIH-01-01) beside headings, for students
+    show_contents = models.BooleanField(default=True)  # the "Contents" box above a chapter
+    backdrops = models.BooleanField(default=True)  # the 3D scenes behind pages
+
+    class Meta:
+        verbose_name_plural = "site settings"
+
+    @classmethod
+    def load(cls):
+        return cls.objects.get_or_create(pk=1)[0]
 
 
 # ───────────────────────────── Syllabus ───────────────────────────────
@@ -206,6 +239,8 @@ class Paper(SyllabusNode):
 
 class Subject(SyllabusNode):
     paper = models.ForeignKey(Paper, on_delete=models.CASCADE, related_name="subjects")
+    # How the topic is presented (icon, colour, 3D scene): "history", "polity"… ("" = guessed from its title).
+    look = models.CharField(max_length=20, blank=True)
 
     objects = SubjectQuerySet.as_manager()
 

@@ -1,5 +1,5 @@
 import { SceneHint } from "@/components/fx/SceneHint";
-import { sceneForTopic } from "@/components/fx/scenes";
+import { sceneForLook } from "@/components/fx/scenes";
 import { ReaderTools } from "@/components/ReaderTools";
 import { ArrowLeft, ArrowRight, BookA, Clock, FileQuestion, Pencil, PlayCircle, NotebookPen } from "lucide-react";
 import type { Metadata } from "next";
@@ -12,7 +12,9 @@ import { StudiedToggle } from "@/components/StudiedToggle";
 import { EmptyState, PriorityBadge, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
-import { NOTE_KINDS, type MicroThemeDetail, type NoteKind } from "@/lib/types";
+import { getSite } from "@/lib/site";
+import { topicLook } from "@/lib/topics";
+import type { MicroThemeDetail, NoteKind } from "@/lib/types";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]/[group]/micro/[code]">): Promise<Metadata> {
   const { code } = await props.params;
@@ -23,11 +25,13 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
   const [{ commission, group, code: rawCode }, sp] = await Promise.all([props.params, props.searchParams]);
   const code = decodeURIComponent(rawCode);
   const self = trackPath(commission, group, `micro/${encodeURIComponent(code)}`);
-  const [user, d] = await Promise.all([
+  const [user, d, site] = await Promise.all([
     requireUser(self),
     load<MicroThemeDetail>(`/tracks/${commission}/${group}/micro-themes/${encodeURIComponent(code)}/`, self),
+    getSite(),
   ]);
   const isAdmin = user.role === "admin";
+  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled); // the types of notes this site offers, in its own words
   const available = NOTE_KINDS.filter((k) => d.notes[k.key]);
   const requested = NOTE_KINDS.find((k) => k.key === sp.note)?.key as NoteKind | undefined;
   const kind: NoteKind | undefined = requested && d.notes[requested] ? requested : available[0]?.key;
@@ -39,7 +43,7 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
 
   return (
     <div className="mt-layout">
-      <SceneHint scene={sceneForTopic(d.breadcrumb.subject.title)} />
+      <SceneHint scene={sceneForLook(topicLook(d.breadcrumb.subject.title, d.breadcrumb.subject.look))} />
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">
@@ -51,7 +55,7 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
           </nav>
           <h1 style={{ fontSize: "clamp(24px, 3vw, 34px)" }}>{mt.title}</h1>
           <div className="row" style={{ marginTop: 10 }}>
-            <span className="code-chip">{mt.code}</span>
+            {(isAdmin || site.show_codes) && <span className="code-chip">{mt.code}</span>}
             <PriorityBadge priority={mt.priority} />
             {mt.is_dual_stage && <span className="badge badge-neutral">Prelims + Mains</span>}
             {mt.estimated_minutes && (

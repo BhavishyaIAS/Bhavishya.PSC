@@ -84,6 +84,23 @@ Everything brand-related lives in **`frontend/src/brand.config.ts`**:
 
 ---
 
+## What an admin can change without code
+
+Everything below is in **Manage** (admins only; every endpoint checks the role again).
+
+| Screen | What it does |
+|---|---|
+| **Exams** | Add / edit / reorder / show-hide / delete commissions (APPSC, UPSC, any PSC) and the exams inside each (Group 1–4, Civil Services…). A new commission is hidden until shown. Deleting asks for the name to be typed. "Set up UPSC" creates UPSC → Civil Services with 14 General Studies topics. |
+| **Topics catalogue** | The topics a learner picks from in Material / Notes: add, rename, drag to reorder, show/hide, delete, and choose each topic's *look* (icon, colour, 3D scene). |
+| **Syllabus & notes** | Chapters and sections inside a topic, and the rich-text editor for each section's notes, videos and glossary. |
+| **Import notes (Word)** | A whole book into a topic: Heading 1 → chapter, Heading 2 → section. |
+| **Site settings** | Dedicate the platform to one exam (and switch back), home-page wording, rename or switch off the three types of notes, default reading font and size, show/hide section codes and the contents box, 3D backgrounds on/off. |
+
+**Dedicating the platform to one exam** (say UPSC) shows that commission, hides every
+other one from students using their ordinary `status` (nothing is deleted), and opens
+the home page straight on it. `SiteSettings.restore_visible` remembers what to show
+again when the admin switches back. Code: `backend/content/views_site.py`.
+
 ## Design, motion and the 3D backdrops
 
 The look of the site lives in two stylesheets: `frontend/src/app/globals.css`

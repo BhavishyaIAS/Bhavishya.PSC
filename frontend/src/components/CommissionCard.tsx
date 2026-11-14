@@ -6,7 +6,7 @@ import { hasPublicAsset } from "@/lib/assets";
 import type { Commission } from "@/lib/types";
 
 export function CommissionCard({ commission, index }: { commission: Commission; index: number }) {
-  const theme = themeFor(commission.slug, index, commission.short_name);
+  const theme = themeFor(commission.slug, index, commission.short_name, commission.theme);
   const cover = hasPublicAsset(theme.cover) ? theme.cover : undefined;
   const emblem = hasPublicAsset(theme.emblem) ? theme.emblem : undefined;
   return (

@@ -8,7 +8,8 @@ import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { syllabusTopics, topicIcon, topicTone } from "@/lib/topics";
-import { NOTE_KINDS, type SyllabusTree } from "@/lib/types";
+import { getSite } from "@/lib/site";
+import type { SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
 
@@ -24,10 +25,12 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
     redirect(`${here}/${sp.subject}${keep.size ? `?${keep}` : ""}`);
   }
 
-  const [user, tree] = await Promise.all([
+  const [user, tree, site] = await Promise.all([
     requireUser(here),
     load<SyllabusTree>(`/tracks/${commission}/${group}/syllabus/`),
+    getSite(),
   ]);
+  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled);
   const isAdmin = user.role === "admin";
   const topics = syllabusTopics(tree);
   const track = `${commission}/${group}`;
@@ -39,7 +42,7 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
         title="No study material in this exam yet"
         action={
           isAdmin && (
-            <Link href={`/manage/syllabus?track=${track}`} className="btn btn-primary">
+            <Link href={`/manage/topics?track=${track}`} className="btn btn-primary">
               <ListTree size={17} aria-hidden /> Add the syllabus topics
             </Link>
           )
@@ -57,12 +60,14 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
           <Steps current={1} />
           <h2 className="flow-title">Choose a syllabus topic</h2>
           <p className="muted" style={{ margin: "4px 0 0" }}>
-            Then pick Comprehensive, Prelims or Mains notes, and read it chapter by chapter.
+            {NOTE_KINDS.length > 1
+              ? `Then pick ${NOTE_KINDS.map((k) => k.label).join(", ").replace(/, ([^,]*)$/, " or $1")}, and read it chapter by chapter.`
+              : "Then read it chapter by chapter."}
           </p>
         </div>
         {isAdmin && (
           <div className="row" style={{ gap: 8 }}>
-            <Link href={`/manage/syllabus?track=${track}`} className="btn btn-ghost btn-sm">
+            <Link href={`/manage/topics?track=${track}`} className="btn btn-ghost btn-sm">
               <ListTree size={15} aria-hidden /> Edit topics
             </Link>
             <Link href="/manage/notes-import" className="btn btn-secondary btn-sm">
@@ -74,10 +79,10 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
 
       <div className="topic-grid">
         {topics.map(({ subject, chapters, byKind }, i) => {
-          const Icon = topicIcon(subject.title);
+          const Icon = topicIcon(subject.title, subject.look);
           const kinds = NOTE_KINDS.filter((k) => byKind[k.key] > 0);
           return (
-            <Link key={subject.id} href={`${here}/${subject.id}`} className={`topic-card tone-${topicTone(subject.title)}`}>
+            <Link key={subject.id} href={`${here}/${subject.id}`} className={`topic-card ${topicTone(subject.title, subject.look)}`}>
               <span className="tc-icon" aria-hidden>
                 <Icon size={22} />
               </span>

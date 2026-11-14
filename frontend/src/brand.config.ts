@@ -70,6 +70,18 @@ export const groupThemes: Record<string, { gradient: string; ink: string }> = {
   },
 };
 
+/** Colour palettes an admin can give a commission's card (Manage → Exams). */
+export const themePalettes: Record<string, Omit<CommissionTheme, "monogram">> = {
+  red: { from: "#8f0613", via: "#d90d20", to: "#ef4444", ink: "#b5091b" },
+  blue: { from: "#0b2a63", via: "#1458c8", to: "#3b82f6", ink: "#1249a8" },
+  navy: { from: "#0a1a3f", via: "#17377d", to: "#3b5fc0", ink: "#17377d" },
+  green: { from: "#064e3b", via: "#0f766e", to: "#14b8a6", ink: "#0f766e" },
+  teal: { from: "#0c4a6e", via: "#0891b2", to: "#22d3ee", ink: "#0e7490" },
+  violet: { from: "#4c1d95", via: "#6d28d9", to: "#8b5cf6", ink: "#6d28d9" },
+  orange: { from: "#7c2d12", via: "#c2410c", to: "#f97316", ink: "#c2410c" },
+  gold: { from: "#713f12", via: "#b45309", to: "#f59e0b", ink: "#92400e" },
+};
+
 const fallbackThemes: Omit<CommissionTheme, "monogram">[] = [
   { from: "#064e3b", via: "#0f766e", to: "#14b8a6", ink: "#0f766e" },
   { from: "#4c1d95", via: "#6d28d9", to: "#8b5cf6", ink: "#6d28d9" },
@@ -80,11 +92,9 @@ export function groupTheme(slug: string, index = 0) {
   return groupThemes[slug] ?? Object.values(groupThemes)[index % Object.keys(groupThemes).length];
 }
 
-export function themeFor(slug: string, index = 0, shortName = ""): CommissionTheme {
-  return (
-    commissionThemes[slug] ?? {
-      ...fallbackThemes[index % fallbackThemes.length],
-      monogram: (shortName || slug).slice(0, 2).toUpperCase(),
-    }
-  );
+/** A commission's colours: the palette its admin chose, else its built-in identity, else one by position. */
+export function themeFor(slug: string, index = 0, shortName = "", palette = ""): CommissionTheme {
+  const monogram = (shortName || slug).slice(0, 2).toUpperCase();
+  if (themePalettes[palette]) return { ...(commissionThemes[slug] ?? { monogram }), ...themePalettes[palette] };
+  return commissionThemes[slug] ?? { ...fallbackThemes[index % fallbackThemes.length], monogram };
 }
