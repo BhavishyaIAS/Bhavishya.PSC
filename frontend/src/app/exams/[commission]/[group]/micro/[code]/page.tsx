@@ -1,3 +1,6 @@
+import { SceneHint } from "@/components/fx/SceneHint";
+import { sceneForTopic } from "@/components/fx/scenes";
+import { ReaderTools } from "@/components/ReaderTools";
 import { ArrowLeft, ArrowRight, BookA, Clock, FileQuestion, Pencil, PlayCircle, NotebookPen } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,7 +10,7 @@ import { QuestionCard } from "@/components/pyq/QuestionCard";
 import { RichText } from "@/components/rich/RichText";
 import { StudiedToggle } from "@/components/StudiedToggle";
 import { EmptyState, PriorityBadge, StatusBadge } from "@/components/ui/bits";
-import { stageLabel, trackPath } from "@/lib/format";
+import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { NOTE_KINDS, type MicroThemeDetail, type NoteKind } from "@/lib/types";
 
@@ -36,11 +39,15 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
 
   return (
     <div className="mt-layout">
+      <SceneHint scene={sceneForTopic(d.breadcrumb.subject.title)} />
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">
-            <span className="badge badge-neutral">{stageLabel(d.breadcrumb.paper.stage)}</span>
-            <span>{d.breadcrumb.paper.title}</span>›<span>{d.breadcrumb.subject.title}</span>›<span>{d.breadcrumb.topic.title}</span>
+            <Link href={trackPath(commission, group, "materials")}>Material / Notes</Link>›
+            <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}`)}>{d.breadcrumb.subject.title}</Link>›
+            <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}?kind=${kind ?? "comprehensive"}&topic=${d.breadcrumb.topic.id}`)}>
+              {d.breadcrumb.topic.title}
+            </Link>
           </nav>
           <h1 style={{ fontSize: "clamp(24px, 3vw, 34px)" }}>{mt.title}</h1>
           <div className="row" style={{ marginTop: 10 }}>
@@ -77,6 +84,7 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
                 ),
               )}
             </div>
+            <ReaderTools />
             {isAdmin && (
               <Link href={`/manage/content/${mt.id}${kind ? `?kind=${kind}` : ""}`} className="btn btn-secondary btn-sm">
                 <Pencil size={15} aria-hidden /> Edit content
@@ -90,7 +98,9 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
                   This note is a <b>draft</b> — students can&apos;t see it yet.
                 </div>
               )}
-              <RichText doc={note.body} />
+              <div className="reading">
+                <RichText doc={note.body} />
+              </div>
             </>
           ) : (
             <EmptyState icon={NotebookPen} title="Notes coming soon">

@@ -18,22 +18,25 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
   return (
     <div className="page">
       <div className="ws-head">
-        <div>
+        <div className="ws-title">
           <h1>
             {track.commission_name} · {track.group_name}
           </h1>
-        </div>
-        <div className="spacer" />
-        <div className="segmented" role="group" aria-label="Switch group">
-          {track.siblings.map((s) => (
-            <Link key={s.group} href={`/exams/${s.commission}/${s.group}`} aria-current={s.group === group ? "page" : undefined}>
-              {s.group_name}
+          <div className="row">
+            <div className="segmented" role="group" aria-label="Switch group">
+              {track.siblings.map((s) => (
+                <Link key={s.group} href={`/exams/${s.commission}/${s.group}`} aria-current={s.group === group ? "page" : undefined}>
+                  {s.group_name}
+                </Link>
+              ))}
+            </div>
+            <Link href={`/exams/${commission}`} className="btn btn-ghost btn-sm">
+              <ArrowLeft size={15} aria-hidden /> All groups
             </Link>
-          ))}
+          </div>
         </div>
-        <Link href={`/exams/${commission}`} className="btn btn-ghost">
-          <ArrowLeft size={17} aria-hidden /> All groups
-        </Link>
+        {/* Where this tab's 3D scene is drawn (see components/fx). */}
+        <div className="ws-stage" data-stage aria-hidden />
       </div>
       <WorkspaceTabs commission={commission} group={group} isAdmin={isAdmin} />
       {props.children}

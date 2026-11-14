@@ -8,7 +8,7 @@ Paper → Subject → Topic → Micro-theme.
 | | |
 |---|---|
 | **Backend** | Python 3.12+, Django 5.2, Django REST Framework, PostgreSQL 16 (full-text search via `tsvector` + GIN) |
-| **Frontend** | Next.js 16 (App Router, server components), React 19, TypeScript, hand-written CSS design system |
+| **Frontend** | Next.js 16 (App Router, server components), React 19, TypeScript, hand-written CSS design system, dependency-free 3D backdrops |
 | **Rich text** | TipTap editor → ProseMirror JSON, rendered by a whitelist renderer; diagrams in Mermaid |
 | **Spreadsheets** | Parsed in the browser (`read-excel-file`, `papaparse`); template built with `write-excel-file` |
 
@@ -83,6 +83,32 @@ Everything brand-related lives in **`frontend/src/brand.config.ts`**:
 - `groupThemes`: the colours of the Group 1 / Group 2 blocks.
 
 ---
+
+## Design, motion and the 3D backdrops
+
+The look of the site lives in two stylesheets: `frontend/src/app/globals.css`
+(each component's layout) and `frontend/src/app/design.css` (palette, glass
+surfaces, depth and every animation).
+
+Behind every page is a real 3D scene that says where the learner is — an open
+book on the home page, a stupa for History, a globe for Geography, the Ashoka
+Chakra for Polity, a target for Prelims PYQs, and so on. They are drawn by a
+small dependency-free renderer in `frontend/src/components/fx/`:
+
+| File | What it does |
+|---|---|
+| `engine.ts` | Geometry builders (box, cone, dome, extrude…), perspective, shading, depth sorting |
+| `scenes.ts` | One function per scene, plus `sceneForPath` / `sceneForTopic` which pick the scene |
+| `Backdrop.tsx` | The canvas: draws the scene inside the page's `[data-stage]` element, follows the pointer, rests when off-screen |
+| `Interactions.tsx` | Cards that tilt towards the pointer, the reading-progress bar |
+
+To add a scene, write a function in `scenes.ts`, add it to `SCENES`, and map a
+URL or topic name to it. Scene colours come from the `--fx-*` variables in
+`design.css` (light and dark).
+
+Reading comfort: text size, a serif option and a focus mode (`ReaderTools.tsx`).
+All motion stops for `prefers-reduced-motion` and for the **Animations: off**
+switch in the footer.
 
 ## Data model
 

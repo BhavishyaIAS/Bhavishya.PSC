@@ -93,14 +93,17 @@ class DocxImportTests(TestCase):
         admin = self.client_for("admin@bhavishya.app", "Admin@2026")
         url = "/api/manage/import-docx/"
         preview = admin.post(url, {"file": upload(make_docx()), "paper": self.paper.id}, **XHR).json()
-        self.assertEqual((preview["subject"], preview["prefix"], preview["sections"]), ("Medieval Indian History", "MIH", 4))
-        self.assertEqual(preview["chapters"][0]["sections"][0]["code"], "MIH-01-01")
-        self.assertFalse(Subject.objects.filter(title="Medieval Indian History").exists())  # preview writes nothing
+        # "Medieval Indian History" goes into the paper's "Medieval History" syllabus topic
+        self.assertEqual((preview["subject"], preview["prefix"], preview["sections"]), ("Medieval History", "MH", 4))
+        self.assertTrue(preview["existing_subject"])
+        self.assertEqual(preview["subjects"][:3], ["Ancient History", "Medieval History", "Modern History"])
+        self.assertEqual(preview["chapters"][0]["sections"][0]["code"], "MH-01-01")
+        self.assertFalse(MicroTheme.objects.filter(code__startswith="MH-").exists())  # preview writes nothing
 
-        res = admin.post(url, {"file": upload(make_docx()), "paper": self.paper.id, "commit": "true", "status": "published"}, **XHR)
+        res = admin.post(url, {"file": upload(make_docx()), "paper": self.paper.id, "prefix": "MIH", "commit": "true", "status": "published"}, **XHR)
         self.assertEqual(res.status_code, 200, res.content)
-        self.assertEqual(res.json()["result"]["micro_themes_created"], 4)
-        subject = Subject.objects.get(paper=self.paper, title="Medieval Indian History")
+        self.assertEqual((res.json()["result"]["topics_created"], res.json()["result"]["micro_themes_created"]), (2, 4))
+        subject = Subject.objects.get(paper=self.paper, title="Medieval History")
         self.assertEqual(list(Topic.objects.filter(subject=subject).order_by("order").values_list("title", flat=True)),
                          ["The Delhi Sultanate (1206–1526): Society, Economy and Culture", "The Kakatiyas"])
         mt = MicroTheme.objects.get(track=self.paper.track, code="MIH-01-01")
@@ -113,20 +116,22 @@ class DocxImportTests(TestCase):
         notes = student.get(f"/api/tracks/appsc/group-1/notes/?kind=comprehensive&topic={topic.id}").json()["results"]
         self.assertEqual([r["micro_theme"]["code"] for r in notes], ["MIH-01-01", "MIH-01-02"])
 
-        # Re-import an edited book: updates in place, adds the new section, no duplicates
+        # Re-import an edited book without naming subject or prefix: same topic, same codes (MIH),
+        # updates in place, adds the new section, no duplicates
         res = admin.post(url, {"file": upload(make_docx(extra_section=True)), "paper": self.paper.id, "commit": "true"}, **XHR).json()
+        self.assertEqual((res["subject"], res["prefix"]), ("Medieval History", "MIH"))
         self.assertEqual((res["result"]["micro_themes_created"], res["result"]["micro_themes_updated"]), (1, 4))
-        self.assertEqual(Subject.objects.filter(paper=self.paper, title="Medieval Indian History").count(), 1)
+        self.assertEqual(Subject.objects.filter(paper=self.paper, title__icontains="Medieval").count(), 1)
         self.assertEqual(MicroTheme.objects.filter(track=self.paper.track, code__startswith="MIH-").count(), 5)
 
     def test_prefix_clash_with_another_subject_is_refused(self):
         admin = self.client_for("admin@bhavishya.app", "Admin@2026")
-        # PRE-PI-HC-001.. belong to the seeded History & Culture subject: prefix "PRE-PI-HC" can't be reused
+        # PRE-PI-HC-001.. belong to the seeded Ancient History subject: its codes can't be reused
         MicroTheme.objects.filter(code="PRE-PI-HC-001").update(code="CLASH-01-01")
         res = admin.post("/api/manage/import-docx/", {"file": upload(make_docx()), "paper": self.paper.id, "prefix": "CLASH", "commit": "true"}, **XHR)
         self.assertEqual(res.status_code, 400)
         self.assertIn("CLASH-01-01", res.json()["conflicts"])
-        self.assertFalse(Subject.objects.filter(title="Medieval Indian History").exists())
+        self.assertFalse(MicroTheme.objects.filter(code__startswith="CLASH-01-02").exists())
 
     def test_students_cannot_import(self):
         student = self.client_for("student@bhavishya.app", "Student@2026")

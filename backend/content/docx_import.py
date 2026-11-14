@@ -19,6 +19,7 @@ Re-importing is idempotent: micro-themes are keyed on their code
 
 import re
 import zipfile
+from collections import Counter
 from dataclasses import dataclass, field
 
 from django.db import transaction
@@ -400,6 +401,33 @@ def parse_docx(upload):
 def default_prefix(title: str) -> str:
     words = [w for w in re.findall(r"[A-Za-z]+", title) if w.lower() not in SMALL_WORDS]
     return ("".join(w[0] for w in words[:4]).upper() or "NOTES")[:8]
+
+
+def _words(text: str) -> set:
+    return {w for w in re.findall(r"[a-z]+", text.lower()) if w not in SMALL_WORDS}
+
+
+def suggest_subject(paper: Paper, doc_title: str):
+    """The paper's subject a document belongs in: every word of its title appears in the document
+    title ("Medieval History" for "Medieval Indian History"); the most specific match wins."""
+    words, best = _words(doc_title), None
+    for subject in Subject.objects.filter(paper=paper):
+        sw = _words(subject.title)
+        if sw and sw <= words and (best is None or len(sw) > len(_words(best.title))):
+            best = subject
+    return best.title if best else None
+
+
+SECTION_CODE = re.compile(r"^([A-Z0-9]+)-\d{2}-\d{2}$")
+
+
+def existing_prefix(paper: Paper, subject_title: str):
+    """The code prefix an earlier import into this subject used, so a re-import updates the same sections."""
+    codes = MicroTheme.objects.filter(topic__subject__paper=paper, topic__subject__title=subject_title).values_list(
+        "code", flat=True
+    )
+    found = Counter(m.group(1) for c in codes if (m := SECTION_CODE.match(c)))
+    return found.most_common(1)[0][0] if found else None
 
 
 def section_code(prefix, ci, si):

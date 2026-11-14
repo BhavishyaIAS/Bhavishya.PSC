@@ -41,7 +41,9 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
         <div>
           <div className="eyebrow">{commission.name}</div>
           <h1 className="display-light">Choose Your Group</h1>
+          <p>Pick the service you are preparing for. Everything inside is arranged for that exam.</p>
         </div>
+        <div className="page-stage" data-stage aria-hidden />
         <Link href="/" className="btn btn-secondary btn-lg">
           <ArrowLeft size={18} aria-hidden /> All exams
         </Link>

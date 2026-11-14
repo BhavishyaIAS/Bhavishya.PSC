@@ -23,7 +23,16 @@ from accounts.api import serialize_user
 from accounts.models import Profile, Role
 from accounts.permissions import IsAdminRole
 
-from .docx_import import DocxImportError, apply_import, check_conflicts, default_prefix, outline, parse_docx
+from .docx_import import (
+    DocxImportError,
+    apply_import,
+    check_conflicts,
+    default_prefix,
+    existing_prefix,
+    outline,
+    parse_docx,
+    suggest_subject,
+)
 from .importer import MAX_ROWS, columns_for, commit_rows, validate_rows
 from .models import (
     Commission,
@@ -359,10 +368,27 @@ def import_docx(request):
     except DocxImportError as exc:
         return Response({"file": [str(exc)]}, status=400)
 
-    subject_title = " ".join(str(request.data.get("subject") or parsed.title or "Imported notes").split())[:255]
-    prefix = re.sub(r"[^A-Z0-9]", "", str(request.data.get("prefix") or default_prefix(subject_title)).upper())[:12] or "NOTES"
     paper_id = str(request.data.get("paper") or "")
     paper = Paper.objects.select_related("track__commission", "track__group").filter(pk=paper_id).first() if paper_id.isdigit() else None
+    # Subject: as chosen, else the paper's matching syllabus topic, else the document's own title.
+    subject_title = " ".join(
+        str(
+            request.data.get("subject")
+            or (paper and suggest_subject(paper, parsed.title or ""))
+            or parsed.title
+            or "Imported notes"
+        ).split()
+    )[:255]
+    # Prefix: as chosen, else the one already used in that subject (so re-imports update in place).
+    prefix = re.sub(
+        r"[^A-Z0-9]",
+        "",
+        str(
+            request.data.get("prefix")
+            or (paper and existing_prefix(paper, subject_title))
+            or default_prefix(subject_title)
+        ).upper(),
+    )[:12] or "NOTES"
     chapters = outline(parsed, prefix)
     payload = {
         "title": parsed.title,
@@ -375,6 +401,7 @@ def import_docx(request):
         "warnings": parsed.warnings,
         "conflicts": check_conflicts(parsed, paper, subject_title, prefix) if paper else [],
         "existing_subject": bool(paper and Subject.objects.filter(paper=paper, title=subject_title).exists()),
+        "subjects": list(Subject.objects.filter(paper=paper).values_list("title", flat=True)) if paper else [],
     }
     if str(request.data.get("commit", "")).lower() in ("1", "true", "yes"):
         if paper is None:
