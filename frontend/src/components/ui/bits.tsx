@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import { Inbox } from "lucide-react";
 
+import { CountUp } from "@/components/fx/CountUp";
 import type { Status } from "@/lib/types";
 
 export function ProgressBar({ value, label, thin }: { value: number; label?: string; thin?: boolean }) {
@@ -30,6 +31,8 @@ export function StatTile({
   label: string;
   progress?: number;
 }) {
+  // Whole numbers and percentages count up when the tile appears.
+  const counted = typeof value === "number" || typeof value === "string" ? /^(\d{1,7})(%?)$/.exec(String(value)) : null;
   return (
     <div className="stat">
       {Icon && (
@@ -37,7 +40,7 @@ export function StatTile({
           <Icon size={20} />
         </div>
       )}
-      <div className="stat-value">{value}</div>
+      <div className="stat-value">{counted ? <CountUp to={Number(counted[1])} suffix={counted[2]} /> : value}</div>
       <div className="stat-label">{label}</div>
       {progress !== undefined && <ProgressBar value={progress} label={label} />}
     </div>

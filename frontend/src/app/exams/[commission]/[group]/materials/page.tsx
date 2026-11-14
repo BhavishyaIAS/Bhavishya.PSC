@@ -7,7 +7,7 @@ import { NotesSteps as Steps } from "@/components/NotesSteps";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
-import { syllabusTopics, topicIcon } from "@/lib/topics";
+import { syllabusTopics, topicIcon, topicTone } from "@/lib/topics";
 import { NOTE_KINDS, type SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
@@ -77,7 +77,7 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
           const Icon = topicIcon(subject.title);
           const kinds = NOTE_KINDS.filter((k) => byKind[k.key] > 0);
           return (
-            <Link key={subject.id} href={`${here}/${subject.id}`} className="topic-card">
+            <Link key={subject.id} href={`${here}/${subject.id}`} className={`topic-card tone-${topicTone(subject.title)}`}>
               <span className="tc-icon" aria-hidden>
                 <Icon size={22} />
               </span>

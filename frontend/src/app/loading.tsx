@@ -1,12 +1,15 @@
+/** While a page loads: a small 3D book whose pages turn. */
 export default function Loading() {
   return (
-    <div className="page" aria-busy="true" aria-live="polite">
+    <div className="page loading-stage" aria-busy="true" aria-live="polite">
       <span className="sr-only">Loading…</span>
-      <div className="stack">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="card" style={{ height: 90, opacity: 0.5 }} />
-        ))}
+      <div className="book-loader" aria-hidden>
+        <span />
+        <span />
+        <span />
+        <span />
       </div>
+      <p className="muted small">Opening the page…</p>
     </div>
   );
 }

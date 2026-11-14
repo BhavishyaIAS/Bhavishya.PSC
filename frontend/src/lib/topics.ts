@@ -37,3 +37,15 @@ export function topicIcon(title: string): LucideIcon {
   if (t.includes("environment") || t.includes("ecology")) return Leaf;
   return NotebookText;
 }
+
+/** A colour family for a topic (see .tone-* in design.css), so each subject is recognisable at a glance. */
+export function topicTone(title: string): string {
+  const t = title.toLowerCase();
+  if (t.includes("history")) return "history";
+  if (t.includes("geograph")) return "geography";
+  if (t.includes("polity") || t.includes("constitution") || t.includes("governance")) return "polity";
+  if (t.includes("econom")) return "economy";
+  if (t.includes("science") || t.includes("technology")) return "science";
+  if (t.includes("environment") || t.includes("ecology")) return "environment";
+  return "default";
+}

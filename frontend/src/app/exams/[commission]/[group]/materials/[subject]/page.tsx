@@ -14,14 +14,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { SceneHint } from "@/components/fx/SceneHint";
+import { sceneForTopic } from "@/components/fx/scenes";
 import { JumpSelect } from "@/components/JumpSelect";
 import { MaterialList } from "@/components/MaterialList";
 import { NotesSteps } from "@/components/NotesSteps";
+import { ReaderTools } from "@/components/ReaderTools";
 import { RichText } from "@/components/rich/RichText";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
-import { syllabusTopics } from "@/lib/topics";
+import { syllabusTopics, topicTone } from "@/lib/topics";
 import { NOTE_KINDS, type Material, type Note, type NoteKind, type SubjectNode, type SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
@@ -73,7 +76,8 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   ]);
 
   return (
-    <div>
+    <div className={`tone-${topicTone(subject.title)}`}>
+      <SceneHint scene={sceneForTopic(subject.title)} />
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
           <NotesSteps current={2} />
@@ -180,6 +184,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                         {chapter!.label}
                       </h3>
                     </div>
+                    <ReaderTools />
                     {chapters.length > 1 && (
                       <JumpSelect
                         label="Chapter"
@@ -229,7 +234,9 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                               <ExternalLink size={14} aria-hidden /> Open
                             </Link>
                           </header>
-                          <RichText doc={note.body} />
+                          <div className="reading">
+                            <RichText doc={note.body} />
+                          </div>
                         </article>
                       ))}
                     </div>
