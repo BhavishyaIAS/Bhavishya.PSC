@@ -19,6 +19,7 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
     <div className="page">
       <div className="ws-head">
         <div className="ws-title">
+          <div className="eyebrow">{track.commission_full_name}</div>
           <h1>
             {track.commission_name} · {track.group_name}
           </h1>

@@ -381,6 +381,21 @@ export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, v
 
   const prims = pool.slice(0, count).sort((a, b) => b.z - a.z);
   const pal = view.palette, shadow = pal[7], light = pal[8];
+
+  // A soft shadow on the "floor" grounds the sculpture, like an object lit in a studio.
+  ctx.save();
+  ctx.translate(view.cx, view.cy + unit * 1.08);
+  ctx.scale(1, 0.16);
+  const pool2 = ctx.createRadialGradient(0, 0, 0, 0, 0, unit * 1.9);
+  pool2.addColorStop(0, `rgba(${shadow[0]},${shadow[1]},${shadow[2]},${0.3 * view.alpha})`);
+  pool2.addColorStop(0.55, `rgba(${shadow[0]},${shadow[1]},${shadow[2]},${0.1 * view.alpha})`);
+  pool2.addColorStop(1, `rgba(${shadow[0]},${shadow[1]},${shadow[2]},0)`);
+  ctx.fillStyle = pool2;
+  ctx.beginPath();
+  ctx.arc(0, 0, unit * 1.9, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   for (const p of prims) {
@@ -388,9 +403,9 @@ export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, v
     ctx.globalAlpha = Math.min(1, p.alpha * view.alpha);
     if (p.kind === 0) {
       const s = p.shade;
-      const r = (base[0] * 0.6 + shadow[0] * 0.4) * (1 - s) + (base[0] * 0.68 + light[0] * 0.32) * s;
-      const g = (base[1] * 0.6 + shadow[1] * 0.4) * (1 - s) + (base[1] * 0.68 + light[1] * 0.32) * s;
-      const b = (base[2] * 0.6 + shadow[2] * 0.4) * (1 - s) + (base[2] * 0.68 + light[2] * 0.32) * s;
+      const r = (base[0] * 0.52 + shadow[0] * 0.48) * (1 - s) + (base[0] * 0.74 + light[0] * 0.26) * s;
+      const g = (base[1] * 0.52 + shadow[1] * 0.48) * (1 - s) + (base[1] * 0.74 + light[1] * 0.26) * s;
+      const b = (base[2] * 0.52 + shadow[2] * 0.48) * (1 - s) + (base[2] * 0.74 + light[2] * 0.26) * s;
       ctx.fillStyle = ctx.strokeStyle = `rgb(${r | 0},${g | 0},${b | 0})`;
       ctx.beginPath();
       ctx.moveTo(p.xy[0], p.xy[1]);

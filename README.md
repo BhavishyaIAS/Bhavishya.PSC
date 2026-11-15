@@ -104,8 +104,17 @@ again when the admin switches back. Code: `backend/content/views_site.py`.
 ## Design, motion and the 3D backdrops
 
 The look of the site lives in two stylesheets: `frontend/src/app/globals.css`
-(each component's layout) and `frontend/src/app/design.css` (palette, glass
-surfaces, depth and every animation).
+(each component's layout) and `frontend/src/app/design.css` (the visual design
+and every animation). The design language is "ink, paper and crimson":
+
+- **One accent.** The brand red is used only for the wordmark, the primary
+  action and "you are here" marks. Everything else is ink on warm paper,
+  separated by hairlines rather than boxes and glows.
+- **Type first.** Titles in a display serif (Instrument Serif, one weight),
+  the interface in Inter, long notes in Inter or Source Serif.
+- **Quiet depth.** Small radii, soft layered shadows, cards that lean only a
+  few degrees, and 3D scenes sculpted in muted porcelain tones with a ground
+  shadow (`--fx-*` variables).
 
 Behind every page is a real 3D scene that says where the learner is — an open
 book on the home page, a stupa for History, a globe for Geography, the Ashoka
