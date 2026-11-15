@@ -24,8 +24,10 @@ export function WorkspaceTabs({ commission, group, isAdmin }: { commission: stri
         const active = pathname === href || pathname.startsWith(href + "/") || (t.slug === "materials" && pathname.includes("/micro/"));
         return (
           <Link key={t.slug} href={href} className="tab" aria-current={active ? "page" : undefined}>
-            <t.icon size={17} aria-hidden />
-            {i + 1}. {t.label}
+            <span className="tab-idx" aria-hidden>
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            {t.label}
             {t.adminOnly && <span className="tab-tag">Admin</span>}
           </Link>
         );

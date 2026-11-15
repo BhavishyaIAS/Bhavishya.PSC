@@ -148,7 +148,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
       ) : (
         <div className={chapters.length > 1 ? "subject-tree" : undefined}>
           {chapters.length > 1 && (
-            <nav className="side-list" aria-label="Chapters">
+            <nav className="side-list chapter-list" aria-label="Chapters">
               <div className="group-label">Chapters</div>
               {chapters.map((c, i) => (
                 <Link key={c.id} href={chapterHref(c.id)} aria-current={c.id === chapter?.id ? "true" : undefined}>
@@ -179,7 +179,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                 </EmptyState>
               ) : (
                 <>
-                  <div className="panel-head">
+                  <div className="panel-head reading-head">
                     <div style={{ minWidth: 0 }}>
                       <div className="eyebrow">{kindInfo!.label}</div>
                       <h3 className="chapter-title">

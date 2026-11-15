@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit, Source_Serif_4 } from "next/font/google";
+import { Instrument_Serif, Inter, Source_Serif_4 } from "next/font/google";
 
 import { brand } from "@/brand.config";
 import { BottomNav } from "@/components/BottomNav";
@@ -17,7 +17,8 @@ import "./globals.css";
 import "./design.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const display = Outfit({ subsets: ["latin"], variable: "--font-outfit", display: "swap" });
+// Titles are set in a display serif (one weight, by design); the interface in Inter; long notes optionally in Source Serif.
+const display = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-display-serif", display: "swap" });
 const serif = Source_Serif_4({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
 
 // Allow time for a sleeping API to wake (Render's free plan takes up to a minute).
@@ -37,8 +38,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   // The browser's own toolbar matches the (monochrome) top bar.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f6fc" },
-    { media: "(prefers-color-scheme: dark)", color: "#090f1c" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f6f2" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0c0f" },
   ],
   width: "device-width",
   initialScale: 1,

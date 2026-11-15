@@ -32,7 +32,7 @@ export function Interactions() {
       frame = requestAnimationFrame(() => {
         const r = el.getBoundingClientRect();
         const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
-        const max = Math.min(9, 2600 / Math.max(r.width, 1));
+        const max = Math.min(5, 1500 / Math.max(r.width, 1)); // a few degrees: felt, not seen
         el.classList.add("is-tilting");
         el.style.setProperty("--ry", `${((x - 0.5) * 2 * max).toFixed(2)}deg`);
         el.style.setProperty("--rx", `${((0.5 - y) * 2 * max).toFixed(2)}deg`);
