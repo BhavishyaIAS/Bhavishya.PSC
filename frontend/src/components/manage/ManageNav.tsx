@@ -1,17 +1,20 @@
 "use client";
 
-import { BookUp, FileQuestion, FileUp, FolderOpen, LayoutDashboard, ListTree, Users } from "lucide-react";
+import { BookUp, FileQuestion, FileUp, FolderOpen, Landmark, LayoutDashboard, LayoutGrid, ListTree, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/manage", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/manage/exams", label: "Exams", icon: Landmark },
+  { href: "/manage/topics", label: "Topics catalogue", icon: LayoutGrid },
   { href: "/manage/syllabus", label: "Syllabus & notes", icon: ListTree },
   { href: "/manage/questions", label: "PYQ manager", icon: FileQuestion },
   { href: "/manage/import", label: "Bulk upload PYQs", icon: FileUp },
   { href: "/manage/notes-import", label: "Import notes (Word)", icon: BookUp },
   { href: "/manage/materials", label: "Study materials", icon: FolderOpen },
   { href: "/manage/users", label: "Users & roles", icon: Users },
+  { href: "/manage/site", label: "Site settings", icon: SlidersHorizontal },
 ];
 
 export function ManageNav() {

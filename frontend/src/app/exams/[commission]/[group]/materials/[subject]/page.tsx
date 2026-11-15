@@ -15,7 +15,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { SceneHint } from "@/components/fx/SceneHint";
-import { sceneForTopic } from "@/components/fx/scenes";
+import { sceneForLook } from "@/components/fx/scenes";
 import { JumpSelect } from "@/components/JumpSelect";
 import { MaterialList } from "@/components/MaterialList";
 import { NotesSteps } from "@/components/NotesSteps";
@@ -24,8 +24,9 @@ import { RichText } from "@/components/rich/RichText";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
-import { syllabusTopics, topicTone } from "@/lib/topics";
-import { NOTE_KINDS, type Material, type Note, type NoteKind, type SubjectNode, type SyllabusTree } from "@/lib/types";
+import { getSite } from "@/lib/site";
+import { syllabusTopics, topicLook, topicTone } from "@/lib/topics";
+import type { Material, Note, NoteKind, SubjectNode, SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
 
@@ -42,14 +43,16 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   const base = `/tracks/${commission}/${group}`;
   const home = trackPath(commission, group, "materials");
   const here = `${home}/${subjectId}`;
-  const [user, tree] = await Promise.all([requireUser(here), load<SyllabusTree>(`${base}/syllabus/`)]);
+  const [user, tree, site] = await Promise.all([requireUser(here), load<SyllabusTree>(`${base}/syllabus/`), getSite()]);
   const isAdmin = user.role === "admin";
+  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled); // the types of notes this site offers, in its own words
 
   const topics = syllabusTopics(tree);
   const current = topics.find((t) => String(t.subject.id) === subjectId);
   if (!current) notFound();
   const { subject, byKind } = current;
-  const kind = NOTE_KINDS.some((k) => k.key === sp.kind) ? (sp.kind as NoteKind) : undefined;
+  // With a single type of notes there is nothing to choose: go straight to reading.
+  const kind = NOTE_KINDS.some((k) => k.key === sp.kind) ? (sp.kind as NoteKind) : NOTE_KINDS.length === 1 ? NOTE_KINDS[0].key : undefined;
   const kindInfo = NOTE_KINDS.find((k) => k.key === kind);
 
   // Chapters (= the subject's topics); one chapter is shown at a time.
@@ -76,8 +79,8 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   ]);
 
   return (
-    <div className={`tone-${topicTone(subject.title)}`}>
-      <SceneHint scene={sceneForTopic(subject.title)} />
+    <div className={topicTone(subject.title, subject.look)}>
+      <SceneHint scene={sceneForLook(topicLook(subject.title, subject.look))} />
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
           <NotesSteps current={2} />
@@ -115,7 +118,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
         </div>
       </div>
 
-      <div className={`note-types ${kind ? "" : "note-types-big"}`} role="list" aria-label="Type of notes">
+      <div className={`note-types ${kind ? "" : "note-types-big"}`} role="list" aria-label="Type of notes" hidden={NOTE_KINDS.length < 2}>
         {NOTE_KINDS.map((k) => {
           const Icon = ICONS[k.key];
           const n = byKind[k.key];
@@ -197,7 +200,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                       />
                     )}
                   </div>
-                  {notes.results.length > 2 && (
+                  {site.show_contents && notes.results.length > 2 && (
                     <details className="chapter-contents" open>
                       <summary>
                         <ListOrdered size={16} aria-hidden /> Contents · {notes.results.length} sections
@@ -220,7 +223,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                       {notes.results.map(({ micro_theme: mt, note }) => (
                         <article key={mt.id} className="note-block" aria-labelledby={`n-${mt.id}`}>
                           <header className="row" style={{ gap: 8, marginBottom: 6 }}>
-                            <span className="code-chip">{mt.code}</span>
+                            {(isAdmin || site.show_codes) && <span className="code-chip">{mt.code}</span>}
                             <h4 id={`n-${mt.id}`} style={{ flex: 1, fontSize: 17 }}>
                               {mt.title}
                             </h4>

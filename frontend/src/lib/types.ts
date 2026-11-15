@@ -31,6 +31,8 @@ export interface Commission {
   name: string;
   description: string;
   status: Status; // "draft" = hidden from students (admins only ever receive those)
+  theme: string; // colour palette of its card ("" = automatic)
+  order: number;
   tracks: CatalogTrack[];
 }
 
@@ -59,6 +61,7 @@ export interface TopicNode extends NodeBase {
   micro_themes: MicroThemeNode[];
 }
 export interface SubjectNode extends NodeBase {
+  look: string; // icon / colour / 3D scene ("" = guessed from the title)
   topics: TopicNode[];
 }
 export interface PaperNode extends NodeBase {
@@ -195,7 +198,7 @@ export interface MicroThemeDetail {
   };
   breadcrumb: {
     paper: { id: number; title: string; stage: StageKey; code: string };
-    subject: { id: number; title: string };
+    subject: { id: number; title: string; look?: string };
     topic: { id: number; title: string };
   };
   notes: Partial<Record<NoteKind, Note>>;
@@ -229,4 +232,37 @@ export const NOTE_KINDS: { key: NoteKind; label: string; blurb: string }[] = [
   { key: "comprehensive", label: "Comprehensive Notes", blurb: "Complete syllabus-linked reference notes" },
   { key: "prelims", label: "Prelims Notes", blurb: "Concise, fact-focused revision notes per micro-theme" },
   { key: "mains", label: "Mains Notes", blurb: "Condensed analytical notes & answer frameworks" },
+];
+
+export interface NoteKindInfo {
+  key: NoteKind;
+  label: string;
+  blurb: string;
+  enabled: boolean;
+}
+
+/** Site-wide choices made in Manage → Site settings (GET /api/site/). */
+export interface Site {
+  focus: string | null; // slug of the one exam the platform is dedicated to, if any
+  focus_name: string;
+  hero_eyebrow: string;
+  hero_lead: string;
+  note_kinds: NoteKindInfo[];
+  reader_font: "sans" | "serif";
+  reader_size: number;
+  show_codes: boolean;
+  show_contents: boolean;
+  backdrops: boolean;
+}
+
+/** How a topic can be presented; "" lets the site guess from the topic's name. */
+export const LOOKS = [
+  { key: "", label: "Automatic (from the name)" },
+  { key: "history", label: "History — stupa" },
+  { key: "geography", label: "Geography — globe" },
+  { key: "polity", label: "Polity — Ashoka Chakra" },
+  { key: "economy", label: "Economy — growth chart" },
+  { key: "science", label: "Science — atom" },
+  { key: "environment", label: "Environment — trees" },
+  { key: "general", label: "General — books" },
 ];

@@ -140,7 +140,7 @@ def syllabus_tree(request, commission, group):
     for t in topics:
         topic_by_subject.setdefault(t.subject_id, []).append(node(t, micro_themes=mt_by_topic.get(t.id, [])))
     for s in subjects:
-        subject_by_paper.setdefault(s.paper_id, []).append(node(s, topics=topic_by_subject.get(s.id, [])))
+        subject_by_paper.setdefault(s.paper_id, []).append(node(s, look=s.look, topics=topic_by_subject.get(s.id, [])))
     tree = [
         node(p, stage=p.stage, description=p.description, subjects=subject_by_paper.get(p.id, []))
         for p in papers
@@ -192,7 +192,7 @@ def micro_theme_detail(request, commission, group, code):
         },
         "breadcrumb": {
             "paper": {"id": paper.id, "title": paper.title, "stage": paper.stage, "code": paper.code},
-            "subject": {"id": subject.id, "title": subject.title},
+            "subject": {"id": subject.id, "title": subject.title, "look": subject.look},
             "topic": {"id": topic.id, "title": topic.title},
         },
         "notes": notes,

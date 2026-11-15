@@ -1,32 +1,17 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, EyeOff } from "lucide-react";
+import { ArrowLeft, EyeOff } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { groupTheme } from "@/brand.config";
+import { GroupCards } from "@/components/GroupCards";
+import { EmptyState } from "@/components/ui/bits";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
-import { trackPath } from "@/lib/format";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]">): Promise<Metadata> {
   const { commission } = await props.params;
-  return { title: `${commission.toUpperCase()} — Choose your group` };
+  return { title: `${commission.toUpperCase()} — Choose your exam` };
 }
-
-const MODULES = [
-  { label: "Syllabus Detailer", tab: "syllabus", adminOnly: true },
-  { label: "Study Material", tab: "materials" },
-  { label: "Prelims PYQs", tab: "prelims" },
-  { label: "Mains PYQs", tab: "mains" },
-  { label: "Progress Tracker", tab: "progress" },
-];
-
-const BLURBS: Record<string, (c: string) => string> = {
-  "group-1": (c) =>
-    `The complete ${c} Group 1 journey — from the prelims concepts through the descriptive mains papers and the interview.`,
-  "group-2": (c) =>
-    `Structured ${c} Group 2 preparation across the screening test and the main examination, mapped subject by subject.`,
-};
 
 export default async function ChooseGroupPage(props: PageProps<"/exams/[commission]">) {
   const { commission: slug } = await props.params;
@@ -40,7 +25,7 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
       <div className="page-head">
         <div>
           <div className="eyebrow">{commission.name}</div>
-          <h1 className="display-light">Choose Your Group</h1>
+          <h1 className="display-light">Choose Your Exam</h1>
           <p>Pick the service you are preparing for. Everything inside is arranged for that exam.</p>
         </div>
         <div className="page-stage" data-stage aria-hidden />
@@ -59,38 +44,26 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
         </div>
       )}
 
-      <div className="grid-2">
-        {commission.tracks.map((t, i) => {
-          const theme = groupTheme(t.group, i);
-          const blurb = BLURBS[t.group]?.(commission.short_name) ?? t.tagline;
-          return (
-            <article key={t.group} className="group-card" style={{ background: theme.gradient }}>
-              <ArrowUpRight className="gc-arrow" size={30} aria-hidden />
-              <h2>
-                <Link href={trackPath(t.commission, t.group)} className="stretched">
-                  {commission.short_name} · {t.group_name.toUpperCase()}
-                </Link>
-              </h2>
-              <p>{blurb}</p>
-              <div className="gc-pills">
-                {MODULES.filter((m) => !m.adminOnly || isAdmin).map((m) => (
-                  <Link key={m.tab} href={trackPath(t.commission, t.group, m.tab)} className="pill">
-                    {m.label}
-                  </Link>
-                ))}
-              </div>
-              {!t.has_content && <span className="gc-soon">Content for this track is being prepared</span>}
-              <span className="gc-enter" aria-hidden>
-                ENTER {t.group_name.toUpperCase()} <ArrowRight size={20} />
-              </span>
-            </article>
-          );
-        })}
-      </div>
+      {commission.tracks.length === 0 ? (
+        <EmptyState title="No exams here yet">
+          {isAdmin ? (
+            <>
+              Add Group 1, Group 2 or any other exam from{" "}
+              <Link className="link" href="/manage/exams">
+                Manage → Exams
+              </Link>
+              .
+            </>
+          ) : (
+            "Exams for this commission are being set up. Check back soon."
+          )}
+        </EmptyState>
+      ) : (
+        <GroupCards commission={commission} isAdmin={isAdmin} />
+      )}
 
       <nav aria-label="Breadcrumb" className="crumbs crumbs-center">
-        <Link href="/">Home</Link> / <span>PSC</span> / <span>{commission.short_name}</span> / <span>Groups</span> /{" "}
-        <span aria-current="page">Choose Your Group</span>
+        <Link href="/">Home</Link> / <span>PSC</span> / <span>{commission.short_name}</span> / <span aria-current="page">Choose Your Exam</span>
       </nav>
     </div>
   );
