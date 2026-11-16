@@ -110,8 +110,19 @@ and every animation). The design language is "ink, paper and crimson":
 - **One accent.** The brand red is used only for the wordmark, the primary
   action and "you are here" marks. Everything else is ink on warm paper,
   separated by hairlines rather than boxes and glows.
-- **Type first.** Titles in a display serif (Instrument Serif, one weight),
-  the interface in Inter, long notes in Inter or Source Serif.
+- **Type first.** Four voices, each with one job (fonts are loaded in
+  `frontend/src/app/layout.tsx`, set in `design.css`):
+
+  | Voice | Typeface | Used for |
+  |---|---|---|
+  | Display | Fraunces (variable, optical sizes, italic) | Titles, the wordmark, big numbers, italic kickers and pulled quotes |
+  | Text | Geist | The interface, and notes read in sans |
+  | Label | Geist Mono | Small capitals above titles, table heads, steps, codes and indices |
+  | Book | Literata | The serif option for notes: old-style figures, italic sub-headings |
+
+  `latin-ext` is loaded for transliteration marks (ā ī ṇ ś) and ₹. Noto Sans
+  Telugu and Noto Sans Devanagari follow every stack and are downloaded only
+  when a page contains those scripts.
 - **Quiet depth.** Small radii, soft layered shadows, cards that lean only a
   few degrees, and 3D scenes sculpted in muted porcelain tones with a ground
   shadow (`--fx-*` variables).

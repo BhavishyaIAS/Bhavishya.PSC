@@ -38,7 +38,7 @@ export default async function LandingPage() {
             ))}
           </p>
           <p className="hero-lead">
-            {firstName ? <b>Welcome back, {firstName}. </b> : null}
+            {firstName ? <span className="hero-greeting">Welcome back, {firstName}.</span> : null}
             {site.hero_lead || "Syllabus, notes, previous-year questions and your progress — in one calm place built for long hours of study."}
           </p>
           <div className="row hero-cta">

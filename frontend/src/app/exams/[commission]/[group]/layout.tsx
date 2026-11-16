@@ -21,7 +21,11 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
         <div className="ws-title">
           <div className="eyebrow">{track.commission_full_name}</div>
           <h1>
-            {track.commission_name} · {track.group_name}
+            {track.commission_name}{" "}
+            <span className="sep" aria-hidden>
+              ·
+            </span>{" "}
+            {track.group_name}
           </h1>
           <div className="row">
             {track.siblings.length > 1 && (

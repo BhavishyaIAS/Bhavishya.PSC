@@ -183,7 +183,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                     <div style={{ minWidth: 0 }}>
                       <div className="eyebrow">{kindInfo!.label}</div>
                       <h3 className="chapter-title">
-                        {chapters.length > 1 ? `Chapter ${chapterIndex + 1}: ` : ""}
+                        {chapters.length > 1 && <span className="kicker">Chapter {chapterIndex + 1}</span>}
                         {chapter!.label}
                       </h3>
                     </div>

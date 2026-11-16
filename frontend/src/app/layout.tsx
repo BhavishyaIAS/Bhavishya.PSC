@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Inter, Source_Serif_4 } from "next/font/google";
+import { Fraunces, Geist, Geist_Mono, Literata, Noto_Sans_Devanagari, Noto_Sans_Telugu } from "next/font/google";
 
 import { brand } from "@/brand.config";
 import { BottomNav } from "@/components/BottomNav";
@@ -16,10 +16,23 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import "./design.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-// Titles are set in a display serif (one weight, by design); the interface in Inter; long notes optionally in Source Serif.
-const display = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-display-serif", display: "swap" });
-const serif = Source_Serif_4({ subsets: ["latin"], variable: "--font-serif", display: "swap" });
+/*
+ * The type system (see design.css → Typography):
+ *   display  Fraunces       a variable serif with optical sizes: delicate when large, sturdy when small
+ *   text     Geist          the interface, and notes read in sans
+ *   mono     Geist Mono     codes, indices and labels: the "catalogue" voice of a syllabus
+ *   reading  Literata       the book-style option for notes, drawn for long reading on screens
+ * latin-ext brings ā ī ṇ ś (transliteration) and ₹. The two Noto faces load only if a page
+ * actually contains Telugu or Devanagari, so notes in those scripts match instead of falling
+ * back to whatever the device has.
+ */
+const sans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
+const display = Fraunces({ subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-display-serif", display: "swap" });
+const mono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono-face", display: "swap", preload: false });
+const serif = Literata({ subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-serif", display: "swap", preload: false });
+const telugu = Noto_Sans_Telugu({ subsets: ["telugu"], variable: "--font-telugu", display: "swap", preload: false });
+const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
+const fonts = [sans, display, mono, serif, telugu, devanagari].map((f) => f.variable).join(" ");
 
 // Allow time for a sleeping API to wake (Render's free plan takes up to a minute).
 export const maxDuration = 60;
@@ -61,7 +74,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${display.variable} ${serif.variable}`}
+      className={fonts}
       data-reader-size={site.reader_size}
       data-reader-font={site.reader_font}
       data-backdrops={site.backdrops ? undefined : "off"}
