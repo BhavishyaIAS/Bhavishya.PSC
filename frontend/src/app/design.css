@@ -9,9 +9,12 @@
  *   2. Type first — four voices, each with one job (see "Typography" below):
  *                   a display serif for titles, a grotesque for the interface,
  *                   a monospace for labels and codes, a book face for long reading.
- *   3. Depth      — a sculpted 3D scene behind each page (components/fx),
- *                   cards that lean a few degrees towards the pointer, pages
- *                   that arrive in perspective. Quiet, never bouncy.
+ *   3. Wonder     — every page is a world (components/fx): a sky of stars and
+ *                   nebula light in that world's colours, a figure of sacred
+ *                   geometry turning in it, a sculpture of the subject on the
+ *                   stage. You arrive through a portal, and travel between
+ *                   pages through the stars. The interface itself stays quiet:
+ *                   the wonder is behind the glass, never in the way of reading.
  *   4. Respect    — all motion stops for prefers-reduced-motion and for the
  *                   "Animations: off" switch in the footer.
  */
@@ -113,8 +116,25 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
-/* a faint warmth in the corners… */
-body::before {
+/*
+ * Nebula light, in the colours of the world the page belongs to: a 192×120 canvas painted
+ * by Backdrop and stretched over the viewport (the stretching is what makes it soft).
+ */
+.nebula {
+  position: fixed;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  z-index: -2;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+/* deep in a page the light dims, so reading is calm */
+:root[data-deep] .nebula {
+  opacity: 0.5;
+}
+/* with the 3D backgrounds switched off (Site settings), a plain warmth in the corners */
+:root[data-backdrops="off"] body::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -134,6 +154,10 @@ body::after {
   opacity: 0.032;
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* a device that struggles (see Backdrop) goes without the grain */
+:root[data-lite] body::after {
+  display: none;
 }
 :root[data-theme="dark"] body::after {
   mix-blend-mode: screen;
@@ -243,7 +267,8 @@ p {
   inset: 0 0 auto 0;
   height: 2px;
   z-index: 120;
-  background: var(--brand-primary);
+  /* the colours of the rainbow bridge, as a hairline */
+  background: linear-gradient(90deg, #d90d20, #f08a2c, #e8c23a, #3fae6a, #2f8fd0, #6d55d6);
   transform-origin: 0 50%;
   transform: scaleX(var(--read, 0));
   pointer-events: none;
@@ -251,10 +276,12 @@ p {
 
 /* ───────────────────────────── Motion ───────────────────────────── */
 
+/* a page comes forward out of the depth */
 @keyframes page-in {
   from {
     opacity: 0;
-    transform: perspective(1600px) translateY(14px) rotateX(3deg);
+    transform: perspective(1400px) translateZ(-150px) rotateX(2.5deg);
+    filter: blur(6px);
   }
 }
 @keyframes fade-up {
@@ -323,6 +350,20 @@ p {
 }
 .page-enter .page-enter {
   animation: fade-up 0.5s var(--ease) backwards;
+}
+/* Departure: the page falls away behind us while the stars stretch (Interactions + Backdrop). */
+main > .page-enter {
+  transition: opacity 0.4s var(--ease), transform 0.6s var(--ease), filter 0.4s var(--ease);
+}
+:root[data-travel="depart"] main > .page-enter {
+  opacity: 0.2;
+  transform: perspective(1400px) translateZ(-110px);
+  filter: blur(4px);
+  pointer-events: none;
+}
+/* The page waits behind the portal, and unravels when it opens. */
+:root[data-portal="on"] :is(.page-enter, .hero-copy > *, .commission-grid > *, .journey > *, .topic-grid > *, .note-types > *, .grid-2 > *, .grid-4 > *) {
+  animation-play-state: paused;
 }
 
 /* Cards arrive one after another. */
@@ -607,7 +648,7 @@ p {
 .card,
 .q-card,
 .stat {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
   border-color: var(--border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
@@ -1047,7 +1088,7 @@ label:has(> .select) {
   gap: 6px;
   padding: 28px 28px 24px;
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -1313,7 +1354,7 @@ label:has(> .select) {
   gap: 16px;
   padding: 20px;
   border-radius: var(--radius-lg);
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
   border-color: var(--border);
   box-shadow: var(--shadow-sm);
 }
@@ -1762,7 +1803,7 @@ label:has(> .select) {
 }
 
 /* Focus mode: only the notes, centred. */
-:root[data-focus] :is(.topbar, .tabs, .ws-head, .flow-head, .note-types, .side-list, .site-footer, .bottom-nav, .mt-aside, .panel[aria-labelledby="files"], .backdrop, .crumbs, .prevnext:not(.chapter-nav)) {
+:root[data-focus] :is(.topbar, .tabs, .ws-head, .flow-head, .note-types, .side-list, .site-footer, .bottom-nav, .mt-aside, .panel[aria-labelledby="files"], .backdrop, .nebula, .crumbs, .prevnext:not(.chapter-nav)) {
   display: none !important;
 }
 :root[data-focus] :is(.subject-tree, .mt-layout) {
@@ -2077,6 +2118,122 @@ button.option:hover:not(:disabled) .key {
   padding-block: 40px 8px;
 }
 
+/* ───────────────────────────── The portal ───────────────────────────── */
+
+/*
+ * The arrival (components/fx/Portal). <html data-portal="on"> is set before first paint,
+ * so this cover is the very first thing drawn; the script then plays the tunnel of light
+ * on the canvas, sets data-portal="open" as the iris widens, and removes the attribute.
+ */
+.portal {
+  display: none;
+}
+:root[data-portal] .portal {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  overflow: hidden;
+  background: #04050c;
+  cursor: pointer;
+  /* if the script never runs, the cover takes itself away */
+  animation: portal-failsafe 0.8s ease 7s forwards;
+}
+:root[data-portal="on"] body {
+  overflow: hidden;
+}
+@keyframes portal-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+.portal canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+/* The logo comes out of the light: from a blur of brightness to itself. */
+.portal-logo {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 148px;
+  height: 148px;
+  margin: -74px 0 0 -74px;
+  border-radius: 50%;
+  background: #fff;
+  object-fit: cover;
+  opacity: 0;
+  transform: scale(0.35);
+  filter: blur(20px) brightness(2.4);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.92),
+    0 0 70px 22px rgba(255, 222, 165, 0.55),
+    0 0 180px 70px rgba(255, 150, 90, 0.26);
+  transition: opacity 1.2s var(--ease), transform 1.5s var(--ease), filter 1.5s var(--ease);
+}
+.portal.show-logo .portal-logo {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+/* …then flies to its place in the top bar as the portal opens. */
+.portal.leaving .portal-logo {
+  transform: translate(var(--dx, 0), var(--dy, -40vh)) scale(var(--ds, 0.3));
+  box-shadow: 0 0 0 2px #fff, 0 0 0 0 transparent, 0 0 0 0 transparent;
+  transition: transform 0.95s var(--ease), box-shadow 0.7s;
+}
+.portal-words {
+  position: absolute;
+  inset: calc(46% + 108px) 16px auto;
+  text-align: center;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 1s 0.3s, transform 1.3s 0.3s var(--ease);
+}
+.portal.show-logo .portal-words {
+  opacity: 1;
+  transform: none;
+}
+.portal-words b {
+  display: block;
+  font: 480 clamp(36px, 5.4vw, 60px) / 1 var(--font-display);
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 4px rgba(40, 12, 0, 0.5), 0 0 28px rgba(60, 20, 0, 0.75), 0 0 70px rgba(60, 20, 0, 0.6);
+  transition: letter-spacing 1.8s 0.3s var(--ease);
+}
+.portal.show-logo .portal-words b {
+  letter-spacing: -0.035em;
+}
+.portal-words span {
+  display: block;
+  margin-top: 16px;
+  font: 500 11px var(--font-mono);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: #f6dfae;
+  text-shadow: 0 1px 3px rgba(40, 12, 0, 0.7), 0 0 22px rgba(60, 20, 0, 0.8);
+}
+.portal-skip {
+  position: absolute;
+  inset: auto 0 26px;
+  text-align: center;
+  font: 500 10px var(--font-mono);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+.portal.leaving {
+  pointer-events: none;
+}
+.portal.leaving :is(.portal-words, .portal-skip) {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
 /* ───────────────────────────── Loader ───────────────────────────── */
 
 .loading-stage {
@@ -2191,7 +2348,8 @@ button.option:hover:not(:disabled) .key {
   }
   .hero-stage {
     order: -1;
-    min-height: 240px;
+    min-height: 330px;
+    margin-top: 10px;
   }
   .hero-title {
     font-size: clamp(48px, 14.5vw, 84px);
@@ -2343,6 +2501,8 @@ button.option:hover:not(:disabled) .key {
 }
 @media print {
   .backdrop,
+  .nebula,
+  .portal,
   .read-progress,
   body::before,
   body::after {

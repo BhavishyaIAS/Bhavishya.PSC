@@ -127,20 +127,21 @@ and every animation). The design language is "ink, paper and crimson":
   few degrees, and 3D scenes sculpted in muted porcelain tones with a ground
   shadow (`--fx-*` variables).
 
-Behind every page is a real 3D scene that says where the learner is — an open
-book on the home page, a stupa for History, a globe for Geography, the Ashoka
-Chakra for Polity, a target for Prelims PYQs, and so on. They are drawn by a
-small dependency-free renderer in `frontend/src/components/fx/`:
+Every page is a world of its own, built from layers (all in
+`frontend/src/components/fx/`, no dependencies):
 
 | File | What it does |
 |---|---|
+| `Portal.tsx` | The arrival, once per visit: a tunnel of prismatic light, the logo emerging from the glow, then an iris opening onto the page while the logo flies to the top bar. Skippable. |
+| `Backdrop.tsx` | Draws the layers below on a fixed canvas, places the sculpture on the page's `[data-stage]`, shifts the light from one world to the next, rests when off-screen, and drops to a "lite" mode on devices that can't keep up |
+| `cosmos.ts` | The stars: a field with depth, glints, and the streaks of travel between pages |
+| `worlds.ts` | Per world: the figure of sacred geometry in its sky (mandala, chakra, astrolabe, eight-point star…), its nebula colours, and the materials of its sculpture |
+| `scenes.ts` | The sculptures: a stone gateway with a manuscript and lamps (home), a stupa (ancient history), a four-minaret monument (medieval), the charkha (modern), a temple tower (regional history), the Ashoka Chakra over a colonnade (polity), a globe, an atom… plus `sceneForPath` / `sceneForLook`, which pick the world |
 | `engine.ts` | Geometry builders (box, cone, dome, extrude…), perspective, shading, depth sorting |
-| `scenes.ts` | One function per scene, plus `sceneForPath` / `sceneForTopic` which pick the scene |
-| `Backdrop.tsx` | The canvas: draws the scene inside the page's `[data-stage]` element, follows the pointer, rests when off-screen |
-| `Interactions.tsx` | Cards that tilt towards the pointer, the reading-progress bar |
+| `Interactions.tsx` | Travel between pages (the page recedes, the stars stretch, the next page comes forward), cards that tilt towards the pointer, the reading-progress bar |
 
-To add a scene, write a function in `scenes.ts`, add it to `SCENES`, and map a
-URL or topic name to it. Scene colours come from the `--fx-*` variables in
+To add a world: write the sculpture in `scenes.ts` and add it to `SCENES`, give
+it an entry in `WORLDS` (`worlds.ts`), and map a URL or topic to it. Scene colours come from the `--fx-*` variables in
 `design.css` (light and dark).
 
 Reading comfort: text size, a serif option and a focus mode (`ReaderTools.tsx`).

@@ -80,7 +80,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
 
   return (
     <div className={topicTone(subject.title, subject.look)}>
-      <SceneHint scene={sceneForLook(topicLook(subject.title, subject.look))} />
+      <SceneHint scene={sceneForLook(topicLook(subject.title, subject.look), subject.title)} />
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
           <NotesSteps current={2} />
