@@ -41,8 +41,9 @@
   --shadow: 0 10px 30px rgba(16, 36, 62, 0.08);
   --shadow-lg: 0 24px 60px rgba(16, 36, 62, 0.16);
 
-  --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-jakarta), var(--font-inter), system-ui, sans-serif;
+  --font-body: var(--font-sans), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-display-serif), Georgia, serif;
+  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --topbar-h: 100px;
   --bottom-nav-h: 64px;
@@ -653,7 +654,7 @@ main {
   color: color-mix(in srgb, var(--brand-primary) 55%, white);
 }
 .code-chip {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 700;
   padding: 2px 7px;
@@ -1763,7 +1764,7 @@ button.option:hover {
   font-style: italic;
 }
 .prose code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 0.9em;
   background: var(--surface-3);
   padding: 1px 5px;
@@ -2264,7 +2265,7 @@ button.option:hover {
   background: var(--surface-2);
 }
 .diagram-edit textarea {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: var(--font-mono);
   font-size: 13px;
 }
 

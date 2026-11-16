@@ -6,8 +6,9 @@
  *   1. Restraint  — one accent (the brand red), used sparingly: the wordmark,
  *                   the primary action, and "you are here" marks. Everything
  *                   else is ink on paper, separated by hairlines, not boxes.
- *   2. Type first — a display serif for titles, a tight grotesque for the
- *                   interface, generous leading for long reading.
+ *   2. Type first — four voices, each with one job (see "Typography" below):
+ *                   a display serif for titles, a grotesque for the interface,
+ *                   a monospace for labels and codes, a book face for long reading.
  *   3. Depth      — a sculpted 3D scene behind each page (components/fx),
  *                   cards that lean a few degrees towards the pointer, pages
  *                   that arrive in perspective. Quiet, never bouncy.
@@ -42,10 +43,14 @@
   --shadow: 0 1px 2px rgba(16, 18, 23, 0.04), 0 8px 24px -8px rgba(16, 18, 23, 0.1);
   --shadow-lg: 0 2px 4px rgba(16, 18, 23, 0.04), 0 28px 56px -20px rgba(16, 18, 23, 0.26);
 
-  --font-body: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: var(--font-display-serif), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  /* Typography. Telugu and Devanagari follow each stack, so notes in those scripts match the page. */
+  --font-indic: var(--font-telugu), var(--font-devanagari);
+  --font-body: var(--font-sans), var(--font-indic), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-display-serif), var(--font-indic), "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-mono: var(--font-mono-face), ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --font-book: var(--font-serif), var(--font-indic), "Iowan Old Style", Georgia, serif;
   --font-reading: var(--font-body);
+  --display-wght: 430; /* the everyday weight of the display serif */
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   --topbar-h: 68px;
@@ -101,8 +106,10 @@ html {
 body {
   font-size: 15px;
   line-height: 1.6;
-  letter-spacing: -0.003em;
-  font-feature-settings: "cv11", "ss03", "calt";
+  letter-spacing: -0.004em;
+  font-kerning: normal;
+  font-variant-ligatures: common-ligatures contextual;
+  font-optical-sizing: auto; /* the serifs redraw themselves for the size they are set at */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -163,9 +170,9 @@ h4 {
 }
 h1 {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.015em;
-  line-height: 1.04;
+  font-weight: var(--display-wght);
+  letter-spacing: -0.028em;
+  line-height: 1.03;
 }
 h2,
 h3,
@@ -180,10 +187,12 @@ p {
 .muted {
   color: var(--muted);
 }
+/* Labels — the small capitals above titles, table heads, steps — speak in the monospace "catalogue" voice. */
 .eyebrow {
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   color: var(--brand-primary);
 }
 .link {
@@ -198,8 +207,8 @@ p {
   margin-bottom: 28px;
 }
 .page-head h1 {
-  font-size: clamp(34px, 4vw, 52px);
-  font-weight: 400;
+  font-size: clamp(32px, 3.8vw, 50px);
+  font-weight: var(--display-wght);
   margin-top: 10px;
 }
 .page-head p {
@@ -207,16 +216,17 @@ p {
   margin-top: 10px;
 }
 .display-light {
-  font-weight: 400 !important;
+  font-weight: var(--display-wght) !important;
 }
 .section-title {
   display: flex;
   align-items: center;
   gap: 18px;
   margin-bottom: 22px;
+  font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.2em;
+  font-weight: 500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -414,9 +424,9 @@ p {
 }
 .brand-name {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-size: 25px;
+  font-weight: 620;
+  letter-spacing: -0.03em;
   line-height: 1;
 }
 .brand-sub {
@@ -502,8 +512,8 @@ p {
   padding: 0 16px;
   border-radius: 10px;
   font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.006em;
+  font-weight: 550;
+  letter-spacing: -0.008em;
   transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease), background 0.2s, border-color 0.2s, color 0.2s;
 }
 .btn:hover {
@@ -670,8 +680,9 @@ label:has(> .select) {
 }
 .empty h3 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 28px;
+  font-weight: 450;
+  font-size: 26px;
+  letter-spacing: -0.03em;
 }
 .empty-icon {
   border-radius: 14px;
@@ -712,8 +723,9 @@ label:has(> .select) {
 }
 .table th {
   background: transparent;
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
   letter-spacing: 0.1em;
   border-bottom-color: var(--border-strong);
   padding-block: 10px;
@@ -757,9 +769,9 @@ label:has(> .select) {
 }
 .stat-value {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 380;
   font-size: 46px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.04em;
   line-height: 1;
   font-variant-numeric: tabular-nums lining-nums;
 }
@@ -796,7 +808,7 @@ label:has(> .select) {
   background: none;
   padding: 14px 18px 15px;
   font-size: 14.5px;
-  font-weight: 550;
+  font-weight: 500;
   color: var(--muted);
   transition: color 0.2s, box-shadow 0.3s var(--ease);
 }
@@ -878,11 +890,11 @@ label:has(> .select) {
   color: var(--muted);
 }
 .hero-title {
-  font-size: clamp(64px, 9.6vw, 136px);
-  font-weight: 400;
-  letter-spacing: -0.035em;
-  line-height: 0.9;
-  margin: 18px 0 26px;
+  font-size: clamp(56px, 7.6vw, 108px);
+  font-weight: 480;
+  letter-spacing: -0.052em;
+  line-height: 0.92;
+  margin: 18px 0 28px;
   color: var(--brand-primary);
 }
 .hero-tagline {
@@ -918,9 +930,17 @@ label:has(> .select) {
   max-width: 480px;
   margin: 0 0 32px;
 }
-.hero-lead b {
+/* the greeting is said in the serif's italic: a human voice before the description */
+.hero-greeting {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.45em;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
   color: var(--text-strong);
-  font-weight: 600;
 }
 .hero-stage {
   min-height: 460px;
@@ -958,14 +978,15 @@ label:has(> .select) {
 }
 .emblem .monogram {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 34px;
+  font-weight: 560;
+  font-size: 32px;
+  letter-spacing: -0.02em;
 }
 .commission-card h2 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(54px, 6.4vw, 84px);
-  letter-spacing: 0.01em;
+  font-weight: 500;
+  font-size: clamp(50px, 6vw, 78px);
+  letter-spacing: 0.005em;
   line-height: 1;
   margin-top: 22px;
   text-shadow: none;
@@ -1061,10 +1082,10 @@ label:has(> .select) {
 }
 .journey-card b {
   font-family: var(--font-display);
-  font-size: 34px;
-  font-weight: 400;
+  font-size: 31px;
+  font-weight: 460;
   line-height: 1.05;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.03em;
   color: var(--text-strong);
 }
 .journey-card .jc-text {
@@ -1124,9 +1145,9 @@ label:has(> .select) {
 }
 .group-card h2 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(34px, 4vw, 54px);
-  letter-spacing: 0.015em;
+  font-weight: 480;
+  font-size: clamp(30px, 3.5vw, 46px);
+  letter-spacing: 0.02em;
   line-height: 1.02;
 }
 .group-card p {
@@ -1163,9 +1184,10 @@ label:has(> .select) {
   border-color: rgba(255, 255, 255, 0.5);
 }
 .group-card .gc-enter {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
 }
 .group-card .gc-enter svg {
   width: 16px;
@@ -1209,10 +1231,14 @@ label:has(> .select) {
   margin-bottom: -4px;
 }
 .ws-head h1 {
-  font-size: clamp(40px, 5.2vw, 68px);
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-size: clamp(38px, 4.7vw, 62px);
+  font-weight: var(--display-wght);
+  letter-spacing: -0.036em;
   line-height: 1;
+}
+/* the dot between commission and exam is the page's one spot of red */
+.ws-head h1 .sep {
+  color: var(--brand-primary);
 }
 /* the tab's 3D scene */
 .ws-stage {
@@ -1224,17 +1250,18 @@ label:has(> .select) {
 }
 .flow-title {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: clamp(30px, 3.2vw, 42px);
-  letter-spacing: -0.012em;
+  font-weight: 450;
+  font-size: clamp(28px, 3vw, 38px);
+  letter-spacing: -0.03em;
   line-height: 1.08;
   margin-top: 8px;
 }
 .flow-steps {
   gap: 6px 14px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   color: var(--faint);
 }
 .flow-steps li + li::before {
@@ -1420,9 +1447,10 @@ label:has(> .select) {
   padding: 8px;
 }
 .side-list .group-label {
+  font-family: var(--font-mono);
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   color: var(--faint);
   padding: 12px 12px 8px;
 }
@@ -1454,11 +1482,21 @@ label:has(> .select) {
 .chapter-title,
 .panel-head .chapter-title {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 470;
   font-size: clamp(28px, 3vw, 40px);
-  letter-spacing: -0.012em;
-  line-height: 1.12;
-  margin: 8px 0 0;
+  letter-spacing: -0.032em;
+  line-height: 1.1;
+  margin: 10px 0 0;
+}
+/* "Chapter 3" — set like the chapter opening of a book: small, italic, above the title */
+.kicker {
+  display: block;
+  margin-bottom: 4px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.5em;
+  letter-spacing: -0.01em;
+  color: var(--muted);
 }
 /* title on the left, reading controls on the right; chapters are chosen in the list beside (a dropdown on phones) */
 .reading-head {
@@ -1483,9 +1521,10 @@ label:has(> .select) {
   animation: fade-up 0.6s var(--ease) 0.1s backwards;
 }
 .chapter-contents > summary {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
 }
@@ -1510,24 +1549,28 @@ label:has(> .select) {
 }
 .note-block h4 {
   font-family: var(--font-display);
-  font-size: 27px !important;
-  font-weight: 400;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
+  font-size: 25px !important;
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  line-height: 1.18;
 }
 .note-block > header {
   margin-bottom: 12px !important;
 }
-/* Long-read typography: a comfortable measure, open leading, soft ink. */
+/*
+ * Long-read typography. A measure of about 70 characters, open leading and soft ink;
+ * headings step down serif → sans → small capitals so the structure reads at a glance.
+ */
 .reading {
-  max-width: 72ch;
+  max-width: 70ch;
   --reader-scale: 1;
 }
 .reading .prose {
   font-family: var(--font-reading);
   font-size: calc(17px * var(--reader-scale));
-  line-height: 1.78;
+  line-height: 1.76;
   color: var(--text);
+  hanging-punctuation: first;
 }
 .reading .prose p {
   margin: 1em 0;
@@ -1535,58 +1578,126 @@ label:has(> .select) {
 .reading .prose li {
   margin: 0.4em 0;
 }
-.reading .prose li::marker {
+.reading .prose ul > li::marker {
   color: var(--faint);
+}
+.reading .prose ol > li::marker {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  color: var(--muted);
 }
 .reading .prose h2 {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 1.55em;
-  letter-spacing: -0.01em;
+  font-weight: 480;
+  font-size: 1.5em;
+  letter-spacing: -0.03em;
   line-height: 1.2;
   margin-top: 1.8em;
 }
 .reading .prose h3 {
-  font-size: 1.1em;
-  font-weight: 600;
+  font-family: var(--font-body);
+  font-size: 1.08em;
+  font-weight: 620;
+  letter-spacing: -0.015em;
   margin-top: 1.9em;
 }
 .reading .prose h4 {
-  font-size: 0.82em;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-family: var(--font-mono);
+  font-size: 0.72em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: 2em;
+  margin-top: 2.2em;
 }
 .reading .prose strong {
-  font-weight: 650;
+  font-weight: 620;
   color: var(--text-strong);
 }
 .reading .prose a {
   text-underline-offset: 3px;
   text-decoration-thickness: 1px;
 }
+/* a pulled quotation, in the display italic */
 .reading .prose blockquote {
   border-left: 2px solid var(--brand-primary);
   background: none;
-  padding: 2px 0 2px 20px;
+  padding: 2px 0 2px 22px;
   font-family: var(--font-display);
-  font-size: 1.25em;
+  font-style: italic;
+  font-weight: 380;
+  font-size: 1.22em;
+  letter-spacing: -0.015em;
   line-height: 1.45;
   color: var(--text-strong);
 }
+/* Tables are ruled like a printed book: horizontal hairlines only, a labelled head, figures that line up. */
 .reading .prose table {
-  font-size: 0.9em;
+  font-family: var(--font-body);
+  font-size: 0.86em;
+  line-height: 1.5;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.reading .prose :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 18px 10px 0;
+}
+.reading .prose :is(th, td):last-child {
+  padding-right: 0;
+}
+.reading .prose tr:first-child > * {
+  border-top: 1px solid var(--text-strong);
+}
+.reading .prose tr:last-child td {
+  border-bottom: 1px solid var(--text-strong);
+}
+.reading .prose th {
+  background: none;
+  border-bottom-color: var(--border-strong);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  vertical-align: bottom;
+}
+.reading .prose :is(th, td) p {
+  margin: 0;
+}
+/* A chapter opens with a dropped initial, as in a printed book. */
+.note-block:first-child .reading .prose > p:first-child::first-letter,
+.mt-layout .reading .prose > p:first-child::first-letter {
+  float: left;
+  margin: 0.08em 0.1em 0 -0.03em;
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 3.5em;
+  line-height: 0.82;
+  color: var(--brand-primary);
+}
+.reading .prose > p:first-child + * {
+  clear: left; /* a short opening paragraph never lets the initial run into what follows */
 }
 :root[data-reader-size="1"] .reading { --reader-scale: 0.91; }
 :root[data-reader-size="3"] .reading { --reader-scale: 1.1; }
 :root[data-reader-size="4"] .reading { --reader-scale: 1.21; }
+/* The book face: slightly larger, a touch narrower, with old-style figures that sit in the line like lowercase. */
 :root[data-reader-font="serif"] .reading {
-  --font-reading: var(--font-serif), Georgia, "Times New Roman", serif;
+  --font-reading: var(--font-book);
+  max-width: 66ch;
 }
 :root[data-reader-font="serif"] .reading .prose {
-  font-size: calc(18px * var(--reader-scale));
+  font-size: calc(18.5px * var(--reader-scale));
+  line-height: 1.72;
+  font-variant-numeric: oldstyle-nums proportional-nums;
+}
+:root[data-reader-font="serif"] .reading .prose h3 {
+  font-family: var(--font-book);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.16em;
 }
 
 .reader-tools {
@@ -1635,17 +1746,19 @@ label:has(> .select) {
   box-shadow: var(--shadow);
 }
 .prevnext small {
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--faint);
 }
 .prevnext b {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-size: 20px;
-  line-height: 1.2;
+  font-weight: 500;
+  font-size: 19px;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 /* Focus mode: only the notes, centred. */
@@ -1791,11 +1904,15 @@ button.option:hover:not(:disabled) .key {
 .auth-art h2 {
   font-family: var(--font-display);
   color: var(--heading);
-  font-weight: 400;
-  font-size: clamp(32px, 3.4vw, 48px);
-  letter-spacing: -0.015em;
-  line-height: 1.08;
+  font-weight: var(--display-wght);
+  font-size: clamp(30px, 3.1vw, 44px);
+  letter-spacing: -0.034em;
+  line-height: 1.1;
   margin-top: 14px;
+}
+.auth-art h2 em {
+  font-weight: 360;
+  color: var(--brand-primary);
 }
 .auth-art p {
   color: var(--muted);
@@ -1814,8 +1931,8 @@ button.option:hover:not(:disabled) .key {
   animation: rise 0.8s var(--ease) backwards;
 }
 .auth-card h1 {
-  font-size: 38px;
-  font-weight: 400;
+  font-size: 34px;
+  font-weight: var(--display-wght);
   margin: 8px 0;
 }
 .demo-creds {
@@ -2062,7 +2179,7 @@ button.option:hover:not(:disabled) .key {
     height: 40px;
   }
   .brand-name {
-    font-size: 23px;
+    font-size: 21px;
   }
   .page {
     padding: 22px 18px calc(var(--bottom-nav-h) + 48px);
@@ -2077,7 +2194,7 @@ button.option:hover:not(:disabled) .key {
     min-height: 240px;
   }
   .hero-title {
-    font-size: clamp(60px, 19vw, 96px);
+    font-size: clamp(48px, 14.5vw, 84px);
   }
   .home {
     gap: 48px;
@@ -2100,7 +2217,7 @@ button.option:hover:not(:disabled) .key {
     display: none;
   }
   .ws-head h1 {
-    font-size: clamp(36px, 11vw, 48px);
+    font-size: clamp(32px, 9.4vw, 44px);
   }
   /* chapters: the dropdown in the reading head replaces the long list */
   .chapter-list {
@@ -2171,7 +2288,7 @@ button.option:hover:not(:disabled) .key {
 }
 @media (max-width: 560px) {
   .brand-name {
-    font-size: 22px;
+    font-size: 20px;
     max-width: none;
     white-space: nowrap;
   }
@@ -2187,7 +2304,7 @@ button.option:hover:not(:disabled) .key {
     margin-right: 10px;
   }
   .note-block h4 {
-    font-size: 23px !important;
+    font-size: 22px !important;
   }
   .stat-value {
     font-size: 36px;
