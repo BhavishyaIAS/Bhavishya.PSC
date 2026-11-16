@@ -36,6 +36,8 @@ export interface Scene {
   sway?: number; // instead of turning all the way round, rock left-right by this many radians
   tilt: number; // camera pitch (negative looks down on the scene)
   zoom?: number;
+  ground?: boolean; // false for figures drawn in the sky: no floor shadow under them
+  drop?: number; // world units to lower a tall scene by, so it sits centred on its stage
 }
 
 /** Palette slots. */
@@ -292,11 +294,11 @@ const pool: Prim[] = [];
 const LIGHT: V3 = [-0.47, 0.74, -0.48];
 
 export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, view: View) {
-  ctx.clearRect(0, 0, view.w, view.h);
-  if (view.alpha <= 0.01) return;
+  if (view.alpha <= 0.01) return; // the caller clears the canvas: several layers are drawn on it
   const yaw = scene.sway ? Math.sin(t * 0.35) * scene.sway : scene.spin * t;
   const cam = euler(scene.tilt + view.py * 0.14, yaw + view.px * 0.3, 0);
   const unit = view.unit * (scene.zoom ?? 1);
+  const cy = view.cy + unit * (scene.drop ?? 0);
   let count = 0;
   const prim = (): Prim => (pool[count] ??= { z: 0, kind: 0, xy: [], color: 0, shade: 0, alpha: 1, size: 1, text: "" });
   const fog = (depth: number) => Math.max(0.12, Math.min(1, 1.2 - (depth - CAM + 1.6) / 5.2));
@@ -311,7 +313,7 @@ export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, v
     };
     const project = (p: V3, out: number[]) => {
       const s = CAM / Math.max(0.4, p[2] + CAM);
-      out.push(view.cx + p[0] * s * unit, view.cy - p[1] * s * unit);
+      out.push(view.cx + p[0] * s * unit, cy - p[1] * s * unit);
     };
 
     if (it.mesh) {
@@ -383,8 +385,9 @@ export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, v
   const pal = view.palette, shadow = pal[7], light = pal[8];
 
   // A soft shadow on the "floor" grounds the sculpture, like an object lit in a studio.
+  if (scene.ground !== false) {
   ctx.save();
-  ctx.translate(view.cx, view.cy + unit * 1.08);
+  ctx.translate(view.cx, cy + unit * 1.08);
   ctx.scale(1, 0.16);
   const pool2 = ctx.createRadialGradient(0, 0, 0, 0, 0, unit * 1.9);
   pool2.addColorStop(0, `rgba(${shadow[0]},${shadow[1]},${shadow[2]},${0.3 * view.alpha})`);
@@ -395,6 +398,7 @@ export function render(ctx: CanvasRenderingContext2D, scene: Scene, t: number, v
   ctx.arc(0, 0, unit * 1.9, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+  }
 
   ctx.lineJoin = "round";
   ctx.lineCap = "round";

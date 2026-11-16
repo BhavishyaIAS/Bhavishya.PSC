@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Backdrop } from "@/components/fx/Backdrop";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
+import { Portal } from "@/components/fx/Portal";
 import { Header } from "@/components/Header";
 import { ToastProvider } from "@/components/ui/Toast";
 import { getCommissions } from "@/lib/catalog";
@@ -62,8 +63,9 @@ export const viewport: Viewport = {
 const brandCss = `:root{--brand-primary:${brand.colors.primary};--brand-primary-deep:${brand.colors.primaryDeep};--brand-secondary:${brand.colors.secondary};--brand-accent:${brand.colors.accent};}`;
 
 // Runs before paint so there's no flash: theme (saved choice, else the OS setting),
-// the animations switch, and the reader's own text size / font (over the site's defaults).
-const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}d.dataset.theme=t;if(s.getItem('motion')==='off')d.dataset.motion='off';var z=s.getItem('reader-size');if(z)d.setAttribute('data-reader-size',z);var f=s.getItem('reader-font');if(f)d.setAttribute('data-reader-font',f)}catch(e){}})();`;
+// the animations switch, the reader's own text size / font (over the site's defaults), and —
+// once per visit, when motion is welcome — the arrival portal (see components/fx/Portal).
+const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}d.dataset.theme=t;if(s.getItem('motion')==='off')d.dataset.motion='off';var z=s.getItem('reader-size');if(z)d.setAttribute('data-reader-size',z);var f=s.getItem('reader-font');if(f)d.setAttribute('data-reader-font',f);var q=sessionStorage;if(!q.getItem('portal')&&d.dataset.motion!=='off'&&d.dataset.backdrops!=='off'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){q.setItem('portal','1');d.dataset.portal='on'}}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, site, commissions, jar] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies()]);
@@ -88,6 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="skip-link">
           Skip to content
         </a>
+        {site.backdrops && <Portal logo={brand.logo} name={`${brand.name} ${brand.suffix}`} tagline={brand.tagline} />}
         {site.backdrops && <Backdrop />}
         <Interactions />
         <ToastProvider>

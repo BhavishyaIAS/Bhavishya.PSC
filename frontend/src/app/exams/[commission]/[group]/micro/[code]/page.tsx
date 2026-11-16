@@ -43,7 +43,7 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
 
   return (
     <div className="mt-layout">
-      <SceneHint scene={sceneForLook(topicLook(d.breadcrumb.subject.title, d.breadcrumb.subject.look))} />
+      <SceneHint scene={sceneForLook(topicLook(d.breadcrumb.subject.title, d.breadcrumb.subject.look), d.breadcrumb.subject.title)} />
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">
