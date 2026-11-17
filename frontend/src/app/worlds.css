@@ -1987,3 +1987,10 @@ ul.destinations {
     background: color-mix(in srgb, var(--bg) 95%, transparent);
   }
 }
+.panel-head .muted,
+.world-tab-label {
+  color: var(--text-strong);
+}
+.panel-head .muted {
+  color: var(--text);
+}
