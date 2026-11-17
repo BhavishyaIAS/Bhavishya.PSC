@@ -1756,7 +1756,7 @@ html {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse 62% 27% at 50% 21%, color-mix(in srgb, var(--w-deep) 88%, transparent), color-mix(in srgb, var(--w-deep) 55%, transparent) 55%, transparent 80%);
+  background: radial-gradient(ellipse 62% 27% at 50% 21%, color-mix(in srgb, var(--w-deep) var(--halo, 88%), transparent), color-mix(in srgb, var(--w-deep) calc(var(--halo, 88%) * 0.6), transparent) 55%, transparent 80%);
 }
 .gateway-text {
   min-width: 210px;
@@ -1993,4 +1993,9 @@ ul.destinations {
 }
 .panel-head .muted {
   color: var(--text);
+}
+
+/* by day dark ink needs little help: the halo thins, and the Sun shows through */
+:root[data-sky="day"] .arrival {
+  --halo: 34%;
 }
