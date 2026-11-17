@@ -54,7 +54,7 @@ export function cosmicEngine() {
     let zone = "";
     try {
       zone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-    } catch (e) {
+    } catch {
       zone = "";
     }
     if (zone === "Asia/Kolkata" || zone === "Asia/Calcutta") return { lat: 16.5, lon: 80.6 }; // the Telugu states
@@ -146,7 +146,7 @@ export function cosmicEngine() {
     const horizonY = opts && opts.phone ? 0.93 : 0.91;
     const facing = at.lat >= 0 ? 180 : 0; // look towards the equator, where the Sun and the planets travel
     const screen = function (alt: number, az: number) {
-      let rel = ((az - facing + 540) % 360) - 180; // -180..180, 0 straight ahead
+      const rel = ((az - facing + 540) % 360) - 180; // -180..180, 0 straight ahead
       const x = 0.5 + 0.47 * (rel / 180);
       const y = alt >= 0
         ? horizonY - (horizonY - 0.07) * Math.pow(Math.sin(alt * RAD), 0.62)
