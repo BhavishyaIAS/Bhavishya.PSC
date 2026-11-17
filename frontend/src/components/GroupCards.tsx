@@ -1,44 +1,44 @@
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
-import { groupTheme } from "@/brand.config";
+import { DESTINATIONS } from "@/components/space/destinations";
+import { Globe } from "@/components/space/Globe";
 import { trackPath } from "@/lib/format";
 import type { Commission } from "@/lib/types";
 
-const MODULES = [
-  { label: "Syllabus Detailer", tab: "syllabus", adminOnly: true },
-  { label: "Study Material", tab: "materials" },
-  { label: "Prelims PYQs", tab: "prelims" },
-  { label: "Mains PYQs", tab: "mains" },
-  { label: "Progress Tracker", tab: "progress" },
-];
-
-/** The big cards for a commission's exams (Group 1, Group 2, Civil Services…). */
-export function GroupCards({ commission, isAdmin }: { commission: Commission; isAdmin: boolean }) {
+/**
+ * A commission's exams (Group 1, Group 2, Civil Services…), each as a station in orbit:
+ * the exam itself, and under it the five worlds you can go straight to.
+ */
+export function GroupCards({ commission }: { commission: Commission }) {
   return (
-    <div className={commission.tracks.length === 1 ? "grid-2 single" : "grid-2"}>
+    <div className={commission.tracks.length === 1 ? "stations single" : "stations"}>
       {commission.tracks.map((t, i) => {
-        const theme = groupTheme(t.group, i);
-        const blurb = t.tagline || `Structured ${commission.short_name} ${t.group_name} preparation — notes, previous-year questions and progress, topic by topic.`;
+        const blurb = t.tagline || `Structured ${commission.short_name} ${t.group_name} preparation: notes, previous-year questions and progress, topic by topic.`;
         return (
-          <article key={t.group} className="group-card" style={{ background: theme.gradient }}>
-            <ArrowUpRight className="gc-arrow" size={30} aria-hidden />
+          <article key={t.group} className="station-card">
+            <div className="station-idx" aria-hidden>
+              {String(i + 1).padStart(2, "0")}
+            </div>
             <h2>
               <Link href={trackPath(t.commission, t.group)} className="stretched">
-                {commission.short_name} · {t.group_name.toUpperCase()}
+                <span className="station-of">{commission.short_name}</span> {t.group_name}
               </Link>
             </h2>
             <p>{blurb}</p>
-            <div className="gc-pills">
-              {MODULES.filter((m) => !m.adminOnly || isAdmin).map((m) => (
-                <Link key={m.tab} href={trackPath(t.commission, t.group, m.tab)} className="pill">
-                  {m.label}
-                </Link>
+            {!t.has_content && <span className="station-soon">Content for this exam is being prepared</span>}
+            <ul className="station-worlds">
+              {DESTINATIONS.map((d) => (
+                <li key={d.tab}>
+                  <Link href={trackPath(t.commission, t.group, d.tab)}>
+                    <Globe world={d.world} size={16} />
+                    <span>{d.long}</span>
+                  </Link>
+                </li>
               ))}
-            </div>
-            {!t.has_content && <span className="gc-soon">Content for this exam is being prepared</span>}
-            <span className="gc-enter" aria-hidden>
-              ENTER {t.group_name.toUpperCase()} <ArrowRight size={20} />
+            </ul>
+            <span className="station-enter" aria-hidden>
+              Enter {t.group_name} <ArrowRight size={17} />
             </span>
           </article>
         );

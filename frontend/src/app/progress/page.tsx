@@ -2,7 +2,6 @@ import { ArrowRight, BarChart3, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { groupTheme } from "@/brand.config";
 import { ProgressBar } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
@@ -27,12 +26,11 @@ export default async function GlobalProgressPage() {
       </div>
 
       <div className="grid-4" style={{ marginBottom: 22 }}>
-        {results.map((r, i) => (
+        {results.map((r) => (
           <Link
             key={r.track.id}
             href={trackPath(r.track.commission, r.track.group, "progress")}
             className="stat card-link track-tile"
-            style={{ ["--tile" as string]: groupTheme(r.track.group, i).gradient }}
           >
             <div className="row" style={{ justifyContent: "space-between" }}>
               <b style={{ color: "var(--text-strong)" }}>{r.track.label}</b>

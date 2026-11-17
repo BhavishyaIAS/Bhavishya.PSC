@@ -14,8 +14,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { SceneHint } from "@/components/fx/SceneHint";
-import { sceneForLook } from "@/components/fx/scenes";
 import { JumpSelect } from "@/components/JumpSelect";
 import { MaterialList } from "@/components/MaterialList";
 import { NotesSteps } from "@/components/NotesSteps";
@@ -25,7 +23,7 @@ import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
-import { syllabusTopics, topicLook, topicTone } from "@/lib/topics";
+import { syllabusTopics, topicTone } from "@/lib/topics";
 import type { Material, Note, NoteKind, SubjectNode, SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
@@ -80,7 +78,6 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
 
   return (
     <div className={topicTone(subject.title, subject.look)}>
-      <SceneHint scene={sceneForLook(topicLook(subject.title, subject.look), subject.title)} />
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
           <NotesSteps current={2} />

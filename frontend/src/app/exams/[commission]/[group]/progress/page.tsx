@@ -2,6 +2,7 @@ import { BookOpenCheck, CheckCircle2, FileText, Layers, ListChecks, Upload } fro
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SubjectBars, subjectStats } from "@/components/SyllabusCharts";
 import { SyllabusOutline } from "@/components/SyllabusOutline";
 import { EmptyState, ProgressBar, StatTile, StatusBadge } from "@/components/ui/bits";
 import { stageLabel } from "@/lib/format";
@@ -40,6 +41,8 @@ export default async function ProgressTab(props: PageProps<"/exams/[commission]/
     );
   }
 
+  const stats = subjectStats(tree.papers);
+
   return (
     <div className="stack" style={{ gap: 22 }}>
       <div className="grid-4">
@@ -48,6 +51,16 @@ export default async function ProgressTab(props: PageProps<"/exams/[commission]/
         <StatTile icon={FileText} value={cov.prelims_questions} label="Prelims PYQs available" />
         <StatTile icon={Layers} value={cov.mains_questions} label="Mains PYQs available" />
       </div>
+
+      {stats.some((s) => s.total > 0) && (
+        <section className="panel" aria-labelledby="per-subject">
+          <div className="panel-head">
+            <h2 id="per-subject">Subject by subject</h2>
+            <span className="muted small">Sections you have marked as studied, the furthest along first. Choose a subject to open it in the syllabus.</span>
+          </div>
+          <SubjectBars stats={stats} href={`/exams/${commission}/${group}/syllabus`} />
+        </section>
+      )}
 
       <section className="panel" aria-labelledby="per-paper">
         <div className="panel-head">

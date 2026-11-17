@@ -1,15 +1,12 @@
-/** While a page loads: a small 3D book whose pages turn. */
+/** While a page loads: a small body going round its orbit. */
 export default function Loading() {
   return (
     <div className="page loading-stage" aria-busy="true" aria-live="polite">
       <span className="sr-only">Loading…</span>
-      <div className="book-loader" aria-hidden>
-        <span />
-        <span />
-        <span />
+      <div className="orbit-loader" aria-hidden>
         <span />
       </div>
-      <p className="muted small">Opening the page…</p>
+      <p className="muted small">On the way…</p>
     </div>
   );
 }

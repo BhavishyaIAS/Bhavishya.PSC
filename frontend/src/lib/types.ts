@@ -258,11 +258,11 @@ export interface Site {
 /** How a topic can be presented; "" lets the site guess from the topic's name. */
 export const LOOKS = [
   { key: "", label: "Automatic (from the name)" },
-  { key: "history", label: "History — stupa" },
-  { key: "geography", label: "Geography — globe" },
-  { key: "polity", label: "Polity — Ashoka Chakra" },
-  { key: "economy", label: "Economy — growth chart" },
-  { key: "science", label: "Science — atom" },
-  { key: "environment", label: "Environment — trees" },
-  { key: "general", label: "General — books" },
+  { key: "history", label: "History" },
+  { key: "geography", label: "Geography" },
+  { key: "polity", label: "Polity" },
+  { key: "economy", label: "Economy" },
+  { key: "science", label: "Science" },
+  { key: "environment", label: "Environment" },
+  { key: "general", label: "General" },
 ];

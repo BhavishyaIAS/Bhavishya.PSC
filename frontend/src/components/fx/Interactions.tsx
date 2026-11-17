@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-import { arrive, depart } from "./Backdrop";
+import { depart } from "@/components/space/Universe";
 
 /** Cards that lean towards the pointer (the CSS reads --rx / --ry / --gx / --gy). */
 const TILT = "[data-tilt], .commission-card, .group-card, .topic-card, .journey-card, .note-types-big .note-type, .stat";
@@ -18,9 +18,9 @@ export function Interactions() {
   const first = useRef(true);
   const landing = useRef(0);
 
-  // Travel between pages. A click on a link to another page is the departure: the page
-  // recedes and the stars stretch (see [data-travel] in design.css, and Backdrop). When the
-  // new page is in, we arrive: it comes forward out of the depth and the stars settle.
+  // Travel between worlds. A click on a link to another page is the departure: the page
+  // recedes and the view pulls away at once (Universe). When the new page is in, it comes
+  // forward (see [data-travel] in design.css) and the new world rises behind it.
   useEffect(() => {
     const root = document.documentElement;
     let fallback = 0;
@@ -34,10 +34,7 @@ export function Interactions() {
       depart();
       // if the navigation never happens (cancelled, failed), come back instead of staying faded
       window.clearTimeout(fallback);
-      fallback = window.setTimeout(() => {
-        root.removeAttribute("data-travel");
-        arrive();
-      }, 3000);
+      fallback = window.setTimeout(() => root.removeAttribute("data-travel"), 3000);
     };
     document.addEventListener("click", onClick, true);
     return () => {
@@ -52,12 +49,9 @@ export function Interactions() {
       return;
     }
     const root = document.documentElement;
-    if (root.dataset.travel !== "depart") depart(); // arrived without a click (a dropdown, the back button): a brief streak
     root.dataset.travel = "arrive";
     window.clearTimeout(landing.current);
-    const settle = window.setTimeout(arrive, 160);
     landing.current = window.setTimeout(() => root.removeAttribute("data-travel"), 900);
-    return () => window.clearTimeout(settle);
   }, [pathname]);
 
   useEffect(() => {

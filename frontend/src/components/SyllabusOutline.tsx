@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { PriorityBadge, StatusBadge } from "@/components/ui/bits";
 import { stageLabel, trackPath } from "@/lib/format";
-import type { MicroThemeNode, PaperNode } from "@/lib/types";
+import type { MicroThemeNode, PaperNode, SubjectNode } from "@/lib/types";
 
 import { StudiedToggle } from "./StudiedToggle";
 
@@ -40,11 +40,12 @@ export function SyllabusOutline({
             </summary>
             {paper.subjects.length === 0 && <p className="muted small" style={{ marginLeft: 18 }}>No subjects yet.</p>}
             {paper.subjects.map((subject) => (
-              <details key={subject.id} className="outline-subject" open>
+              <details key={subject.id} id={`subject-${subject.id}`} className="outline-subject" open>
                 <summary>
                   <ChevronRight className="chev-rot" size={16} aria-hidden />
-                  {subject.title}
+                  <span style={{ flex: 1 }}>{subject.title}</span>
                   {admin && subject.status === "draft" && <StatusBadge status="draft" />}
+                  {!admin && <SubjectCount subject={subject} />}
                 </summary>
                 {subject.topics.map((topic) => (
                   <div key={topic.id} className="outline-topic">
@@ -63,6 +64,16 @@ export function SyllabusOutline({
         );
       })}
     </div>
+  );
+}
+
+function SubjectCount({ subject }: { subject: SubjectNode }) {
+  const mts = subject.topics.flatMap((t) => t.micro_themes);
+  const done = mts.filter((m) => m.studied).length;
+  return (
+    <span className={`outline-count ${mts.length > 0 && done === mts.length ? "is-done" : ""}`}>
+      {done}/{mts.length}
+    </span>
   );
 }
 

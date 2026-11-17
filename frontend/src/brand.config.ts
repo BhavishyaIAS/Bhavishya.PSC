@@ -13,11 +13,11 @@
 export const brand = {
   name: "Bhavishya", // full name = name + " " + suffix
   suffix: "IAS",
-  tagline: "Prepare · Practice · Perform",
+  tagline: "Explore Knowledge. Conquer Horizons.",
   heroTitle: "Bhavishya IAS", // the home page heading (brand red)
-  subtitle: "State PSC Group 1 & Group 2 Preparation",
+  subtitle: "UPSC & State PSC Preparation",
   description:
-    "A structured preparation ecosystem for State Public Service Commission exams — syllabus, notes, previous-year questions and progress in one place.",
+    "A structured preparation ecosystem for UPSC and State Public Service Commission exams: syllabus, notes, previous-year questions and progress in one place.",
   logo: "/brand/logo.png",
   colors: {
     primary: "#d90d20", // strong brand red

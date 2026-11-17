@@ -233,7 +233,7 @@ function EditTopic({ topic, busy, onClose, onSave }: { topic: SubjectNode; busy:
           <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={255} required />
         </label>
         <label className="field">
-          <span className="label">Look — its icon, colour and 3D background</span>
+          <span className="label">Look: its icon and colour</span>
           <select className="select" value={look} onChange={(e) => setLook(e.target.value)}>
             {LOOKS.map((l) => (
               <option key={l.key} value={l.key}>
