@@ -99,7 +99,7 @@
   --accent: #e9c98d; /* its one colour, bright enough for the dark */
   --accent-ink: #8a5a14; /* the same colour, dark enough for paper */
   --on-accent: #17120a; /* text on a filled accent */
-  --brand-red: #f2303f; /* the name stays red on every world */
+  --brand-red: #ff4d5b; /* the name stays red on every world (light enough for 4.5:1 at phone size) */
 
   --bg: var(--w-deep);
   --surface: color-mix(in srgb, var(--w-glass) 95%, transparent); /* near-solid: no texture behind text */
@@ -1957,4 +1957,33 @@ ul.destinations {
   color: var(--muted);
   text-decoration: line-through;
   text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
+}
+
+/* Third round (phone audit) */
+:root[data-scrolled] .topbar {
+  background: color-mix(in srgb, var(--bg) 95%, transparent);
+}
+.worlds-nav {
+  background: color-mix(in srgb, var(--w-glass) 94%, transparent);
+}
+:is(.ws-head, .flow-head, .reading-head, .page-head) :is(.muted, p.muted, .label) {
+  color: var(--text);
+}
+.bottom-nav a {
+  color: var(--text);
+}
+.bottom-nav a[aria-current="page"] {
+  color: var(--text-strong);
+}
+.table th {
+  color: var(--text);
+}
+.diagram text {
+  fill: var(--text);
+}
+@media (max-width: 900px) {
+  /* on a phone the bar is always a solid band: the name never stands on a bright sky */
+  .topbar {
+    background: color-mix(in srgb, var(--bg) 95%, transparent);
+  }
 }
