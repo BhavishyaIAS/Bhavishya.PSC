@@ -176,12 +176,13 @@
   --border: color-mix(in srgb, var(--w-lite) 11%, var(--w-sheet));
   --border-strong: color-mix(in srgb, var(--w-lite) 22%, var(--w-sheet));
   --heading: var(--w-lite);
-  --ring: color-mix(in srgb, var(--accent) 34%, transparent);
-  --brand-primary: var(--accent);
-  --brand-primary-deep: color-mix(in srgb, var(--accent) 70%, #000);
-  --brand-accent: var(--accent);
-  --primary-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
-  --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
+  /* the world's own night accent: never the daytime sky's (see the living sky) */
+  --ring: color-mix(in srgb, var(--accent-night, var(--accent)) 34%, transparent);
+  --brand-primary: var(--accent-night, var(--accent));
+  --brand-primary-deep: color-mix(in srgb, var(--accent-night, var(--accent)) 70%, #000);
+  --brand-accent: var(--accent-night, var(--accent));
+  --primary-soft: color-mix(in srgb, var(--accent-night, var(--accent)) 12%, var(--w-sheet));
+  --accent-soft: color-mix(in srgb, var(--accent-night, var(--accent)) 12%, var(--w-sheet));
   --on-accent: #14110b;
   border-color: color-mix(in srgb, var(--w-lite) 12%, var(--w-sheet));
 }
@@ -1698,12 +1699,13 @@ html {
   --border: rgb(11 18 32 / 0.16);
   --border-strong: rgb(11 18 32 / 0.34);
   --heading: #0b1220;
-  --accent: #7a4e0e;
-  --brand-primary: #7a4e0e;
-  --brand-primary-deep: #5c3a08;
-  --brand-accent: #7a4e0e;
+  --accent-night: #e9c98d;
+  --accent: #4a2e06;
+  --brand-primary: #4a2e06;
+  --brand-primary-deep: #3a2405;
+  --brand-accent: #4a2e06;
   --on-accent: #ffffff;
-  --ring: rgb(122 78 14 / 0.35);
+  --ring: rgb(74 46 6 / 0.35);
   --primary-soft: #f6efe2;
   --accent-soft: #f6efe2;
   --brand-red: #b20f1d;
