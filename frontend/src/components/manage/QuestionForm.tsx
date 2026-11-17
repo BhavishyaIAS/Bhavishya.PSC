@@ -195,7 +195,7 @@ export function QuestionForm({ commissions, initial }: { commissions: Commission
               {(["a", "b", "c", "d"] as const).map((k) => (
                 <div className="field" key={k}>
                   <label htmlFor={`q-opt-${k}`}>Option {k.toUpperCase()}</label>
-                  <input id={`q-opt-${k}`} name={`option_${k}`} className="input" defaultValue={initial[`option_${k}`] ?? ""} required aria-invalid={inv(`option_${k}`)} />
+                  <input id={`q-opt-${k}`} name={`option_${k}`} className="input" defaultValue={initial[`option_${k}`] ?? ""} required={k === "a"} aria-invalid={inv(`option_${k}`)} />
                   {err(`option_${k}`)}
                 </div>
               ))}
@@ -211,6 +211,9 @@ export function QuestionForm({ commissions, initial }: { commissions: Commission
                   ))}
                 </div>
                 {err("correct_option")}
+                <p className="muted small" style={{ margin: "6px 0 0" }}>
+                  No options on record? Put the answer in option A, leave B, C and D empty and choose A: learners see an answer-only question.
+                </p>
               </fieldset>
               <div className="field full">
                 <label htmlFor="q-expl">Explanation (optional)</label>

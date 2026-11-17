@@ -10,10 +10,40 @@ export function PrelimsOptions({ q }: { q: Question }) {
   const [picked, setPicked] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const show = revealed || picked !== null;
+  const options = q.options ?? [];
+  // Recorded without its distractors: think of the answer, then reveal it.
+  if (options.length < 2) {
+    return (
+      <>
+        {revealed && (
+          <div className="option correct answer-only" role="status">
+            <span className="key" aria-hidden>
+              ✓
+            </span>
+            <span>
+              <b>Answer:</b> {options[0]?.text}
+            </span>
+          </div>
+        )}
+        <div className="q-foot">
+          <button type="button" className="btn btn-sm btn-secondary" onClick={() => setRevealed((r) => !r)} aria-expanded={revealed}>
+            {revealed ? <EyeOff size={15} aria-hidden /> : <Eye size={15} aria-hidden />}
+            {revealed ? "Hide answer" : "Show the answer"}
+          </button>
+          {!revealed && <span className="muted small">Options for this question are not on record. Answer it in your head first.</span>}
+        </div>
+        {revealed && q.explanation && (
+          <div className="explanation">
+            <b>Explanation.</b> {q.explanation}
+          </div>
+        )}
+      </>
+    );
+  }
   return (
     <>
       <div className="options" role="group" aria-label="Options">
-        {(q.options ?? []).map((o) => {
+        {options.map((o) => {
           const isCorrect = o.key === q.correct_option;
           const cls = show && isCorrect ? "correct" : picked === o.key && !isCorrect ? "wrong" : "";
           return (

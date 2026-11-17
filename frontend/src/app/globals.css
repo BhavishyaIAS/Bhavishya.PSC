@@ -3036,3 +3036,10 @@ ol.steps {
     font-size: 11px;
   }
 }
+
+/* a prelims PYQ recorded without its distractors: just the answer, once revealed */
+.option.answer-only {
+  width: 100%;
+  margin-bottom: 4px;
+  cursor: default;
+}

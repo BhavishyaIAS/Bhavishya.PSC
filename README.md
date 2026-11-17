@@ -143,6 +143,27 @@ Reading comfort: text size, a serif option and a focus mode (`ReaderTools.tsx`).
 All motion stops for `prefers-reduced-motion` and for the **Animations: off**
 switch in the footer.
 
+## Loading previous-year questions in bulk
+
+Small batches go in through **Manage → Bulk upload PYQs**. A whole collection (the
+content team's spreadsheets of prelims and mains PYQs with model answers) goes in
+as a *bundle*, loaded once by a migration on deploy:
+
+```bash
+python manage.py pyq_bundle build prelims.csv mains.csv content/data/pyqs-<date>.json.gz
+python manage.py pyq_bundle load content/data/pyqs-<date>.json.gz --dry-run   # see what it would do
+```
+
+`content/pyq_bundle.py` documents exactly what `build` does: which exam each row
+belongs to, how model answers are cleaned (only material pasted after an answer,
+and notes addressed to the compiler, are removed) and given structure, and how
+each micro-theme is filed under the exam's notes topics. New chapters are created
+as drafts, so Notes, Syllabus and Progress don't change until an admin publishes
+them; the questions are published at once. Prelims questions recorded without
+their options are kept as answer-only questions. `content/data/pyqs-2026-11.json.gz`
+(migration 0007) holds APPSC Group 1 Prelims 2016–2024 and Mains 2008–2025 and
+TGPSC Group 1 Mains 2016 and 2024.
+
 ## Data model
 
 ```
