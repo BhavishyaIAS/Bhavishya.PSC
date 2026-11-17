@@ -1,5 +1,3 @@
-import { SceneHint } from "@/components/fx/SceneHint";
-import { sceneForLook } from "@/components/fx/scenes";
 import { ReaderTools } from "@/components/ReaderTools";
 import { ArrowLeft, ArrowRight, BookA, Clock, FileQuestion, Pencil, PlayCircle, NotebookPen } from "lucide-react";
 import type { Metadata } from "next";
@@ -13,7 +11,6 @@ import { EmptyState, PriorityBadge, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
-import { topicLook } from "@/lib/topics";
 import type { MicroThemeDetail, NoteKind } from "@/lib/types";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]/[group]/micro/[code]">): Promise<Metadata> {
@@ -43,7 +40,6 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
 
   return (
     <div className="mt-layout">
-      <SceneHint scene={sceneForLook(topicLook(d.breadcrumb.subject.title, d.breadcrumb.subject.look), d.breadcrumb.subject.title)} />
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">

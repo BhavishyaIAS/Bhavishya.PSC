@@ -1,39 +1,66 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Geist, Geist_Mono, Literata, Noto_Sans_Devanagari, Noto_Sans_Telugu } from "next/font/google";
+import {
+  Cormorant_Garamond,
+  Fraunces,
+  Geist,
+  Geist_Mono,
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
+  IBM_Plex_Sans_Condensed,
+  Literata,
+  Manrope,
+  Noto_Sans_Devanagari,
+  Noto_Sans_Telugu,
+  Space_Grotesk,
+  Syncopate,
+} from "next/font/google";
 
 import { brand } from "@/brand.config";
 import { BottomNav } from "@/components/BottomNav";
-import { Backdrop } from "@/components/fx/Backdrop";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
-import { Portal } from "@/components/fx/Portal";
 import { Header } from "@/components/Header";
+import { SpaceLayer } from "@/components/space/SpaceLayer";
+import { worldForPath } from "@/components/space/worlds";
 import { ToastProvider } from "@/components/ui/Toast";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 import "./globals.css";
 import "./design.css";
+import "./worlds.css";
 
 /*
- * The type system (see design.css → Typography):
- *   display  Fraunces       a variable serif with optical sizes: delicate when large, sturdy when small
- *   text     Geist          the interface, and notes read in sans
- *   mono     Geist Mono     codes, indices and labels: the "catalogue" voice of a syllabus
- *   reading  Literata       the book-style option for notes, drawn for long reading on screens
- * latin-ext brings ā ī ṇ ś (transliteration) and ₹. The two Noto faces load only if a page
- * actually contains Telugu or Devanagari, so notes in those scripts match instead of falling
- * back to whatever the device has.
+ * Type. Each world has its own voice (see worlds.css); these are the faces they draw on.
+ * Only Geist is preloaded: every other face is fetched when a page first uses it.
+ *
+ *   everywhere   Geist (interface), Geist Mono (labels), Literata (the book face for long notes)
+ *   deep space   Syncopate: wide, quiet capitals, with Fraunces italic beside them
+ *   Mars         IBM Plex Sans / Condensed / Mono: the voice of technical documents
+ *   the Moon     Geist and Geist Mono alone: precise, engineered
+ *   Saturn       Cormorant Garamond: editorial, contemplative
+ *   Jupiter      Space Grotesk: structured, a little scientific
+ *   Earth        Manrope: modern, analytical, with clear numerals
+ *
+ * latin-ext brings ā ī ṇ ś (transliteration) and ₹; the two Noto faces load only on pages
+ * that contain Telugu or Devanagari.
  */
-const sans = Geist({ subsets: ["latin", "latin-ext"], variable: "--font-sans", display: "swap" });
-const display = Fraunces({ subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-display-serif", display: "swap" });
-const mono = Geist_Mono({ subsets: ["latin", "latin-ext"], variable: "--font-mono-face", display: "swap", preload: false });
-const serif = Literata({ subsets: ["latin", "latin-ext"], style: ["normal", "italic"], axes: ["opsz"], variable: "--font-serif", display: "swap", preload: false });
+const sans = Geist({ subsets: ["latin", "latin-ext"], display: "swap", variable: "--font-sans" });
+const mono = Geist_Mono({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-mono-face" });
+const serif = Literata({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-serif" });
+const display = Fraunces({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-display-serif" });
+const wide = Syncopate({ subsets: ["latin"], weight: ["400", "700"], display: "swap", preload: false, variable: "--font-wide" });
+const plex = IBM_Plex_Sans({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-plex" });
+const plexCondensed = IBM_Plex_Sans_Condensed({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "600"], variable: "--font-plex-condensed" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500"], variable: "--font-plex-mono" });
+const cormorant = Cormorant_Garamond({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-cormorant" });
+const grotesk = Space_Grotesk({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-grotesk" });
+const manrope = Manrope({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-manrope" });
 const telugu = Noto_Sans_Telugu({ subsets: ["telugu"], variable: "--font-telugu", display: "swap", preload: false });
 const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
-const fonts = [sans, display, mono, serif, telugu, devanagari].map((f) => f.variable).join(" ");
+const fonts = [sans, mono, serif, display, wide, plex, plexCondensed, plexMono, cormorant, grotesk, manrope, telugu, devanagari].map((f) => f.variable).join(" ");
 
 // Allow time for a sleeping API to wake (Render's free plan takes up to a minute).
 export const maxDuration = 60;
@@ -52,8 +79,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   // The browser's own toolbar matches the (monochrome) top bar.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f7f6f2" },
-    { media: "(prefers-color-scheme: dark)", color: "#0b0c0f" },
+    // the browser's own bar is the colour of space
+    { media: "(prefers-color-scheme: light)", color: "#05060c" },
+    { media: "(prefers-color-scheme: dark)", color: "#05060c" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -63,12 +91,13 @@ export const viewport: Viewport = {
 const brandCss = `:root{--brand-primary:${brand.colors.primary};--brand-primary-deep:${brand.colors.primaryDeep};--brand-secondary:${brand.colors.secondary};--brand-accent:${brand.colors.accent};}`;
 
 // Runs before paint so there's no flash: theme (saved choice, else the OS setting),
-// the animations switch, the reader's own text size / font (over the site's defaults), and —
-// once per visit, when motion is welcome — the arrival portal (see components/fx/Portal).
-const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}d.dataset.theme=t;if(s.getItem('motion')==='off')d.dataset.motion='off';var z=s.getItem('reader-size');if(z)d.setAttribute('data-reader-size',z);var f=s.getItem('reader-font');if(f)d.setAttribute('data-reader-font',f);var q=sessionStorage;if(!q.getItem('portal')&&d.dataset.motion!=='off'&&d.dataset.backdrops!=='off'&&!matchMedia('(prefers-reduced-motion: reduce)').matches){q.setItem('portal','1');d.dataset.portal='on'}}catch(e){}})();`;
+// the animations switch, and the reader's own text size / font (over the site's defaults).
+const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}d.dataset.theme=t;if(s.getItem('motion')==='off')d.dataset.motion='off';var z=s.getItem('reader-size');if(z)d.setAttribute('data-reader-size',z);var f=s.getItem('reader-font');if(f)d.setAttribute('data-reader-font',f)}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [user, site, commissions, jar] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies()]);
+  const [user, site, commissions, jar, head] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies(), headers()]);
+  // Which world this page is in, known on the server (the proxy passes the path), so the first paint is already there.
+  const world = worldForPath(head.get("x-bp-path") ?? "/");
   // The phone bar links to the exams of the commission being browsed (or the one the site is dedicated to).
   const browsing = jar.get("bp_commission")?.value;
   const current =
@@ -80,6 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-reader-size={site.reader_size}
       data-reader-font={site.reader_font}
       data-backdrops={site.backdrops ? undefined : "off"}
+      data-world={world}
       suppressHydrationWarning
     >
       <head>
@@ -90,15 +120,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        {site.backdrops && <Portal logo={brand.logo} name={`${brand.name} ${brand.suffix}`} tagline={brand.tagline} />}
-        {site.backdrops && <Backdrop />}
+        <SpaceLayer live={site.backdrops} />
         <Interactions />
         <ToastProvider>
           <Header user={user} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             <span>
-              {brand.name} {brand.suffix} · {brand.tagline} · Structured preparation for State PSC exams
+              {brand.name} {brand.suffix} · {brand.tagline}
             </span>
             <MotionToggle />
           </footer>

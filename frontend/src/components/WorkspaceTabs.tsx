@@ -1,34 +1,27 @@
 "use client";
 
-import { BarChart3, BookOpen, FileText, Layers, ListTree } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { DESTINATIONS } from "@/components/space/destinations";
+import { Globe } from "@/components/space/Globe";
 import { trackPath } from "@/lib/format";
 
-export const WORKSPACE_TABS = [
-  { slug: "syllabus", label: "Syllabus Detailer", icon: ListTree, adminOnly: true },
-  { slug: "materials", label: "Material / Notes", icon: BookOpen },
-  { slug: "prelims", label: "Prelims PYQs", icon: FileText },
-  { slug: "mains", label: "Mains PYQs", icon: Layers },
-  { slug: "progress", label: "Progress Tracker", icon: BarChart3 },
-];
-
-export function WorkspaceTabs({ commission, group, isAdmin }: { commission: string; group: string; isAdmin: boolean }) {
+/** The five worlds of an exam, as its navigation: each tab is a place, named for what you do there. */
+export function WorkspaceTabs({ commission, group }: { commission: string; group: string }) {
   const pathname = usePathname();
-  const tabs = WORKSPACE_TABS.filter((t) => !t.adminOnly || isAdmin);
   return (
-    <nav className="tabs" aria-label="Workspace sections">
-      {tabs.map((t, i) => {
-        const href = trackPath(commission, group, t.slug);
-        const active = pathname === href || pathname.startsWith(href + "/") || (t.slug === "materials" && pathname.includes("/micro/"));
+    <nav className="worlds-nav" aria-label="Workspace sections">
+      {DESTINATIONS.map((d) => {
+        const href = trackPath(commission, group, d.tab);
+        const active = pathname === href || pathname.startsWith(href + "/") || (d.tab === "materials" && pathname.includes("/micro/"));
         return (
-          <Link key={t.slug} href={href} className="tab" aria-current={active ? "page" : undefined}>
-            <span className="tab-idx" aria-hidden>
-              {String(i + 1).padStart(2, "0")}
+          <Link key={d.tab} href={href} className={`world-tab world-tab-${d.world}`} aria-current={active ? "page" : undefined}>
+            <Globe world={d.world} size={22} />
+            <span className="world-tab-text">
+              <span className="world-tab-place">{d.place}</span>
+              <span className="world-tab-label">{d.long}</span>
             </span>
-            {t.label}
-            {t.adminOnly && <span className="tab-tag">Admin</span>}
           </Link>
         );
       })}

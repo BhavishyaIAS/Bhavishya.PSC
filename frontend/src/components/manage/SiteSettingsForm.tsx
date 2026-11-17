@@ -214,7 +214,7 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
               <input type="checkbox" checked={codes} onChange={(e) => setCodes(e.target.checked)} /> Show section codes (like MIH-01-01) to students
             </label>
             <label className="checkbox full">
-              <input type="checkbox" checked={backdrops} onChange={(e) => setBackdrops(e.target.checked)} /> Show the 3D backgrounds behind pages
+              <input type="checkbox" checked={backdrops} onChange={(e) => setBackdrops(e.target.checked)} /> Show the living worlds behind pages (off: a still image of each world)
             </label>
           </div>
         </section>

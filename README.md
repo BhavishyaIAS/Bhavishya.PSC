@@ -8,7 +8,7 @@ Paper → Subject → Topic → Micro-theme.
 | | |
 |---|---|
 | **Backend** | Python 3.12+, Django 5.2, Django REST Framework, PostgreSQL 16 (full-text search via `tsvector` + GIN) |
-| **Frontend** | Next.js 16 (App Router, server components), React 19, TypeScript, hand-written CSS design system, dependency-free 3D backdrops |
+| **Frontend** | Next.js 16 (App Router, server components), React 19, TypeScript, hand-written CSS design system, dependency-free WebGL worlds |
 | **Rich text** | TipTap editor → ProseMirror JSON, rendered by a whitelist renderer; diagrams in Mermaid |
 | **Spreadsheets** | Parsed in the browser (`read-excel-file`, `papaparse`); template built with `write-excel-file` |
 
@@ -91,58 +91,53 @@ Everything below is in **Manage** (admins only; every endpoint checks the role a
 | Screen | What it does |
 |---|---|
 | **Exams** | Add / edit / reorder / show-hide / delete commissions (APPSC, UPSC, any PSC) and the exams inside each (Group 1–4, Civil Services…). A new commission is hidden until shown. Deleting asks for the name to be typed. "Set up UPSC" creates UPSC → Civil Services with 14 General Studies topics. |
-| **Topics catalogue** | The topics a learner picks from in Material / Notes: add, rename, drag to reorder, show/hide, delete, and choose each topic's *look* (icon, colour, 3D scene). |
+| **Topics catalogue** | The topics a learner picks from in Material / Notes: add, rename, drag to reorder, show/hide, delete, and choose each topic's *look* (icon and colour). |
 | **Syllabus & notes** | Chapters and sections inside a topic, and the rich-text editor for each section's notes, videos and glossary. |
 | **Import notes (Word)** | A whole book into a topic: Heading 1 → chapter, Heading 2 → section. |
-| **Site settings** | Dedicate the platform to one exam (and switch back), home-page wording, rename or switch off the three types of notes, default reading font and size, show/hide section codes and the contents box, 3D backgrounds on/off. |
+| **Site settings** | Dedicate the platform to one exam (and switch back), home-page wording, rename or switch off the three types of notes, default reading font and size, show/hide section codes and the contents box, living worlds on/off (off: a still of each world). |
 
 **Dedicating the platform to one exam** (say UPSC) shows that commission, hides every
 other one from students using their ordinary `status` (nothing is deleted), and opens
 the home page straight on it. `SiteSettings.restore_visible` remembers what to show
 again when the admin switches back. Code: `backend/content/views_site.py`.
 
-## Design, motion and the 3D backdrops
+## Design: the worlds
 
-The look of the site lives in two stylesheets: `frontend/src/app/globals.css`
-(each component's layout) and `frontend/src/app/design.css` (the visual design
-and every animation). The design language is "ink, paper and crimson":
+Every part of the site is a place, with its own environment, type and controls:
 
-- **One accent.** The brand red is used only for the wordmark, the primary
-  action and "you are here" marks. Everything else is ink on warm paper,
-  separated by hairlines rather than boxes and glows.
-- **Type first.** Four voices, each with one job (fonts are loaded in
-  `frontend/src/app/layout.tsx`, set in `design.css`):
+| Where | World | Its design system |
+|---|---|---|
+| Landing, sign-in, search | Deep space: the real night sky, a spiral galaxy, the examinations as planets (UPSC, APPSC…) | Syncopate capitals for the name and labels, Fraunces italic for the tagline |
+| `/exams/<commission>` | That examination's own system: its planet, close | as above |
+| Material / Notes | **Mars**: a research station on a plain, under a dusty sky | IBM Plex (Condensed / Sans / Mono); rust, basalt, sand; square, chamfered controls, segmented gauges |
+| Prelims PYQs | **The Moon**: a lunar facility, Earth in the black sky | Geist / Geist Mono; graphite, lunar white, one restrained blue; machined hairline controls |
+| Mains PYQs | **Saturn**: the ringed planet | Cormorant Garamond headings, Literata for answers; gold, ivory, umber; ruled editorial pages |
+| Syllabus Detailer | **Jupiter**: the banded giant with the Red Spot | Space Grotesk; amber and blue; capsules, orbit rings per subject, the outline drawn as a connected system |
+| Progress Tracker | **Earth** from orbit, the Moon beside it | Manrope; ocean blue and green; mission-control readings, subject-by-subject bars |
+| Manage | The station: a quiet view of space | neutral, everything on paper |
 
-  | Voice | Typeface | Used for |
-  |---|---|---|
-  | Display | Fraunces (variable, optical sizes, italic) | Titles, the wordmark, big numbers, italic kickers and pulled quotes |
-  | Text | Geist | The interface, and notes read in sans |
-  | Label | Geist Mono | Small capitals above titles, table heads, steps, codes and indices |
-  | Book | Literata | The serif option for notes: old-style figures, italic sub-headings |
+**What is real and what is computed.** Earth is NASA's *Blue Marble* map
+(public domain) with computed clouds, oceans and terminator; the star field is
+the Tycho-2 star survey. Saturn, Jupiter, Mars and the Moon are rendered
+procedurally (physically based shading: ring shadows, limb atmospheres, haze),
+not photographs.
 
-  `latin-ext` is loaded for transliteration marks (ā ī ṇ ś) and ₹. Noto Sans
-  Telugu and Noto Sans Devanagari follow every stack and are downloaded only
-  when a page contains those scripts.
-- **Quiet depth.** Small radii, soft layered shadows, cards that lean only a
-  few degrees, and 3D scenes sculpted in muted porcelain tones with a ground
-  shadow (`--fx-*` variables).
-
-Every page is a world of its own, built from layers (all in
-`frontend/src/components/fx/`, no dependencies):
+**How it is built** (`frontend/src/components/space/`, no dependencies):
 
 | File | What it does |
 |---|---|
-| `Portal.tsx` | The arrival, once per visit: a tunnel of prismatic light, the logo emerging from the glow, then an iris opening onto the page while the logo flies to the top bar. Skippable. |
-| `Backdrop.tsx` | Draws the layers below on a fixed canvas, places the sculpture on the page's `[data-stage]`, shifts the light from one world to the next, rests when off-screen, and drops to a "lite" mode on devices that can't keep up |
-| `cosmos.ts` | The stars: a field with depth, glints, and the streaks of travel between pages |
-| `worlds.ts` | Per world: the figure of sacred geometry in its sky (mandala, chakra, astrolabe, eight-point star…), its nebula colours, and the materials of its sculpture |
-| `scenes.ts` | The sculptures: a stone gateway with a manuscript and lamps (home), a stupa (ancient history), a four-minaret monument (medieval), the charkha (modern), a temple tower (regional history), the Ashoka Chakra over a colonnade (polity), a globe, an atom… plus `sceneForPath` / `sceneForLook`, which pick the world |
-| `engine.ts` | Geometry builders (box, cone, dome, extrude…), perspective, shading, depth sorting |
-| `Interactions.tsx` | Travel between pages (the page recedes, the stars stretch, the next page comes forward), cards that tilt towards the pointer, the reading-progress bar |
+| `shaders.ts` | One full-screen WebGL2 fragment shader per world (deep space with planets, Saturn, Jupiter, Earth, the Moon, Mars) |
+| `Universe.tsx` | The renderer: one fixed canvas, compiles a world's shader when it is first needed, places the subject on the page's `[data-stage]` and planets on `[data-orb]` elements, travels between worlds on navigation, renders at a calm frame rate (5–30 fps by world) and only fast while something moves, lowers its resolution on slow devices, rests when hidden or scrolled into the content |
+| `SpaceLayer.tsx` | The layers behind every page: a poster still (instant, and all there is without WebGL or with motion off), the canvas, and a veil that deepens as you read |
+| `worlds.ts` | Which world a URL is (`worldForPath`) and the planet an examination is (`planetFor`, from its slug or the palette chosen in Manage → Exams) |
+| `destinations.ts`, `Gateway.tsx`, `Globe.tsx` | The five worlds inside an exam, the landing-page gateways, the small globes used in navigation |
 
-To add a world: write the sculpture in `scenes.ts` and add it to `SCENES`, give
-it an entry in `WORLDS` (`worlds.ts`), and map a URL or topic to it. Scene colours come from the `--fx-*` variables in
-`design.css` (light and dark).
+`frontend/src/app/worlds.css` holds each world's tokens (`--w-deep`,
+`--w-paper`, `--accent`, fonts, radii) and component shapes. Two kinds of ink
+everywhere: light ink on dark glass for anything standing on the scene, and the
+reader's own light or dark theme, in the world's paper, for anything read at
+length (panels, questions, notes, dialogs). The posters in
+`public/space/poster-*.webp` are renders of the same shaders.
 
 Reading comfort: text size, a serif option and a focus mode (`ReaderTools.tsx`).
 All motion stops for `prefers-reduced-motion` and for the **Animations: off**
@@ -206,7 +201,12 @@ is one global search across micro-themes, notes, glossary and PYQs, plus a
 cross-track progress overview. On phones there's a bottom navigation bar, and
 light/dark themes follow the OS with a manual toggle.
 
-**Admins** also get the **Syllabus Detailer** tab and **Manage**:
+Every learner also has the **Syllabus Detailer** (Jupiter): the whole syllabus
+with progress per subject, where sections are ticked off as studied. Admins see
+the same page as a content workbench (drafts, sections without notes or PYQs, a
+link to the Syllabus manager).
+
+**Admins** also get **Manage**:
 
 - **Dashboard**: totals and a per-track table.
 - **Syllabus manager**: create, edit and delete papers, subjects, topics and

@@ -29,7 +29,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  const response = NextResponse.next();
+  // Tell the layout which page this is, so it can render in the right world from the first byte.
+  const headers = new Headers(request.headers);
+  headers.set("x-bp-path", pathname);
+  const response = NextResponse.next({ request: { headers } });
   if (examMatch && request.cookies.get(COMMISSION_COOKIE)?.value !== examMatch[1]) {
     response.cookies.set(COMMISSION_COOKIE, examMatch[1], { path: "/", sameSite: "lax", maxAge: 60 * 60 * 24 * 365 });
   }
