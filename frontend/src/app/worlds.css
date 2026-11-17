@@ -230,7 +230,7 @@
   --radius-xl: 4px;
   --ctl-radius: 2px;
   --veil: 86%;
-  --veil-all: 0.52;
+  --veil-all: 0.6;
 }
 
 /* The Moon: the lunar facility. White, silver and graphite, one restrained blue; engineered, exact. */
@@ -255,7 +255,7 @@
   --radius-xl: 10px;
   --ctl-radius: 5px;
   --veil: 60%;
-  --veil-all: 0.18;
+  --veil-all: 0.32;
 }
 
 /* Saturn: the long view. Gold, ivory and umber; an editorial page. */
@@ -1754,7 +1754,7 @@ html {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse 52% 30% at 50% 24%, color-mix(in srgb, var(--w-deep) 62%, transparent), transparent 72%);
+  background: radial-gradient(ellipse 62% 27% at 50% 21%, color-mix(in srgb, var(--w-deep) 88%, transparent), color-mix(in srgb, var(--w-deep) 55%, transparent) 55%, transparent 80%);
 }
 .gateway-text {
   min-width: 210px;
@@ -1923,4 +1923,36 @@ ul.destinations {
 }
 .flow-steps [aria-current="step"] {
   color: var(--text-strong);
+}
+
+/* On the sky, secondary text is held to the same 4.5:1 as the rest (the sky's haze is computed for it). */
+:root:root:is([data-world="cosmos"], [data-world="system"]) {
+  --muted: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
+  --faint: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
+}
+:root:root:is([data-world="cosmos"], [data-world="system"])[data-sky="day"] {
+  --muted: #2b3547;
+  --faint: #2b3547;
+}
+/* the name on a dark sky: a little lighter red, so it holds its own against dusk */
+:root:not([data-sky="day"]) .arrival-title {
+  color: #ff4655;
+}
+/* labels above titles take the world's accent in every theme */
+:root:root .eyebrow {
+  color: var(--brand-primary);
+}
+/* search hits: a clear highlight, with the word in full ink */
+:is(.result, .prose) mark {
+  background: color-mix(in srgb, var(--brand-primary) 26%, transparent);
+  color: var(--text-strong);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+/* a choice that isn't available: still readable, plainly not pressable */
+.seg-disabled {
+  opacity: 1;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--muted) 60%, transparent);
 }

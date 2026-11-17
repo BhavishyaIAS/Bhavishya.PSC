@@ -175,7 +175,8 @@ export function cosmicEngine() {
       const h = Math.max(0, Math.min(1, (horizonY - y) / horizonY));
       return mix(pal.horizon, pal.zenith, Math.pow(h, 0.55));
     });
-    const LIGHT_INK = 0.84, DARK_INK = 0.0085; // the luminance of the inks in worlds.css
+    // the luminance of the secondary inks in worlds.css (the main inks are stronger, so they pass too)
+    const LIGHT_INK = 0.56, DARK_INK = 0.036;
     const need = function (ink: number, hazeColor: number[]) {
       for (let a = 0; a <= 0.7; a += 0.02) {
         const ok = bands.every(function (c) {
