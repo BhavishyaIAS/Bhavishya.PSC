@@ -198,7 +198,7 @@
   --font-label: var(--font-wide), var(--font-body);
   --label-track: 0.3em;
   --veil: 0%;
-  --veil-deep: 0.62;
+  --veil-deep: 0.82;
 }
 :root[data-world="system"] {
   --veil: 46%;
@@ -229,8 +229,8 @@
   --radius-lg: 4px;
   --radius-xl: 4px;
   --ctl-radius: 2px;
-  --veil: 78%;
-  --veil-all: 0.42;
+  --veil: 86%;
+  --veil-all: 0.52;
 }
 
 /* The Moon: the lunar facility. White, silver and graphite, one restrained blue; engineered, exact. */
@@ -1874,4 +1874,53 @@ ul.destinations {
     min-height: 40px;
     min-width: 40px;
   }
+}
+
+/* ───────────────────────────── Readability fixes (from the contrast audit) ───────────────────────────── */
+/* the names of the worlds in the navigation, and the line under the logo: large enough, strong enough */
+.world-tab-place {
+  font-size: 10.5px;
+  color: var(--muted);
+}
+.world-tab[aria-current="page"] .world-tab-place {
+  color: var(--text-strong);
+}
+.world-tab-label {
+  color: var(--text);
+}
+.brand-sub {
+  font-size: 9.5px;
+  color: var(--muted);
+}
+/* a world's name on the five-worlds cards: its own colour, darkened or lightened towards the ink */
+.destination-place {
+  color: color-mix(in srgb, var(--d) 45%, var(--text-strong));
+}
+:root[data-sky="day"] .destination-place {
+  filter: none;
+}
+/* the way down to the five worlds: a pill of glass, readable on any sky */
+.arrival-more {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 10px;
+}
+/* the footer stands on the scene: give it its own ground */
+.site-footer {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--w-deep) 88%, transparent);
+  border-radius: 14px 14px 0 0;
+}
+.site-footer .motion-toggle {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+/* labels standing on the scene (a select's "Topic", the steps) */
+:is(.flow-head, .reading-head, .ws-head) :is(.label, .flow-steps) {
+  color: var(--text);
+}
+.flow-steps [aria-current="step"] {
+  color: var(--text-strong);
 }

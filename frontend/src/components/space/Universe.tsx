@@ -239,7 +239,7 @@ export default function Universe() {
         gl.uniform4fv(U("uOrbA"), orbA);
         gl.uniform4fv(U("uOrbB"), orbB);
         gl.uniform1f(U("uGalaxy"), shown === "cosmos" ? 1 : shown === "system" ? 0.35 : 0);
-        gl.uniform2f(U("uGalaxyAt"), phone() ? 0.05 : 0.5, phone() ? 0.5 : 0.3);
+        gl.uniform2f(U("uGalaxyAt"), phone() ? 0.05 : 0.66, phone() ? 0.5 : 0.12); // clear of the name and the gateways
 
         const living = !!LIVING_SKY[shown];
         if (now - skyAt > 1000) {
