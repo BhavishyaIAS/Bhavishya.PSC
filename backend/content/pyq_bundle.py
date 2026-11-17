@@ -434,3 +434,33 @@ def load(bundle, get_model, log=print):
     for k, v in sorted(totals.items()):
         log(f"  {k}: {v}")
     return dict(totals)
+
+
+def publish(bundle, get_model, log=print):
+    """
+    Publish what `load` created hidden: the bundle's micro-themes, the chapters made only of them,
+    and the topics `load` added hidden (Ethics, Essay, Mental Ability, Current Affairs). Anything an
+    admin made or hid is left alone: a chapter that also holds other sections keeps its status.
+    """
+    Track, Subject, Topic, MicroTheme = (get_model(n) for n in ("Track", "Subject", "Topic", "MicroTheme"))
+    totals = defaultdict(int)
+    for slug, data in bundle["tracks"].items():
+        commission, group = slug.split("/")
+        track = Track.objects.filter(commission__slug=commission, group__slug=group).first()
+        if track is None:
+            continue
+        codes = {m["code"] for m in data["micro_themes"]} | {f"{m['code']}-PYQ" for m in data["micro_themes"]}
+        ours = MicroTheme.objects.filter(track=track, code__in=codes)
+        topic_ids = set(ours.values_list("topic_id", flat=True))
+        mixed = set(MicroTheme.objects.filter(topic_id__in=topic_ids).exclude(code__in=codes).values_list("topic_id", flat=True))
+        chapters = Topic.objects.filter(id__in=topic_ids - mixed)
+        totals["micro_themes_published"] += ours.filter(status="draft").update(status="published")
+        totals["chapters_published"] += chapters.filter(status="draft").update(status="published")
+        regional = commission == "tgpsc"
+        titles = [SUBJECTS[k][1 if regional else 0] for k in NEW_SUBJECTS_HIDDEN]
+        new_subjects = Subject.objects.filter(paper__track=track, code__in=NEW_SUBJECTS_HIDDEN, title__in=titles, status="draft")
+        totals["topics_published"] += new_subjects.update(status="published")
+        log(f"  {slug}: published")
+    for k, v in sorted(totals.items()):
+        log(f"  {k}: {v}")
+    return dict(totals)

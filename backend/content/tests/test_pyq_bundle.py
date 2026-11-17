@@ -181,3 +181,30 @@ class AnswerOnlyValidationTests(TestCase):
         self.assertIn("option_c", half.json())
         wrong = c.post("/api/manage/questions/", {**base, "question_no": 997, "option_a": "Answer", "correct_option": "B"}, format="json", **XHR)
         self.assertEqual(wrong.status_code, 400)
+
+
+class PublishTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+
+    def test_publish_only_what_the_import_made(self):
+        bundle, _ = LoadTests.bundle(self)
+        get = lambda n: apps.get_model("content", n)  # noqa: E731
+        pb.load(bundle, get, log=lambda *_: None)
+        q = Question.objects.get(text="Describe soils.")
+        chapter = q.micro_theme.topic
+        # an admin's hidden section in a chapter the import also used: that chapter must stay as it is
+        other = Question.objects.get(text="Which Veda?").micro_theme.topic
+        MicroTheme.objects.create(topic=other, track=other.subject.paper.track, code="ADMIN-1", title="Draft by admin", status="draft")
+        totals = pb.publish(bundle, get, log=lambda *_: None)
+        chapter.refresh_from_db()
+        other.refresh_from_db()
+        self.assertEqual(chapter.status, "published")
+        self.assertEqual(other.status, "draft")
+        self.assertEqual(MicroTheme.objects.get(code="ADMIN-1").status, "draft")
+        self.assertEqual(Question.objects.get(text="Which Veda?").micro_theme.status, "published")
+        self.assertGreaterEqual(totals["micro_themes_published"], 3)
+        # running it again changes nothing
+        self.assertEqual(pb.publish(bundle, get, log=lambda *_: None).get("micro_themes_published", 0), 0)
+
