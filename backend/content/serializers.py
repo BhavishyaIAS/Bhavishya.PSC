@@ -8,6 +8,7 @@ from .models import (
     Note,
     Paper,
     Question,
+    prelims_option_errors,
     Stage,
     StudyMaterial,
     Subject,
@@ -183,12 +184,9 @@ class QuestionReadSerializer(serializers.ModelSerializer):
     def get_options(self, obj):
         if obj.stage != Stage.PRELIMS:
             return None
-        return [
-            {"key": "A", "text": obj.option_a},
-            {"key": "B", "text": obj.option_b},
-            {"key": "C", "text": obj.option_c},
-            {"key": "D", "text": obj.option_d},
-        ]
+        # an answer-only question (no distractors on record) comes out with just its answer
+        opts = [("A", obj.option_a), ("B", obj.option_b), ("C", obj.option_c), ("D", obj.option_d)]
+        return [{"key": k, "text": t} for k, t in opts if (t or "").strip()]
 
 
 class QuestionWriteSerializer(serializers.ModelSerializer):
@@ -218,14 +216,10 @@ class QuestionWriteSerializer(serializers.ModelSerializer):
         if mt is not None and track is not None and mt.track_id != track.id:
             raise serializers.ValidationError({"micro_theme": "Micro-theme belongs to a different exam track."})
         if stage == Stage.PRELIMS:
-            errors = {}
-            for f in ("option_a", "option_b", "option_c", "option_d"):
-                value = attrs.get(f, getattr(self.instance, f, "") if self.instance else "")
-                if not (value or "").strip():
-                    errors[f] = "Required for prelims questions."
-            correct = attrs.get("correct_option", self.instance.correct_option if self.instance else "")
-            if correct not in Question.Option.values:
-                errors["correct_option"] = "Choose A, B, C or D."
+            value = lambda f: attrs.get(f, getattr(self.instance, f, "") if self.instance else "")  # noqa: E731
+            errors = prelims_option_errors(
+                value("option_a"), value("option_b"), value("option_c"), value("option_d"), value("correct_option")
+            )
             if errors:
                 raise serializers.ValidationError(errors)
         # Natural-key uniqueness, with a friendlier message than the DB constraint.

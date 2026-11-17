@@ -11,7 +11,7 @@ so re-running the same sheet updates questions instead of duplicating them.
 
 from django.db import transaction
 
-from .models import MicroTheme, Question, Stage, Status, Track
+from .models import MicroTheme, Question, Stage, Status, Track, prelims_option_errors
 from .richtext import text_to_doc
 from .serializers import get_or_create_tags
 
@@ -88,13 +88,12 @@ def validate_rows(track: Track, stage: str, rows: list, default_status: str):
         if stage == Stage.PRELIMS:
             for f in ("option_a", "option_b", "option_c", "option_d"):
                 data[f] = _s(raw.get(f))
-                if not data[f]:
-                    errors.append(f"{f} is required")
             correct = _s(raw.get("correct_option")).upper().replace("OPTION", "").strip("() .")
             if correct in ("1", "2", "3", "4"):
                 correct = "ABCD"[int(correct) - 1]
-            if correct not in ("A", "B", "C", "D"):
-                errors.append("correct_option must be A, B, C or D")
+            # four options, or answer-only (the answer in option_a, B–D empty)
+            for f, msg in prelims_option_errors(data["option_a"], data["option_b"], data["option_c"], data["option_d"], correct).items():
+                errors.append(f"{f}: {msg}")
             data["correct_option"] = correct
             data["explanation"] = _s(raw.get("explanation"))
         else:

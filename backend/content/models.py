@@ -369,6 +369,27 @@ def question_search_vector():
     )
 
 
+def prelims_option_errors(a, b, c, d, correct):
+    """
+    A prelims question has four options and the letter of the right one, or is answer-only:
+    the answer in option A and B–D left empty (a previous-year question recorded without its
+    distractors). Returns {field: message}.
+    """
+    opts = {"option_a": a, "option_b": b, "option_c": c, "option_d": d}
+    filled = {f for f, v in opts.items() if (v or "").strip()}
+    errors = {}
+    if filled == {"option_a"}:
+        if correct != "A":
+            errors["correct_option"] = "An answer-only question keeps its answer in option A."
+        return errors
+    for f in opts:
+        if f not in filled:
+            errors[f] = "Required — or leave B, C and D all empty for an answer-only question."
+    if correct not in ("A", "B", "C", "D"):
+        errors["correct_option"] = "Choose A, B, C or D."
+    return errors
+
+
 class QuestionQuerySet(models.QuerySet):
     def visible_to(self, user):
         return self if is_admin(user) else self.filter(status=P, track__commission__status=P)
@@ -437,11 +458,7 @@ class Question(TimeStamped):
     def clean(self):
         errors = {}
         if self.stage == Stage.PRELIMS:
-            for f in ("option_a", "option_b", "option_c", "option_d"):
-                if not (getattr(self, f) or "").strip():
-                    errors[f] = "Required for prelims questions."
-            if self.correct_option not in self.Option.values:
-                errors["correct_option"] = "Choose A, B, C or D."
+            errors.update(prelims_option_errors(self.option_a, self.option_b, self.option_c, self.option_d, self.correct_option))
         if self.micro_theme_id and self.micro_theme.track_id != self.track_id:
             errors["micro_theme"] = "Micro-theme belongs to a different exam track."
         if errors:
