@@ -20,6 +20,8 @@ import { BottomNav } from "@/components/BottomNav";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
 import { Header } from "@/components/Header";
+import { skyBootScript } from "@/components/space/environment";
+import { SkyClock } from "@/components/space/SkyClock";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
 import { worldForPath } from "@/components/space/worlds";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -115,12 +117,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <style dangerouslySetInnerHTML={{ __html: brandCss }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* the sky of this moment, before the first paint (components/space/environment.ts) */}
+        <script dangerouslySetInnerHTML={{ __html: skyBootScript }} />
       </head>
       <body>
         <a href="#main" className="skip-link">
           Skip to content
         </a>
         <SpaceLayer live={site.backdrops} />
+        <SkyClock />
         <Interactions />
         <ToastProvider>
           <Header user={user} />
