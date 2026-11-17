@@ -47,18 +47,17 @@ import "./worlds.css";
  * latin-ext brings ā ī ṇ ś (transliteration) and ₹; the two Noto faces load only on pages
  * that contain Telugu or Devanagari.
  */
-const opts = { subsets: ["latin", "latin-ext"] as ("latin" | "latin-ext")[], display: "swap" as const, preload: false };
-const sans = Geist({ ...opts, preload: true, variable: "--font-sans" });
-const mono = Geist_Mono({ ...opts, variable: "--font-mono-face" });
-const serif = Literata({ ...opts, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-serif" });
-const display = Fraunces({ ...opts, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-display-serif" });
+const sans = Geist({ subsets: ["latin", "latin-ext"], display: "swap", variable: "--font-sans" });
+const mono = Geist_Mono({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-mono-face" });
+const serif = Literata({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-serif" });
+const display = Fraunces({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, style: ["normal", "italic"], axes: ["opsz"], variable: "--font-display-serif" });
 const wide = Syncopate({ subsets: ["latin"], weight: ["400", "700"], display: "swap", preload: false, variable: "--font-wide" });
-const plex = IBM_Plex_Sans({ ...opts, weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-plex" });
-const plexCondensed = IBM_Plex_Sans_Condensed({ ...opts, weight: ["500", "600"], variable: "--font-plex-condensed" });
-const plexMono = IBM_Plex_Mono({ ...opts, weight: ["400", "500"], variable: "--font-plex-mono" });
-const cormorant = Cormorant_Garamond({ ...opts, weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-cormorant" });
-const grotesk = Space_Grotesk({ ...opts, variable: "--font-grotesk" });
-const manrope = Manrope({ ...opts, variable: "--font-manrope" });
+const plex = IBM_Plex_Sans({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500", "600"], style: ["normal", "italic"], variable: "--font-plex" });
+const plexCondensed = IBM_Plex_Sans_Condensed({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "600"], variable: "--font-plex-condensed" });
+const plexMono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500"], variable: "--font-plex-mono" });
+const cormorant = Cormorant_Garamond({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-cormorant" });
+const grotesk = Space_Grotesk({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-grotesk" });
+const manrope = Manrope({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-manrope" });
 const telugu = Noto_Sans_Telugu({ subsets: ["telugu"], variable: "--font-telugu", display: "swap", preload: false });
 const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
 const fonts = [sans, mono, serif, display, wide, plex, plexCondensed, plexMono, cormorant, grotesk, manrope, telugu, devanagari].map((f) => f.variable).join(" ");

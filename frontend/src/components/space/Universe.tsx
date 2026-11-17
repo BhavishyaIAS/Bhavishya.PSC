@@ -149,8 +149,9 @@ export default function Universe() {
     } catch {}
 
     const resize = () => {
-      w = window.innerWidth;
-      h = window.innerHeight;
+      // the canvas's own box (the viewport), not innerWidth: a phone's layout viewport can be wider for a moment
+      w = canvas.clientWidth || window.innerWidth;
+      h = canvas.clientHeight || window.innerHeight;
       scale = Math.min(window.devicePixelRatio || 1, 1.5) * quality;
       canvas.width = Math.max(2, Math.round(w * scale));
       canvas.height = Math.max(2, Math.round(h * scale));
@@ -186,6 +187,7 @@ export default function Universe() {
       py += (ty - py) * Math.min(1, dt * 4);
       if (!current) return;
 
+      if (canvas.clientWidth > 0 && (canvas.clientWidth !== w || canvas.clientHeight !== h)) resize();
       const H = canvas.height, sc = scale;
       gl.uniform2f(U("uRes"), canvas.width, H);
       gl.uniform1f(U("uTime"), frozen ? 40 : (now / 1000) % 3600);

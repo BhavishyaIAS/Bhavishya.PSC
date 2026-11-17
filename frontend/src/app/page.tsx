@@ -21,8 +21,9 @@ export default async function LandingPage() {
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
   const focus = site.focus ? commissions.find((c) => c.slug === site.focus) : undefined;
   const shown = focus ? [focus] : commissions;
-  const lead = focus ?? commissions[0];
-  const first = lead?.tracks.find((t) => t.has_content) ?? lead?.tracks[0];
+  // "Continue" and the five worlds lead into the first exam that has something in it
+  const tracks = shown.flatMap((c) => c.tracks);
+  const first = tracks.find((t) => t.has_content) ?? tracks[0];
   const isAdmin = user?.role === "admin";
   const firstName = user?.display_name?.split(" ")[0];
   const eyebrow = site.hero_eyebrow || (focus ? focus.name : firstName ? `Welcome back, ${firstName}` : "Civil services preparation");

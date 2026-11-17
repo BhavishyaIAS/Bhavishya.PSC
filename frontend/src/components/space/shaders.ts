@@ -71,16 +71,16 @@ vec3 starLayer(vec3 d, float scale, float rarity) {
   float m = h31(id + 3.1);
   if (m < rarity) return vec3(0);
   vec3 sp = id + .5 + (h33(id) - .5) * .6;
-  float dd = length(p - sp), r = scale * 1.05 / uRes.y;
+  float dd = length(p - sp), r = scale * .8 / uRes.y;
   float b = pow((m - rarity) / (1. - rarity), 3.);
-  float core = smoothstep(r * 1.5, r * .2, dd) * (.22 + b * 2.4);
+  float core = smoothstep(r * 1.5, r * .2, dd) * (.1 + b * 2.);
   core += exp(-dd * dd / (r * r * 7.)) * b * b * 1.1 * smoothstep(.2, .1, dd);       // the brightest bloom a little
   vec3 tint = mix(vec3(1., .76, .58), vec3(.70, .83, 1.), h31(id + 9.7));
   return mix(vec3(1), tint, .7) * core;
 }
 vec3 starField(vec3 d, float amount) {
-  vec3 c = starLayer(d, 60., .972) * 1.2 + starLayer(d, 135., .955) * .75;
-  if (uLite < .5) c += starLayer(d, 300., .94) * .5;
+  vec3 c = starLayer(d, 60., .978) * 1.15 + starLayer(d, 135., .972) * .6;
+  if (uLite < .5) c += starLayer(d, 300., .962) * .38;
   return c * amount;
 }
 /* The real sky: the Tycho-2 survey. Sampled soft, and lifted so the Milky Way reads as light, not as dots. */
@@ -154,7 +154,7 @@ vec4 planet(vec2 q, float kind, vec3 ca, vec3 cb, float ring, float seed, float 
     } else {
       float hgt = fbm3(sp * 2.4 + seed), det = fbm3(sp * 9. + seed * 3.);
       alb = mix(cb, ca, smoothstep(.36, .68, hgt)) * (.68 + .55 * det);
-      alb = mix(alb, vec3(.93, .91, .9), smoothstep(1.12, 1.32, abs(lat) + det * .22));    // polar caps
+      alb = mix(alb, vec3(.86, .84, .82), smoothstep(1.32, 1.5, abs(lat) + det * .1) * .7);  // small polar caps
     }
     float ndl = dot(n, L), lit = pow(clamp(ndl, 0., 1.), .85);
     if (ring > .5) {                                                                     // the ring's shadow on the planet
