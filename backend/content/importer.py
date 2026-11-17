@@ -91,6 +91,8 @@ def validate_rows(track: Track, stage: str, rows: list, default_status: str):
             correct = _s(raw.get("correct_option")).upper().replace("OPTION", "").strip("() .")
             if correct in ("1", "2", "3", "4"):
                 correct = "ABCD"[int(correct) - 1]
+            elif correct in ("NONE", "NONE OF THE OPTIONS", "NONE OF THESE"):
+                correct = "N"
             # four options, or answer-only (the answer in option_a, B–D empty)
             for f, msg in prelims_option_errors(data["option_a"], data["option_b"], data["option_c"], data["option_d"], correct).items():
                 errors.append(f"{f}: {msg}")

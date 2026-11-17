@@ -385,8 +385,8 @@ def prelims_option_errors(a, b, c, d, correct):
     for f in opts:
         if f not in filled:
             errors[f] = "Required — or leave B, C and D all empty for an answer-only question."
-    if correct not in ("A", "B", "C", "D"):
-        errors["correct_option"] = "Choose A, B, C or D."
+    if correct not in ("A", "B", "C", "D", "N"):
+        errors["correct_option"] = "Choose A, B, C, D or None of the options."
     return errors
 
 
@@ -412,6 +412,7 @@ class Question(TimeStamped):
         B = "B", "B"
         C = "C", "C"
         D = "D", "D"
+        NONE = "N", "None of the options"  # a PYQ whose official wording leaves no option correct
 
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="questions")
     stage = models.CharField(max_length=10, choices=Stage.choices)
