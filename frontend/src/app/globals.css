@@ -1675,6 +1675,7 @@ button.option:hover {
   margin-top: 14px;
 }
 .explanation {
+  white-space: pre-line; /* explanations keep their paragraphs and lists */
   margin-top: 12px;
   padding: 12px 14px;
   border-radius: 12px;

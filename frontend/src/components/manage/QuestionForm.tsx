@@ -204,9 +204,9 @@ export function QuestionForm({ commissions, initial }: { commissions: Commission
                   Correct option
                 </legend>
                 <div className="row">
-                  {["A", "B", "C", "D"].map((k) => (
+                  {["A", "B", "C", "D", "N"].map((k) => (
                     <label key={k} className="checkbox">
-                      <input type="radio" name="correct_option" value={k} defaultChecked={initial.correct_option === k} /> {k}
+                      <input type="radio" name="correct_option" value={k} defaultChecked={initial.correct_option === k} /> {k === "N" ? "None of the options" : k}
                     </label>
                   ))}
                 </div>

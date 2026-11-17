@@ -164,6 +164,13 @@ their options are kept as answer-only questions. `content/data/pyqs-2026-11.json
 (migration 0007) holds APPSC Group 1 Prelims 2016–2024 and Mains 2008–2025 and
 TGPSC Group 1 Mains 2016 and 2024.
 
+UPSC Prelims come from the content team's Word editions instead:
+`python manage.py pyq_bundle build-upsc-docx <year-wise.docx> <out.json.gz> --subjectwise <subject-wise.docx>`
+(`content/pyq_docx.py`). `content/data/upsc-prelims-2026-11.json.gz` (migration 0010) holds
+General Studies Paper I, 1979–2026: 5,930 questions, browsable by year (in paper order) and by
+subject on the Prelims PYQ page. A prelims answer can also be "None of the options" (`N`) for
+questions whose official wording leaves no option correct.
+
 ## Data model
 
 ```

@@ -321,8 +321,8 @@ def load(bundle, get_model, log=print):
     (track, stage, year, paper, number); a question an admin already entered with the same wording
     and year is left as it is.
     """
-    Track, Paper, Subject, Topic, MicroTheme, Question = (
-        get_model(n) for n in ("Track", "Paper", "Subject", "Topic", "MicroTheme", "Question")
+    Track, Paper, Subject, Topic, MicroTheme, Question, Tag = (
+        get_model(n) for n in ("Track", "Paper", "Subject", "Topic", "MicroTheme", "Question", "Tag")
     )
     from django.contrib.postgres.search import SearchVector
 
@@ -352,16 +352,21 @@ def load(bundle, get_model, log=print):
             home = Paper.objects.create(track=track, code="GS", title="General Studies", stage="prelims", order=1, status="published")
         subjects = {}
 
-        def subject(key):
+        def subject(key, own=None):
+            """A topic by key (SUBJECTS), or one the bundle names itself: own = {title, look, hidden}."""
             if key in subjects:
                 return subjects[key]
-            title_ap, title_tg, look = SUBJECTS[key]
-            title = title_tg if regional else title_ap
+            if own:
+                title, look = own["title"], own.get("look", "general")
+            else:
+                title_ap, title_tg, look = SUBJECTS[key]
+                title = title_tg if regional else title_ap
             s = Subject.objects.filter(paper__track=track, title__iexact=title).first()
             if s is None:
                 last = Subject.objects.filter(paper=home).order_by("-order").values_list("order", flat=True).first() or 0
-                s = Subject.objects.create(paper=home, title=title, code=key, look=look, order=last + 1,
-                                           status="draft" if key in NEW_SUBJECTS_HIDDEN else "published")
+                hidden = own.get("hidden", False) if own else key in NEW_SUBJECTS_HIDDEN
+                s = Subject.objects.create(paper=home, title=title, code=key[:40], look=look, order=last + 1,
+                                           status="draft" if hidden else "published")
                 totals["subjects_created"] += 1
             subjects[key] = s
             return s
@@ -383,7 +388,7 @@ def load(bundle, get_model, log=print):
                     mt_ids[mt["code"]] = existing.id
                     totals["micro_themes_reused"] += 1
                     continue
-            s = subject(mt["subject"])
+            s = subject(mt["subject"], mt.get("subject_own"))
             ck = (s.id, mt["chapter"])
             if ck not in chapters:
                 topic = Topic.objects.filter(subject=s, title=mt["chapter"]).first()
@@ -406,6 +411,7 @@ def load(bundle, get_model, log=print):
         fields = ("text", "option_a", "option_b", "option_c", "option_d", "correct_option", "explanation",
                   "directive", "marks", "model_answer", "keywords", "status")
         touched = []
+        tag_ids = {}
         for q in data["questions"]:
             key = {"track": track, "stage": q["stage"], "year": q["year"], "paper_label": q["paper_label"], "question_no": q["question_no"]}
             obj = Question.objects.filter(**key).first()
@@ -421,9 +427,18 @@ def load(bundle, get_model, log=print):
                 if f in q:
                     setattr(obj, f, q[f])
             obj.micro_theme_id = mt_ids.get(q["micro_theme"])
+            if q.get("tags"):
+                tag_ids.setdefault(tuple(q["tags"]), []).append(obj)
             obj.model_answer_text = doc_to_text(obj.model_answer) if q["stage"] == "mains" else ""
             obj.save()
             touched.append(obj.pk)
+        for names, objs in tag_ids.items():
+            tags = []
+            for name in names:
+                tag_slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:70]
+                tags.append(Tag.objects.filter(slug=tag_slug).first() or Tag.objects.create(name=name[:60], slug=tag_slug))
+            for obj in objs:
+                obj.tags.add(*tags)
         # the same search index Question.save() maintains (migration models don't run custom save())
         weights = SearchVector("text", weight="A", config="english") + SearchVector("keywords", weight="B", config="english") \
             + SearchVector("option_a", "option_b", "option_c", "option_d", weight="C", config="english") \

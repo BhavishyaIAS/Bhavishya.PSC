@@ -11,6 +11,7 @@ export function PrelimsOptions({ q }: { q: Question }) {
   const [revealed, setRevealed] = useState(false);
   const show = revealed || picked !== null;
   const options = q.options ?? [];
+  const noneCorrect = q.correct_option === "N"; // the official wording leaves no option correct
   // Recorded without its distractors: think of the answer, then reveal it.
   if (options.length < 2) {
     return (
@@ -71,9 +72,9 @@ export function PrelimsOptions({ q }: { q: Question }) {
             (picked === q.correct_option ? (
               <b style={{ color: "var(--success)" }}>Correct!</b>
             ) : (
-              <b style={{ color: "var(--danger)" }}>Not quite — the answer is {q.correct_option}.</b>
+              <b style={{ color: "var(--danger)" }}>Not quite — {noneCorrect ? "none of the options is correct as framed" : `the answer is ${q.correct_option}`}.</b>
             ))}
-          {picked === null && revealed && <b>Answer: {q.correct_option}</b>}
+          {picked === null && revealed && <b>Answer: {noneCorrect ? "none of the options is correct as framed" : q.correct_option}</b>}
         </span>
       </div>
       {show && q.explanation && (
