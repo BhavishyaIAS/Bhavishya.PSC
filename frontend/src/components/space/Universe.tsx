@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
+import { cosmicEngine, type SkyState } from "./environment";
 import { FRAGMENT, VERTEX, type ShaderName } from "./shaders";
 import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 
@@ -10,6 +11,8 @@ import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 let leave: () => void = () => {};
 export const depart = () => leave();
 
+/** The sky (Sun, Moon, daylight, events) lives over these worlds; the admin station keeps plain deep space. */
+const LIVING_SKY: Partial<Record<World, boolean>> = { cosmos: true, system: true };
 /** How often each world needs redrawing when nothing is being touched. Most of space moves very slowly. */
 const CALM_FPS: Record<World, number> = { cosmos: 30, system: 30, saturn: 24, jupiter: 24, earth: 24, mars: 12, moon: 5, station: 10 };
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -137,6 +140,13 @@ export default function Universe() {
     let reveal = 1, px = 0, py = 0, tx = 0, ty = 0;
     let lastDraw = 0, lastFrame = 0, busyUntil = 0, slow = 0, calibrating = 50;
     const hover = new Float32Array(6);
+    // the environment: recomputed every second (it changes by the minute); the orrery runs on its own clock
+    const engine = cosmicEngine();
+    const visitStart = performance.now();
+    const skyStart = engine.moment(location.search);
+    const skyOffset = skyStart.getTime() - Date.now(); // non-zero only when previewing another time (?at=)
+    let skyState: SkyState = engine.sky(skyStart, { phone: phone() });
+    let skyAt = 0;
     const orb = new Float32Array(24), orbA = new Float32Array(24), orbB = new Float32Array(24);
     // The opening: on the first page of a visit, space comes up out of darkness.
     try {
@@ -229,7 +239,29 @@ export default function Universe() {
         gl.uniform4fv(U("uOrbA"), orbA);
         gl.uniform4fv(U("uOrbB"), orbB);
         gl.uniform1f(U("uGalaxy"), shown === "cosmos" ? 1 : shown === "system" ? 0.35 : 0);
-        gl.uniform2f(U("uGalaxyAt"), phone() ? 0.05 : 0.5, phone() ? 0.5 : 0.3);
+        gl.uniform2f(U("uGalaxyAt"), phone() ? 0.05 : 0.66, phone() ? 0.5 : 0.12); // clear of the name and the gateways
+
+        const living = !!LIVING_SKY[shown];
+        if (now - skyAt > 1000) {
+          skyState = engine.sky(new Date(Date.now() + skyOffset), { phone: phone() });
+          skyAt = now;
+        }
+        const sky = skyState, W = canvas.width;
+        const elapsed = frozen ? 0 : (now - visitStart) / 1000;
+        gl.uniform1f(U("uEnv"), living ? 1 : 0);
+        gl.uniform1f(U("uHorizon"), H - sky.horizonY * H);
+        gl.uniform2f(U("uSunPos"), sky.sun.x * W, H - sky.sun.y * H);
+        gl.uniform1f(U("uSunAlt"), engine.ENV.sun ? sky.sun.alt : -90);
+        gl.uniform2f(U("uMoonPos"), sky.moon.x * W, H - sky.moon.y * H);
+        gl.uniform1f(U("uMoonAlt"), engine.ENV.moon ? sky.moon.alt : -90);
+        gl.uniform1f(U("uMoonElong"), sky.moon.elongation);
+        gl.uniform3fv(U("uZen"), sky.zenith);
+        gl.uniform3fv(U("uHor"), sky.horizon);
+        gl.uniform3fv(U("uGlow"), sky.glow);
+        gl.uniform1f(U("uStars"), sky.stars);
+        gl.uniform1f(U("uClock"), frozen ? 0.5 : (Date.now() / 1000) % 100000);
+        gl.uniform1f(U("uEvents"), engine.ENV.events && !frozen ? 1 : 0);
+        gl.uniform1fv(U("uTheta"), engine.ENV.planets ? engine.orbitsAt(skyStart, elapsed) : sky.planets);
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, quad);
       gl.enableVertexAttribArray(0);
