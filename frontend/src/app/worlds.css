@@ -185,6 +185,7 @@
   --primary-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
   --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
   --on-accent: #14110b;
+  --brand-red: #ff4d5b; /* the name, light enough for 4.5:1 on a dark sheet */
   border-color: color-mix(in srgb, var(--w-lite) 12%, var(--w-sheet));
 }
 /* a sheet inside a sheet does not cast a second shadow */
@@ -2082,4 +2083,13 @@ ul.destinations {
 }
 .station-soon {
   color: var(--muted);
+}
+
+/* Night audit fixes */
+:is(.flow-head, .reading-head, .ws-head) .label {
+  color: var(--text-strong);
+}
+.diagram :is(p, span, text) {
+  color: var(--text);
+  fill: var(--text);
 }
