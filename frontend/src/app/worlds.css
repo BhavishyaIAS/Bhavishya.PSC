@@ -94,8 +94,8 @@
   --w-deep: #05060c; /* its darkness */
   --w-glass: #0c0e18; /* its dark surfaces */
   --w-lite: #eef0f6; /* its light ink */
-  --w-paper: #f6f5f1; /* its paper (light theme) */
-  --w-ink: #12141c; /* the ink on that paper */
+  --w-paper: #fbfaf7; /* its paper (light theme): ivory white */
+  --w-ink: #161a38; /* the ink on that paper: deep navy */
   --accent: #e9c98d; /* its one colour, bright enough for the dark */
   --accent-ink: #8a5a14; /* the same colour, dark enough for paper */
   --on-accent: #17120a; /* text on a filled accent */
@@ -133,7 +133,7 @@
 
 /* ───────────────────────────── Paper ───────────────────────────── */
 
-:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper) {
+:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty) {
   color-scheme: light;
   --bg: var(--w-paper);
   --surface: var(--w-paper);
@@ -153,6 +153,7 @@
   --primary-soft: color-mix(in srgb, var(--accent-ink) 8%, var(--w-paper));
   --accent-soft: color-mix(in srgb, var(--accent-ink) 8%, var(--w-paper));
   --on-accent: #fff;
+  --brand-red: #c00d24; /* the name, deep enough for 4.5:1 on ivory */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px -8px rgba(0, 0, 0, 0.14);
   --shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.06), 0 28px 56px -20px rgba(0, 0, 0, 0.32);
@@ -162,7 +163,7 @@
   box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
 }
 /* the reader's dark theme: the same sheets, in the world's own darkness */
-:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper) {
+:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty) {
   color-scheme: dark;
   --w-sheet: color-mix(in srgb, var(--w-lite) 3%, var(--w-glass));
   --bg: var(--w-sheet);
@@ -177,12 +178,12 @@
   --border-strong: color-mix(in srgb, var(--w-lite) 22%, var(--w-sheet));
   --heading: var(--w-lite);
   /* the world's own night accent: never the daytime sky's (see the living sky) */
-  --ring: color-mix(in srgb, var(--accent-night, var(--accent)) 34%, transparent);
-  --brand-primary: var(--accent-night, var(--accent));
-  --brand-primary-deep: color-mix(in srgb, var(--accent-night, var(--accent)) 70%, #000);
-  --brand-accent: var(--accent-night, var(--accent));
-  --primary-soft: color-mix(in srgb, var(--accent-night, var(--accent)) 12%, var(--w-sheet));
-  --accent-soft: color-mix(in srgb, var(--accent-night, var(--accent)) 12%, var(--w-sheet));
+  --ring: color-mix(in srgb, var(--accent) 34%, transparent);
+  --brand-primary: var(--accent);
+  --brand-primary-deep: color-mix(in srgb, var(--accent) 70%, #000);
+  --brand-accent: var(--accent);
+  --primary-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--w-sheet));
   --on-accent: #14110b;
   border-color: color-mix(in srgb, var(--w-lite) 12%, var(--w-sheet));
 }
@@ -505,13 +506,14 @@ html {
   border-style: solid;
 }
 /* outlined controls standing on the scene get a pane of glass behind them */
+/* (only where they stand on the scene: inside any surface they are plain) */
 .btn-ghost,
 .segmented {
   background-color: color-mix(in srgb, var(--w-deep) 52%, transparent);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-:is(.panel, .card, .q-card, .modal, .auth-card) :is(.btn-ghost, .segmented) {
+:is(.panel, .card, .q-card, .modal, .auth-card, .topbar, .bottom-nav, .gateway-text, .station-card, .destination) :is(.btn-ghost, .segmented) {
   background-color: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -1679,73 +1681,6 @@ html {
 :root[data-world="moon"] { --poster-at: 78% 50%; }
 :root:is([data-world="cosmos"], [data-world="system"]) { --poster-at: 70% 30%; }
 
-/* ───────────────────────────── The living sky (components/space/environment.ts) ─────────────────────────────
- *
- * Over the deep-space worlds the sky follows the reader's clock. Its ink follows the sky, not the
- * reading theme: <html data-sky="day"> (decided from the sky's own colours) turns everything that
- * stands on the sky to dark ink on light glass; reading panels keep the reader's light or dark theme.
- * --sky-haze is an even veil, only as strong as needed for every band of the sky to give 4.5:1. */
-
-:root:root:is([data-world="cosmos"], [data-world="system"])[data-sky="day"] {
-  --w-deep: #e3ebf4;
-  --bg: #eef3f9;
-  --surface: rgb(249 251 254 / 0.94);
-  --surface-2: #f2f6fa;
-  --surface-3: #e4eaf2;
-  --text: #1b2433;
-  --text-strong: #0b1220;
-  --muted: #364255;
-  --faint: #4b5769;
-  --border: rgb(11 18 32 / 0.16);
-  --border-strong: rgb(11 18 32 / 0.34);
-  --heading: #0b1220;
-  --accent-night: #e9c98d;
-  --accent: #4a2e06;
-  --brand-primary: #4a2e06;
-  --brand-primary-deep: #3a2405;
-  --brand-accent: #4a2e06;
-  --on-accent: #ffffff;
-  --ring: rgb(74 46 6 / 0.35);
-  --primary-soft: #f6efe2;
-  --accent-soft: #f6efe2;
-  --brand-red: #b20f1d;
-  --shadow-sm: 0 1px 2px rgb(11 18 32 / 0.08);
-  --shadow: 0 1px 2px rgb(11 18 32 / 0.08), 0 10px 26px -12px rgb(11 18 32 / 0.25);
-  color-scheme: light;
-}
-:root:is([data-world="cosmos"], [data-world="system"]) .space-scrim::before {
-  background: var(--sky-haze, transparent);
-  opacity: 1;
-}
-:root:is([data-world="cosmos"], [data-world="system"]) .space {
-  background: var(--sky-zenith, var(--w-deep));
-}
-/* without WebGL (or before it is up) the still follows the time of day too */
-:root:is([data-world="cosmos"], [data-world="system"]) .space-poster::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, var(--sky-zenith, transparent) 0%, var(--sky-horizon, transparent) 88%, #0b1018 91.5%);
-  opacity: calc(1 - var(--sky-stars, 1));
-}
-:root[data-sky="day"]:is([data-world="cosmos"], [data-world="system"]) :is(.ws-title, .page-head, .system-copy, .flow-head, .crumbs, .arrival) {
-  text-shadow: 0 1px 14px rgb(255 255 255 / 0.55);
-}
-:root[data-sky="day"]:is([data-world="cosmos"], [data-world="system"]) .arrival-title {
-  text-shadow: 0 2px 24px rgb(255 255 255 / 0.6);
-}
-:root[data-sky="day"]:is([data-world="cosmos"], [data-world="system"]) .gateway:is(:hover, :focus-visible) .gateway-name {
-  text-shadow: none;
-}
-/* the Sun's warmth on what stands in the open: faint, and never on reading panels */
-:root:is([data-world="cosmos"], [data-world="system"]) :is(.gateway-text, .station-card, .destination) {
-  background-image: radial-gradient(70vmax circle at var(--sun-x, 50%) var(--sun-y, 120%), rgb(255 214 160 / calc(var(--sun-light, 0) * 0.16)), transparent 70%);
-  background-attachment: fixed;
-}
-:root:is([data-world="cosmos"], [data-world="system"]) .topbar {
-  box-shadow: inset 0 -1px 0 rgb(255 214 160 / calc(var(--sun-light, 0) * 0.25));
-}
-
 /* ── the landing: a quiet halo behind the name and lead, and a plate under each gateway's label ── */
 .arrival {
   isolation: isolate;
@@ -1753,10 +1688,11 @@ html {
 .arrival::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: 0 0 auto 0;
+  height: 560px; /* behind the name and the lead only, however tall the gateways below make the section */
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(ellipse 62% 27% at 50% 21%, color-mix(in srgb, var(--w-deep) var(--halo, 88%), transparent), color-mix(in srgb, var(--w-deep) calc(var(--halo, 88%) * 0.6), transparent) 55%, transparent 80%);
+  background: radial-gradient(ellipse 64% 44% at 50% 40%, color-mix(in srgb, var(--w-deep) 88%, transparent), color-mix(in srgb, var(--w-deep) 53%, transparent) 55%, transparent 80%);
 }
 .gateway-text {
   min-width: 210px;
@@ -1797,9 +1733,6 @@ ul.destinations {
 }
 .destination-place {
   font-weight: 700;
-}
-:root[data-sky="day"] .destination-place {
-  filter: brightness(0.55) saturate(1.3);
 }
 @media (max-width: 900px) {
   .gateway-text {
@@ -1898,9 +1831,6 @@ ul.destinations {
 .destination-place {
   color: color-mix(in srgb, var(--d) 45%, var(--text-strong));
 }
-:root[data-sky="day"] .destination-place {
-  filter: none;
-}
 /* the way down to the five worlds: a pill of glass, readable on any sky */
 .arrival-more {
   border: 1px solid var(--border);
@@ -1932,12 +1862,8 @@ ul.destinations {
   --muted: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
   --faint: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
 }
-:root:root:is([data-world="cosmos"], [data-world="system"])[data-sky="day"] {
-  --muted: #2b3547;
-  --faint: #2b3547;
-}
 /* the name on a dark sky: a little lighter red, so it holds its own against dusk */
-:root:not([data-sky="day"]) .arrival-title {
+.arrival-title {
   color: #ff4655;
 }
 /* labels above titles take the world's accent in every theme */
@@ -1995,7 +1921,154 @@ ul.destinations {
   color: var(--text);
 }
 
-/* by day dark ink needs little help: the halo thins, and the Sun shows through */
-:root[data-sky="day"] .arrival {
-  --halo: 34%;
+/* ───────────────────────────── Day and Night: the interface, not the universe ─────────────────────────────
+ *
+ * The Day/Night switch sets the reading theme only. The universe stays as it is: deep space on the
+ * home page and the examinations' pages in both, each planet's own atmosphere on the modules.
+ *   Night  deep navy and graphite surfaces, light ink, restrained gold and blue.
+ *   Day    ivory, white and pale lavender surfaces, deep navy ink, antique gold; on the planetary
+ *          pages a pale atmosphere (peach, lavender, soft blue) is laid over the planet, so the
+ *          world surrounds the content without ever standing behind its words. */
+
+/* the bar, the bottom bar and the plates are surfaces like any panel: solid, never a big drop shadow */
+:is(.topbar, .bottom-nav) {
+  box-shadow: none !important;
+  border-radius: 0;
+}
+.topbar {
+  border-bottom: 1px solid var(--border);
+}
+:root[data-scrolled] .topbar {
+  background: var(--surface);
+}
+.gateway-text,
+.station-card,
+.destination {
+  box-shadow: 0 18px 40px -22px rgb(0 0 0 / 0.55);
+}
+
+/* Day, on the planets: the light interface over a pale atmosphere */
+:root:root[data-theme="light"]:is([data-world="mars"], [data-world="moon"], [data-world="saturn"], [data-world="jupiter"], [data-world="earth"]) {
+  color-scheme: light;
+  --w-deep: #f3eef6;
+  --w-glass: #fdfcff;
+  --w-lite: #141838;
+  --bg: #f6f3f8;
+  --surface: rgb(255 255 255 / 0.94);
+  --surface-2: #f7f5fb;
+  --surface-3: #eeeaf5;
+  --text: #22264a;
+  --text-strong: #141838;
+  --muted: #474b6b;
+  --faint: #5b5f7d;
+  --border: rgb(20 24 56 / 0.14);
+  --border-strong: rgb(20 24 56 / 0.3);
+  --heading: #141838;
+  --brand-primary: var(--accent-ink);
+  --brand-primary-deep: color-mix(in srgb, var(--accent-ink) 78%, #000);
+  --brand-accent: var(--accent-ink);
+  --on-accent: #ffffff;
+  --ring: color-mix(in srgb, var(--accent-ink) 30%, transparent);
+  --primary-soft: color-mix(in srgb, var(--accent-ink) 9%, #fff);
+  --accent-soft: color-mix(in srgb, var(--accent-ink) 9%, #fff);
+  --shadow-sm: 0 1px 2px rgb(20 24 56 / 0.07);
+  --shadow: 0 1px 2px rgb(20 24 56 / 0.06), 0 12px 30px -14px rgb(20 24 56 / 0.22);
+  --veil: 0%;
+  --veil-all: 0;
+  --veil-deep: 0.35;
+}
+:root[data-theme="light"]:is([data-world="mars"], [data-world="moon"], [data-world="saturn"], [data-world="jupiter"], [data-world="earth"]) .space-scrim::before {
+  opacity: 1;
+  background:
+    radial-gradient(70vmax 50vmax at 0% 0%, rgb(253 226 206 / 0.5), transparent 70%),
+    linear-gradient(160deg, rgb(252 246 242 / 0.78), rgb(243 239 252 / 0.76) 48%, rgb(233 239 252 / 0.8));
+}
+:root[data-theme="light"]:is([data-world="mars"], [data-world="moon"], [data-world="saturn"], [data-world="jupiter"], [data-world="earth"]) :is(.ws-title, .page-head, .flow-head, .crumbs) {
+  text-shadow: none;
+}
+:root[data-theme="light"] .world-tab[aria-current="page"] {
+  background: color-mix(in srgb, var(--accent-ink, var(--brand-primary)) 10%, #fff);
+}
+
+/* ───────────────────────────── The examinations' spheres ───────────────────────────── */
+.gateways {
+  align-items: flex-start;
+  gap: clamp(40px, 7vw, 120px);
+  margin-top: clamp(34px, 6vh, 70px);
+}
+.gateway.has-emblem .gateway-orb {
+  width: clamp(140px, 13vw, 196px);
+  margin-inline: clamp(24px, 3vw, 46px); /* room for its orbit */
+  margin-bottom: 8px;
+}
+/* three gateways: the middle one rides a little higher, a triangle rather than a row of cards */
+.gateways-3 .gateway:nth-child(2) {
+  margin-top: -34px;
+}
+.gateway-name {
+  font-size: clamp(20px, 2vw, 28px);
+}
+.gateway-desc {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--brand-primary);
+  letter-spacing: 0.01em;
+}
+.gateway-text {
+  transition: border-color 0.3s, box-shadow 0.4s var(--ease), transform 0.5s var(--ease);
+}
+.gateway:is(:hover, :focus-visible) .gateway-text {
+  border-color: color-mix(in srgb, var(--orb-a, var(--brand-primary)) 60%, var(--border-strong));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--orb-a, var(--brand-primary)) 35%, transparent), 0 22px 48px -22px rgb(0 0 0 / 0.6);
+  transform: translateY(-3px);
+}
+/* without WebGL (and before it is up): the emblem itself, in a glossy enamel disc */
+:root:not([data-space="live"]) :is(.gateway-orb, .system-orb).has-emblem,
+:root:not([data-space="live"]) .gateway.has-emblem .gateway-orb {
+  background:
+    radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.55), transparent 34%),
+    radial-gradient(circle at 50% 50%, transparent 62%, color-mix(in srgb, var(--orb-a) 70%, #000) 100%),
+    var(--emblem) center / 88% no-repeat,
+    #fbfaf7;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--orb-a) 70%, #fff), 0 0 50px -6px color-mix(in srgb, var(--orb-a) 55%, transparent);
+}
+:root:not([data-space="live"]) .gateway.has-emblem .gateway-orb::after {
+  display: none;
+}
+.system-orb.has-emblem {
+  width: min(100%, clamp(200px, 24vw, 320px));
+}
+@media (max-width: 900px) {
+  .gateways {
+    flex-direction: column;
+    align-items: center;
+    gap: 34px;
+  }
+  .gateways-3 .gateway:nth-child(2) {
+    margin-top: 0;
+  }
+  .gateway.has-emblem {
+    width: min(100%, 340px);
+  }
+  .gateway.has-emblem .gateway-orb {
+    width: clamp(128px, 36vw, 160px);
+    margin-inline: 40px;
+  }
+  .system-orb.has-emblem {
+    width: clamp(110px, 32vw, 160px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gateway-text {
+    transition: none;
+  }
+}
+
+.gateway:is(:hover, :focus-visible) .gateway-enter {
+  color: var(--surface);
+}
+@media (max-width: 900px) {
+  .arrival::before {
+    height: 330px; /* ends above the first sphere */
+  }
 }

@@ -177,13 +177,11 @@ vec4 planet(vec2 q, float kind, vec3 ca, vec3 cb, float ring, float seed, float 
 }
 `;
 
-/* ═════════════════════════ THE LIVING SKY: landing, the exam systems, search, sign-in (and, without the sky, the admin station) ═════════════════════════
+/* ═════════════════════════ DEEP SPACE: landing, the exam systems, search, sign-in, the admin station ═════════════════════════
  *
- * Above a planet's curving horizon: the sky of this moment (environment.ts decides it from the reader's
- * clock — the Sun and the Moon where they are, the Moon in its phase, the light of dawn, day, dusk or
- * night), the deep sky behind it (survey stars, twinkling; nebulae drifting; galaxies), an orrery of
- * the solar system turning about the Sun, the examinations' own planets turning in sunlight, and now
- * and then a shooting star, a meteor, a comet or a satellite. uEnv = 0 leaves only deep space. */
+ * Always night, always deep space: survey stars (twinkling), drifting nebulae, dust lanes, star clusters,
+ * the great galaxy and far ones; now and then a shooting star, a meteor or a comet. The examinations
+ * are glass spheres holding their official emblems: the glass turns, the emblem keeps facing you. */
 const COSMOS = `
 uniform float uGalaxy;        // how much of the great galaxy is in view
 uniform vec2 uGalaxyAt;       // where it sits, in view units
@@ -191,16 +189,10 @@ uniform int uOrbN;
 uniform vec4 uOrb[6];         // x, y (px, y up), radius, hover
 uniform vec4 uOrbA[6];        // colour A, kind
 uniform vec4 uOrbB[6];        // colour B, ring
-uniform float uEnv;           // 1 = the living sky; 0 = deep space only
-uniform vec2 uSunPos;         // px, y up
-uniform float uSunAlt;        // degrees
-uniform vec2 uMoonPos;
-uniform float uMoonAlt;
-uniform float uMoonElong;     // Sun–Moon elongation, radians (0 new … π full … 2π)
-uniform vec3 uZen, uHor, uGlow; // sky colours (sRGB)
-uniform float uStars;         // 1 night … 0 day
+uniform float uOrbE[6];       // emblem texture slot (0..2), or -1 for a computed planet
+uniform sampler2D uE0, uE1, uE2;
+uniform vec3 uEmblemOn;       // each emblem texture fades in once loaded
 uniform float uClock;         // seconds, from the real clock: when events happen
-uniform float uTheta[6];      // planets' longitudes on the orrery
 uniform float uEvents;        // 1 = celestial events on
 
 vec3 galaxy(vec3 rd) {
@@ -237,6 +229,16 @@ vec3 farGalaxies(vec3 rd) {
   float g = exp(-(along * along / .0016 + across * across / .00022));
   return mix(vec3(.9, .8, .7), vec3(.7, .8, 1.), h31(id + 2.)) * g * .5;
 }
+/* distant star clusters: a soft glow resolved into many faint stars */
+vec3 clusters(vec3 rd) {
+  vec3 p = rd * 6., id = floor(p);
+  if (h31(id + 77.) < .88) return vec3(0);
+  vec3 c = id + .5 + (h33(id + 5.) - .5) * .5;
+  float d = length(p - c), r = .05 + .08 * h31(id + 8.);
+  float glow = exp(-d * d / (r * r));
+  vec3 tint = mix(vec3(1., .9, .75), vec3(.75, .85, 1.), h31(id + 12.));
+  return tint * (glow * .05 + starLayer(rd, 520., .82) * glow * 2.4);
+}
 float segment(vec2 p, vec2 a, vec2 b, out float h) {
   vec2 pa = p - a, ba = b - a;
   h = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-4), 0., 1.);
@@ -246,7 +248,7 @@ vec4 rnd4(float s, float k) { return vec4(h21(vec2(s, k)), h21(vec2(s, k + 3.7))
 
 /* Shooting stars (common, faint, quick) and meteors (rare, bright, sometimes breaking up).
    Time is cut into slots; whether a slot has one, where and which way it goes, all come from the slot's number. */
-vec3 meteors(vec2 fc, float vis) {
+vec3 meteors(vec2 fc) {
   vec3 acc = vec3(0);
   float u = uRes.y / 900.;
   for (int kind = 0; kind < 2; kind++) {
@@ -263,7 +265,7 @@ vec3 meteors(vec2 fc, float vis) {
       if (age < 0. || age > 1.) continue;
       vec4 r2 = rnd4(s, 31. + float(kind) * 50.);
       vec2 start = vec2(.06 + .88 * r2.x, .5 + .45 * r2.y) * uRes;
-      float ang = (r2.z < .5 ? 3.55 : 4.95) + .7 * r2.w;          // down to the left, or down to the right
+      float ang = (r2.z < .5 ? 3.55 : 4.95) + .7 * r2.w;
       vec2 dir = vec2(cos(ang), sin(ang));
       float run = (kind == 0 ? .22 + .12 * r.w : .42) * uRes.y;
       vec2 head = start + dir * run * age;
@@ -272,10 +274,10 @@ vec3 meteors(vec2 fc, float vis) {
       float wpx = (kind == 0 ? .8 : 1.5) * u;
       float fade = sin(3.14159 * pow(age, .8));
       float g = exp(-d * d / (wpx * wpx)) * pow(h, 2.4) * fade;
-      g += exp(-dot(fc - head, fc - head) / (wpx * wpx * 9.)) * fade * (kind == 0 ? .5 : 1.4);  // the head glows
+      g += exp(-dot(fc - head, fc - head) / (wpx * wpx * 9.)) * fade * (kind == 0 ? .5 : 1.4);
       vec3 tint = kind == 0 ? vec3(.86, .92, 1.) : mix(vec3(1., .74, .45), vec3(.62, 1., .74), step(.62, r.w));
       acc += tint * g * (kind == 0 ? .7 + 1.3 * r.y : 3.2);
-      if (kind == 1 && r.w > .4 && age > .58) {                // it breaks up: two fragments run on and die away
+      if (kind == 1 && r.w > .4 && age > .58) {
         for (int f = 0; f < 2; f++) {
           vec2 fd = rot(f == 0 ? .07 : -.09) * dir;
           float fa = (age - .58) / .42;
@@ -286,11 +288,11 @@ vec3 meteors(vec2 fc, float vis) {
       }
     }
   }
-  return acc * vis;
+  return acc;
 }
 
-/* A comet: rare; drifts across the sky over a few minutes, its tails streaming away from the Sun. */
-vec3 comet(vec2 fc, float vis) {
+/* A comet: rare; drifts across the sky over a few minutes, its tails streaming away from the light. */
+vec3 comet(vec2 fc) {
   float slot = 540., s = floor(uClock / slot);
   vec4 r = rnd4(s, 71.);
   if (r.x > .5) return vec3(0);
@@ -299,7 +301,8 @@ vec3 comet(vec2 fc, float vis) {
   if (age < 0. || age > 1.) return vec3(0);
   vec2 a = vec2(.12 + .3 * r.z, .62 + .3 * r.w) * uRes, b = a + vec2(.32 * (r.z < .5 ? 1. : -1.), -.12) * uRes.x;
   vec2 pos = mix(a, b, age);
-  vec2 away = normalize(pos - uSunPos + vec2(.0001));
+  vec2 star = vec2(-.4, 1.4) * uRes;                                            // the light it falls towards, beyond the top left
+  vec2 away = normalize(pos - star);
   float u = uRes.y / 900.;
   float bright = smoothstep(0., .15, age) * smoothstep(1., .82, age) * (.85 + .15 * sin(uClock * .7 + r.w * 9.));
   vec2 q = fc - pos;
@@ -309,22 +312,56 @@ vec3 comet(vec2 fc, float vis) {
   float ion = along > 0. ? exp(-across * across / pow(1.2 * u + along * .03, 2.)) * exp(-along / len * 1.4) : 0.;
   float coma = exp(-dot(q, q) / pow(7. * u, 2.)), nucleus = exp(-dot(q, q) / pow(1.6 * u, 2.));
   vec3 c = vec3(1., .95, .84) * dust * .55 + vec3(.55, .78, 1.) * ion * .5 + vec3(.8, .95, 1.) * coma * .7 + vec3(1.) * nucleus * 2.2;
-  return c * bright * vis;
+  return c * bright;
 }
 
-/* A satellite: a steady point gliding across the evening sky, sometimes flaring as its panels catch the Sun. */
-vec3 satellite(vec2 fc, float vis) {
-  float slot = 83., s = floor(uClock / slot);
-  vec4 r = rnd4(s, 97.);
-  if (r.x > .42) return vec3(0);
-  float dur = 55., t0 = s * slot + r.y * (slot - dur);
-  float age = (uClock - t0) / dur;
-  if (age < 0. || age > 1.) return vec3(0);
-  vec2 a = vec2(r.z < .5 ? -.02 : 1.02, .55 + .4 * r.w) * uRes, b = vec2(r.z < .5 ? 1.02 : -.02, .62 + .3 * r.z) * uRes;
-  vec2 pos = mix(a, b, age);
-  float u = uRes.y / 900.;
-  float flare = 1. + 5. * exp(-pow((age - .5 - .3 * (r.w - .5)) * 14., 2.)) * step(.7, r.y);
-  return vec3(1., .97, .92) * exp(-dot(fc - pos, fc - pos) / pow(1.1 * u, 2.)) * .9 * flare * smoothstep(0., .08, age) * smoothstep(1., .92, age) * vis;
+vec4 emblemTex(float slot, vec2 uv) {
+  vec4 c = slot < .5 ? texture(uE0, uv) : slot < 1.5 ? texture(uE1, uv) : texture(uE2, uv);
+  float on = slot < .5 ? uEmblemOn.x : slot < 1.5 ? uEmblemOn.y : uEmblemOn.z;
+  return vec4(toLinear(c.rgb), c.a * on);
+}
+
+/* An examination's sphere: a glass orb that turns on a tilted axis, its official emblem held inside,
+   facing the viewer with a gentle sway so it can always be read. Tint = the commission's colour. */
+vec4 emblemSphere(vec2 q, float slot, vec3 tint, float hover, float seed, vec3 L) {
+  float d2 = dot(q, q);
+  if (d2 > 1.) {
+    float e = sqrt(d2) - 1.;                                                       // a soft halo, brighter when approached
+    float halo = exp(-e * 16.) * (.18 + .3 * hover);
+    return vec4(mix(tint, vec3(1.), .5) * halo, halo);
+  }
+  vec3 n = vec3(q, sqrt(1. - d2));
+  float t = uTime;
+  // the emblem: an inner medallion that sways a little (yaw and pitch), never turning away
+  float yaw = sin(t * .31 + seed) * (.2 + .16 * hover), pitch = sin(t * .23 + seed * 1.7) * .07;
+  vec3 m = n;
+  m.xz *= rot(yaw); m.yz *= rot(pitch);
+  float k = .84;                                                                   // the medallion sits in the flatter middle of the face
+  vec2 uv = vec2(.5 + m.x / (2. * k), .5 - m.y / (2. * k));
+  vec4 em = emblemTex(slot, clamp(uv, 0., 1.));                                  // sampled everywhere (smooth mipmaps), then masked
+  em.a *= smoothstep(.25, .42, m.z) * step(max(abs(uv.x - .5), abs(uv.y - .5)), .5);
+  // the glass behind the emblem: deep tinted space with a slow inner glow that turns
+  vec3 ax = normalize(vec3(.22, .95, .2));
+  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(ax, e1);
+  float spin = t * (.12 + .05 * fract(seed));
+  float lat = asin(clamp(dot(n, ax), -1., 1.)), lon = atan(dot(n, e2), dot(n, e1)) + spin;
+  vec3 sp = vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
+  float swirl = fbm3(sp * 2.6 + seed);
+  vec3 inner = toLinear(tint) * (.18 + .55 * swirl) * (.45 + .55 * max(dot(n, L), 0.));
+  float ndl = max(dot(n, L), 0.);
+  vec3 lit = em.rgb * (.88 + .28 * ndl);                                           // the emblem stays true and bright: legible on its shaded side too
+  vec3 col = mix(inner, lit, em.a);
+  // the shell: etched meridians and parallels that turn with the glass, Fresnel rim, two highlights
+  float grid = smoothstep(.035, .0, abs(fract(lon * 12. / 6.28318) - .5) * 2. - .96) + smoothstep(.04, .0, abs(fract(lat * 6. / 3.14159 + .5) - .5) * 2. - .95);
+  col += vec3(.85, .9, 1.) * grid * .045 * (1. - em.a);
+  float fres = pow(1. - n.z, 3.2);
+  col = mix(col, toLinear(tint) * .9 + vec3(.08), fres * .55 * (1. - em.a * .85)); // the tinted rim never veils the emblem
+  vec3 h = normalize(L + vec3(0, 0, 1));
+  col += vec3(1.) * (pow(max(dot(n, h), 0.), 160.) * 1.4 * (1. - em.a * .55) + pow(max(dot(n, h), 0.), 14.) * .045); // a sharp highlight (softer over the emblem), a faint sheen
+  col += mix(tint, vec3(.7, .85, 1.), .5) * pow(1. - n.z, 2.) * smoothstep(-.3, .4, -dot(n.xy, L.xy)) * (.25 + .35 * hover);  // rim light from behind
+  col *= mix(mix(.72, .9, em.a), 1., smoothstep(-.6, .5, dot(n, L)));              // its night side (gentler across the emblem)
+  col *= 1. + hover * .18;
+  return vec4(col, smoothstep(1., .985, d2));
 }
 
 void main() {
@@ -333,151 +370,73 @@ void main() {
   float u = uRes.y / 900.;
   vec3 rd = viewRay(p, 2.3);
 
-  // ── the deep sky: survey stars, computed stars (twinkling), drifting nebulae, galaxies ──
-  vec3 deep = realSky(rd) * 1.1 + starField(rd, 1.);
-  float band = smoothstep(.0, .09, dot(deep, vec3(.3)));
+  // ── the deep sky, layer behind layer ──
+  vec3 col = realSky(rd) * 1.1 + starField(rd, 1.);
+  float band = smoothstep(.0, .09, dot(col, vec3(.3)));
   vec3 drift = vec3(uTime * .0021, 0., uTime * .0013);
   float neb = fbm3(rd * 2.4 + drift + fbm3(rd * 3.6 - drift) * 1.1);
-  deep += (vec3(.5, .13, .2) * smoothstep(.52, .9, neb) + vec3(.07, .2, .26) * smoothstep(.56, .9, fbm3(rd * 3.1 + 7. + drift))) * (.05 + band * .3);
+  col += (vec3(.5, .13, .2) * smoothstep(.52, .9, neb) + vec3(.07, .2, .26) * smoothstep(.56, .9, fbm3(rd * 3.1 + 7. + drift))) * (.05 + band * .3);
+  float dust = fbm3(rd * 1.7 + vec3(3., 1., 7.) + drift * .5);
+  col *= 1. - .38 * smoothstep(.5, .78, dust) * band;                                // dark dust lanes across the bright band
+  col += vec3(.16, .09, .06) * smoothstep(.55, .8, dust) * band * .08;
   vec3 rv = normalize(vec3(p, -1.55)); rv.yz *= rot(uPointer.y * .012); rv.xz *= rot(uPointer.x * .018);
-  deep += galaxy(rv) * uGalaxy;
-  if (uLite < .5) deep += farGalaxies(rd);
+  col += galaxy(rv) * uGalaxy;
+  if (uLite < .5) col += farGalaxies(rd) + clusters(rd);
 
-  // ── the atmosphere of this moment ──
-  float W = uRes.x, Hh = uRes.y;
-  float limb = uHorizon - pow((fc.x - .5 * W) / W, 2.) * Hh * .09;      // the horizon curves away at the edges
-  float above = fc.y - limb;
-  float ht = clamp(above / max(Hh - limb, 1.), 0., 1.);
-  vec3 zen = toLinear(uZen), hor = toLinear(uHor), glw = toLinear(uGlow);
-  vec3 sky = mix(hor, zen, pow(ht, .55));
-  vec2 ds = (fc - uSunPos) / Hh;
-  float dsun = length(ds);
-  float sunUp = smoothstep(-14., 3., uSunAlt);
-  sky += glw * (exp(-dsun * 7.5) * .2 + exp(-dsun * 20.) * .42) * sunUp;                        // light scattered about the Sun
-  float twi = smoothstep(-14., -3., uSunAlt) * smoothstep(14., 2., uSunAlt);
-  sky += glw * exp(-max(above, 0.) / (Hh * .05)) * exp(-abs(fc.x - uSunPos.x) / (W * .24)) * twi * .45; // dawn and dusk along the horizon
-  float stars = mix(1., uStars, uEnv);
-  vec3 col = sky * uEnv + deep * stars;
-
-  // the Moon: where it is, in its phase, faint by day
-  if (uEnv > .5 && uMoonAlt > -2.) {
-    float rm = 15. * u;
-    vec2 mq = (fc - uMoonPos) / rm;
-    float m2 = dot(mq, mq);
-    vec2 toSun = normalize(uSunPos - uMoonPos + vec2(.0001));
-    float E = uMoonElong > 3.14159 ? 6.28318 - uMoonElong : uMoonElong;        // 0 new … π full
-    vec3 Lm = normalize(vec3(toSun * sin(E), -cos(E)));
-    if (m2 < 1.) {
-      vec3 n = vec3(mq, sqrt(1. - m2));
-      float maria = fbm(mq * 2.3 + 4.) , crater = fbm(mq * 9. + 1.);
-      vec3 alb = vec3(.62, .61, .59) * (.72 + .3 * smoothstep(.35, .7, maria)) * (.9 + .2 * crater);
-      float lit = smoothstep(-.03, .08, dot(n, Lm));
-      vec3 mc = alb * (lit * 1.6 + .025 * stars);                                   // and a little earthshine on the dark side
-      float a = smoothstep(1., .9, m2) * smoothstep(-2., 1.5, uMoonAlt);
-      col = mix(col, mix(col + mc * .55, mc, stars * .8 + .2), a);
-    }
-    col += vec3(.75, .8, .9) * exp(-sqrt(m2) * 1.6) * .06 * stars * (1. - cos(E)) * smoothstep(-2., 2., uMoonAlt);  // its halo
+  // ── now and then ──
+  if (uEvents > .5) {
+    col += meteors(fc);
+    col += comet(fc);
   }
 
-  // ── the orrery: the planets on their orbits about the Sun ──
-  vec3 Lsun3 = normalize(vec3((uSunPos - .5 * uRes) / Hh, .7));
-  if (uEnv > .5 && above > 0.) {
-    float R[6] = float[6](.075, .115, .16, .215, .355, .5);
-    float pr[6] = float[6](2.2, 3.4, 3.6, 2.8, 7., 6.);
-    vec3 pc[6] = vec3[6](vec3(.62, .58, .55), vec3(.95, .86, .66), vec3(.35, .55, .9), vec3(.85, .42, .25), vec3(.86, .74, .6), vec3(.9, .8, .58));
-    mat2 tilt = rot(-.1);
-    float k = .3, kz = sqrt(1. - k * k);
-    for (int i = 0; i < 6; i++) {
-      float Ri = R[i] * Hh;
-      vec2 uu = (fc - uSunPos) * tilt;
-      float e = length(vec2(uu.x, uu.y / k)) / Ri;
-      float line = 1. - smoothstep(0., 1.4, abs(e - 1.) / max(fwidth(e), 1e-4));
-      col += vec3(.85, .89, 1.) * line * (uu.y > 0. ? .05 : .09) * mix(.6, 1., stars);
-      float th = uTheta[i];
-      vec2 pp = uSunPos + vec2(cos(th), sin(th) * k) * Ri * transpose(tilt);
-      float rr = pr[i] * u;
-      vec2 q = (fc - pp) / rr;
-      float q2 = dot(q, q);
-      if (q2 < 9.) {
-        vec3 Lp = normalize(vec3(-cos(th), -k * sin(th), kz * sin(th)));
-        if (q2 < 1.) {
-          vec3 n = vec3(q, sqrt(1. - q2));
-          float lit = max(dot(n, Lp), 0.);
-          vec3 c = pc[i] * (lit * 1.5 + .04);
-          if (i == 4) c *= .85 + .3 * sin(q.y * 9.);                                  // Jupiter's belts
-          col = mix(col, c, smoothstep(1., .75, q2) * (sin(th) > 0. && length(fc - uSunPos) < 24. * u ? 0. : 1.));
-        }
-        if (i == 5) {                                                                  // Saturn's rings
-          vec2 rq = q * rot(.35);
-          float re = length(vec2(rq.x, rq.y / .32));
-          col += vec3(.9, .82, .62) * smoothstep(.12, 0., abs(re - 1.9)) * .7 * (q2 < 1. && rq.y > 0. ? 0. : 1.);
-        }
-        col += pc[i] * exp(-q2 * .6) * .05;
-      }
-    }
-  }
-
-  // ── the examinations' own worlds, turning in sunlight ──
-  vec3 L = uEnv > .5 ? normalize(mix(Lsun3, vec3(-.58, .34, .74), .25)) : normalize(vec3(-.58, .34, .74));
+  // ── the examinations ──
+  vec3 L = normalize(vec3(-.55, .45, .72));
   for (int i = 0; i < 6; i++) {
     if (i >= uOrbN) break;
     vec4 o = uOrb[i];
     if (o.z < 1.) continue;
-    vec2 q = (fc - o.xy - uPointer * o.z * .06) / (o.z * (1. + uTravel * .45));
-    float spin = uTime * (uOrbA[i].w < .5 ? .055 : .022) * (1. + .15 * float(i)) + float(i);  // a gas giant turns faster than a rocky world
-    vec4 pl = planet(q, uOrbA[i].w, uOrbA[i].rgb, uOrbB[i].rgb, uOrbB[i].w, float(i) * 7.3 + 1.7, spin, L);
-    pl.rgb += sky * .06 * uEnv * step(.01, pl.a);                                       // the sky's light on its night side
-    pl.rgb *= 1. + o.w * .35;
-    col = mix(col, pl.rgb, pl.a);
-  }
-
-  // ── now and then ──
-  if (uEnv > .5 && uEvents > .5 && above > 0.) {
-    col += meteors(fc, mix(.12, 1., stars));
-    col += comet(fc, mix(.1, 1., stars));
-    col += satellite(fc, stars * smoothstep(-20., -5., uSunAlt) + stars * .3);
-  }
-
-  // ── the Sun: disc, corona, a restrained lens bloom ──
-  if (uEnv > .5) {
-    float rs = 17. * u;
-    float d = length(fc - uSunPos);
-    vec3 sunCol = mix(vec3(1., .5, .22), vec3(1., .97, .9), smoothstep(-2., 14., uSunAlt));
-    float disc = smoothstep(rs, rs * .92, d);
-    float corona = exp(-max(d - rs, 0.) / (rs * .55)) * .9 + exp(-max(d - rs, 0.) / (rs * 2.4)) * .35;
-    float ang = atan(fc.y - uSunPos.y, fc.x - uSunPos.x);
-    corona *= .85 + .15 * sin(ang * 12. + uTime * .05) * smoothstep(rs * 4., rs, d);
-    col += sunCol * (disc * 7. + corona * 1.1) * smoothstep(-3., .5, uSunAlt);
-    vec2 axis = .5 * uRes - uSunPos;                                                    // two faint ghosts along the line through the centre
-    for (int g = 0; g < 2; g++) {
-      vec2 gp = uSunPos + axis * (g == 0 ? 1.45 : 1.9);
-      col += sunCol * exp(-pow(length(fc - gp) / ((g == 0 ? 10. : 24.) * u), 2.)) * (g == 0 ? .05 : .025) * smoothstep(4., 20., uSunAlt);
+    float fi = float(i), sd = fi * 7.3 + 1.7;
+    float R = o.z * (1. + uTravel * .45);
+    // each drifts on a small orbit of its own, slowly enough to keep the gateway where it is
+    vec2 c = o.xy + uPointer * o.z * .06 + vec2(cos(uTime * (.11 + .03 * fi) + sd), sin(uTime * (.14 + .02 * fi) + sd)) * R * .035;
+    if (uOrbE[i] > -.5) {
+      // its orbit: a tilted ellipse, with a small moon going round at its own pace (behind the sphere on the far side)
+      mat2 tl = rot(-.2 + .12 * fi);
+      vec2 rel = (fc - c) * tl;
+      float a = 1.55 * R, b = .36 * R;
+      float e = length(vec2(rel.x / a, rel.y / b));
+      float line = 1. - smoothstep(0., 1.3, abs(e - 1.) / max(fwidth(e), 1e-4));
+      bool far = rel.y > 0.;
+      bool hidden = far && dot(fc - c, fc - c) < R * R;
+      if (!hidden) col += mix(uOrbA[i].rgb, vec3(.8, .88, 1.), .6) * line * (far ? .1 : .2) * (1. + o.w * 1.6);
+      float th = uTime * (.42 - .09 * fi) + sd;
+      vec2 mpos = c + vec2(cos(th) * a, sin(th) * b) * transpose(tl);
+      bool mfar = sin(th) > 0.;
+      vec2 mq = (fc - mpos) / (R * .075);
+      float m2 = dot(mq, mq);
+      if (m2 < 1. && !(mfar && dot(fc - c, fc - c) < R * R)) {
+        vec3 mn = vec3(mq, sqrt(1. - m2));
+        col = mix(col, vec3(.75, .76, .8) * (max(dot(mn, L), 0.) * 1.3 + .04), smoothstep(1., .8, m2));
+      }
+      vec4 sph = emblemSphere((fc - c) / R, uOrbE[i], uOrbA[i].rgb, o.w, sd, L);
+      col = mix(col, sph.rgb, sph.a);
+      if (m2 < 1. && !mfar) {
+        vec3 mn = vec3(mq, sqrt(1. - m2));
+        col = mix(col, vec3(.75, .76, .8) * (max(dot(mn, L), 0.) * 1.3 + .04), smoothstep(1., .8, m2));
+      }
+    } else {
+      vec2 q = (fc - c) / R;
+      float spin = uTime * (uOrbA[i].w < .5 ? .055 : .022) * (1. + .15 * fi) + fi;
+      vec4 pl = planet(q, uOrbA[i].w, uOrbA[i].rgb, uOrbB[i].rgb, uOrbB[i].w, sd, spin, L);
+      pl.rgb *= 1. + o.w * .35;
+      col = mix(col, pl.rgb, pl.a);
     }
-  }
-
-  // ── the ground: the planet's limb, its edge of air lit by the sky ──
-  if (uEnv > .5) {
-    float ground = smoothstep(.5, -.5, above);
-    vec3 land = mix(vec3(.004, .007, .014), vec3(.035, .055, .08), smoothstep(-6., 20., uSunAlt));
-    float lights = step(.9975, h21(floor(fc / (2. * u)))) * stars * smoothstep(-6. * u, -60. * u, above) * .1;  // towns, at night
-    land += vec3(1., .72, .4) * lights;
-    col = mix(col, land, ground);
-    col += hor * exp(-abs(above) / (2.5 * u)) * .35;                                    // the bright edge of air
   }
 
   // the opening: space comes up out of darkness, from the centre outwards
   float iris = smoothstep(0., 1., uReveal * 1.9 - length(p) * .85);
   col *= mix(iris, 1., smoothstep(.75, 1., uReveal)) * smoothstep(0., .35, uReveal);
-  // the sky keeps its colours (no film curve), only highlights roll off; deep space keeps the old finish
-  if (uEnv > .5) {
-    col *= 1. - uTravel;
-    vec3 hi = max(col - .8, 0.);
-    col = min(col, .8) + .2 * (1. - exp(-hi / .2));
-    col = pow(col, vec3(1. / 2.2)) + (h21(fc + fract(uTime) * 61.) - .5) / 255.;
-    fragColor = vec4(col, 1.);
-  } else {
-    fragColor = vec4(finish(col, fc), 1.);
-  }
+  fragColor = vec4(finish(col, fc), 1.);
 }`;
 
 /* ═════════════════════════ SATURN: Mains ═════════════════════════ */

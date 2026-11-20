@@ -132,22 +132,18 @@ not photographs.
 | `worlds.ts` | Which world a URL is (`worldForPath`) and the planet an examination is (`planetFor`, from its slug or the palette chosen in Manage → Exams) |
 | `destinations.ts`, `Gateway.tsx`, `Globe.tsx` | The five worlds inside an exam, the landing-page gateways, the small globes used in navigation |
 
-**The living sky** (`space/environment.ts`, the cosmic environment engine). Over the landing,
-sign-in, search and each examination's page, the sky follows the reader's own clock and time zone:
-the Sun's and the Moon's real positions (almanac formulas, about a degree), the Moon's real phase,
-dawn, day, dusk and night colours interpolated continuously from the Sun's altitude, stars and
-nebulae fading in as it gets dark. An orrery turns about the Sun (planets start where they really
-are today and move on an illustrative clock: Earth goes round in 400 s, every planet at its true
-relative speed); the examination planets turn on their axes, lit by the actual Sun. Shooting stars,
-meteors (some breaking up), comets (tails away from the Sun) and satellites appear now and then,
-timed by the real clock rather than a loop. Independent switches for the Sun, Moon, planets, events
-and the orbital clock are in `ENV`.
+**The home page** is always deep space, day or night: survey stars (twinkling), drifting nebulae,
+dust lanes, star clusters, the great galaxy and far ones, and now and then a shooting star, a meteor
+(some break up) or a comet, timed by the real clock rather than a loop. The examinations are glass
+spheres holding their **official emblems** (`public/brand/emblems/`, built from the commissions'
+artwork without redrawing, on a white enamel disc; mapping in `space/emblems.ts`): the glass turns on
+a tilted axis, the emblem faces the viewer with a gentle sway so it can always be read, and each
+sphere drifts on its own orbit with a small moon going round it. Without WebGL the emblems show flat
+in a glossy disc.
 
-The sky decides its own ink: `<html data-sky="day|night">` and an even haze (`--sky-haze`) are
-computed so that text on the sky reaches 4.5:1 everywhere, whatever the time; reading panels keep the
-reader's light or dark theme. To preview another moment add `?at=06:15` (or `?at=2026-12-21T18:05`)
-to any address. Reduced motion stops the events and the clock; without WebGL a gradient of the same
-sky stands in.
+**Day and Night** switch the interface only. Night: deep navy and graphite surfaces, light ink.
+Day: ivory, white and pale-lavender surfaces, deep navy ink, antique gold; the home page stays deep
+space, and the planetary pages lay a pale atmosphere over their planet so the content stands on light.
 
 `frontend/src/app/worlds.css` holds each world's tokens (`--w-deep`,
 `--w-paper`, `--accent`, fonts, radii) and component shapes. Two kinds of ink
