@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { GroupCards } from "@/components/GroupCards";
 import { orbAttr } from "@/components/space/destinations";
+import { emblemFor } from "@/components/space/emblems";
 import { planetFor } from "@/components/space/worlds";
 import { EmptyState } from "@/components/ui/bits";
 import { getCommissions } from "@/lib/catalog";
@@ -24,6 +25,7 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
   if (!commission) notFound();
   const isAdmin = user?.role === "admin";
   const planet = planetFor(commission.slug, commission.theme, index);
+  const emblem = emblemFor(commission.slug); // the official emblem, as a sphere
 
   return (
     <div className="page system">
@@ -39,7 +41,17 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
           </p>
         </div>
         {/* the planet itself is drawn here by the renderer */}
-        <div className={`system-orb ${planet.ring ? "has-ring" : ""}`} data-orb={orbAttr(planet)} aria-hidden />
+        {emblem ? (
+          <div
+            className="system-orb has-emblem"
+            data-orb={orbAttr({ a: emblem.tint, b: emblem.tint, kind: 0, ring: false })}
+            data-emblem={emblem.src}
+            style={{ ["--emblem" as string]: `url(${emblem.src})`, ["--orb-a" as string]: `rgb(${emblem.tint.map((v) => Math.round(v * 255)).join(" ")})` }}
+            aria-hidden
+          />
+        ) : (
+          <div className={`system-orb ${planet.ring ? "has-ring" : ""}`} data-orb={orbAttr(planet)} aria-hidden />
+        )}
       </header>
 
       {commission.status === "draft" && (

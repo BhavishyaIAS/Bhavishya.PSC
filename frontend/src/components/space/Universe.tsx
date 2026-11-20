@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
-import { cosmicEngine, type SkyState } from "./environment";
 import { FRAGMENT, VERTEX, type ShaderName } from "./shaders";
 import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 
@@ -11,8 +10,8 @@ import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 let leave: () => void = () => {};
 export const depart = () => leave();
 
-/** The sky (Sun, Moon, daylight, events) lives over these worlds; the admin station keeps plain deep space. */
-const LIVING_SKY: Partial<Record<World, boolean>> = { cosmos: true, system: true };
+/** Shooting stars, meteors and comets cross these skies; the admin station stays quiet. */
+const EVENTS: Partial<Record<World, boolean>> = { cosmos: true, system: true };
 /** How often each world needs redrawing when nothing is being touched. Most of space moves very slowly. */
 const CALM_FPS: Record<World, number> = { cosmos: 30, system: 30, saturn: 24, jupiter: 24, earth: 24, mars: 12, moon: 5, station: 10 };
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -140,13 +139,37 @@ export default function Universe() {
     let reveal = 1, px = 0, py = 0, tx = 0, ty = 0;
     let lastDraw = 0, lastFrame = 0, busyUntil = 0, slow = 0, calibrating = 50;
     const hover = new Float32Array(6);
-    // the environment: recomputed every second (it changes by the minute); the orrery runs on its own clock
-    const engine = cosmicEngine();
-    const visitStart = performance.now();
-    const skyStart = engine.moment(location.search);
-    const skyOffset = skyStart.getTime() - Date.now(); // non-zero only when previewing another time (?at=)
-    let skyState: SkyState = engine.sky(skyStart, { phone: phone() });
-    let skyAt = 0;
+    // the examinations' emblems (units 2–4), fetched the first time a page shows them
+    const emblemSlots = new Map<string, number>(); // url -> slot
+    const emblemOn = new Float32Array(3), emblemReady = [false, false, false];
+    const emblemTex = [0, 1, 2].map((k) => {
+      const t = gl.createTexture();
+      gl.activeTexture(gl.TEXTURE2 + k);
+      gl.bindTexture(gl.TEXTURE_2D, t);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 0]));
+      return t;
+    });
+    const emblemSlot = (url: string) => {
+      if (emblemSlots.has(url)) return emblemSlots.get(url)!;
+      if (emblemSlots.size >= 3) return -1;
+      const k = emblemSlots.size;
+      emblemSlots.set(url, k);
+      load(url).then((img) => {
+        if (dead || !img) return;
+        gl.activeTexture(gl.TEXTURE2 + k);
+        gl.bindTexture(gl.TEXTURE_2D, emblemTex[k]);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        emblemReady[k] = true;
+        start();
+      });
+      return k;
+    };
+    const orbE = new Float32Array(6).fill(-1);
     const orb = new Float32Array(24), orbA = new Float32Array(24), orbB = new Float32Array(24);
     // The opening: on the first page of a visit, space comes up out of darkness.
     try {
@@ -233,7 +256,15 @@ export default function Universe() {
           orb.set([(r.left + r.width / 2) * sc, H - (r.top + r.height / 2) * sc, (r.width / 2) * sc * (1 + hover[i] * 0.07), hover[i]], i * 4);
           orbA.set([ar, ag, ab, kind], i * 4);
           orbB.set([br, bg, bb, ring], i * 4);
+          const emblem = el.dataset.emblem;
+          orbE[i] = emblem ? emblemSlot(phone() ? emblem.replace(/\.webp$/, "-s.webp") : emblem) : -1;
         });
+        for (let k = 0; k < 3; k++) emblemOn[k] = Math.min(1, emblemOn[k] + (emblemReady[k] ? dt * 2.5 : 0));
+        gl.uniform1fv(U("uOrbE"), orbE);
+        gl.uniform1i(U("uE0"), 2);
+        gl.uniform1i(U("uE1"), 3);
+        gl.uniform1i(U("uE2"), 4);
+        gl.uniform3fv(U("uEmblemOn"), emblemOn);
         gl.uniform1i(U("uOrbN"), marks.length);
         gl.uniform4fv(U("uOrb"), orb);
         gl.uniform4fv(U("uOrbA"), orbA);
@@ -241,27 +272,8 @@ export default function Universe() {
         gl.uniform1f(U("uGalaxy"), shown === "cosmos" ? 1 : shown === "system" ? 0.35 : 0);
         gl.uniform2f(U("uGalaxyAt"), phone() ? 0.05 : 0.66, phone() ? 0.5 : 0.12); // clear of the name and the gateways
 
-        const living = !!LIVING_SKY[shown];
-        if (now - skyAt > 1000) {
-          skyState = engine.sky(new Date(Date.now() + skyOffset), { phone: phone() });
-          skyAt = now;
-        }
-        const sky = skyState, W = canvas.width;
-        const elapsed = frozen ? 0 : (now - visitStart) / 1000;
-        gl.uniform1f(U("uEnv"), living ? 1 : 0);
-        gl.uniform1f(U("uHorizon"), H - sky.horizonY * H);
-        gl.uniform2f(U("uSunPos"), sky.sun.x * W, H - sky.sun.y * H);
-        gl.uniform1f(U("uSunAlt"), engine.ENV.sun ? sky.sun.alt : -90);
-        gl.uniform2f(U("uMoonPos"), sky.moon.x * W, H - sky.moon.y * H);
-        gl.uniform1f(U("uMoonAlt"), engine.ENV.moon ? sky.moon.alt : -90);
-        gl.uniform1f(U("uMoonElong"), sky.moon.elongation);
-        gl.uniform3fv(U("uZen"), sky.zenith);
-        gl.uniform3fv(U("uHor"), sky.horizon);
-        gl.uniform3fv(U("uGlow"), sky.glow);
-        gl.uniform1f(U("uStars"), sky.stars);
         gl.uniform1f(U("uClock"), frozen ? 0.5 : (Date.now() / 1000) % 100000);
-        gl.uniform1f(U("uEvents"), engine.ENV.events && !frozen ? 1 : 0);
-        gl.uniform1fv(U("uTheta"), engine.ENV.planets ? engine.orbitsAt(skyStart, elapsed) : sky.planets);
+        gl.uniform1f(U("uEvents"), EVENTS[shown] && !frozen ? 1 : 0);
       }
       gl.bindBuffer(gl.ARRAY_BUFFER, quad);
       gl.enableVertexAttribArray(0);
@@ -277,7 +289,7 @@ export default function Universe() {
       raf = 0;
       if (dead) return;
       const gap = now - lastFrame;
-      const active = now < busyUntil || travel > 0 || travelTo > 0 || reveal < 1 || calibrating > 0 || skyOn < 1 || (NEEDS_EARTH[shown] && earthOn < 1);
+      const active = now < busyUntil || travel > 0 || travelTo > 0 || reveal < 1 || calibrating > 0 || skyOn < 1 || (NEEDS_EARTH[shown] && earthOn < 1) || emblemReady.some((r, k) => r && emblemOn[k] < 1);
       const deep = window.scrollY > h * 0.9 && wanted.current === shown; // the reader is in the content: hold the last frame
       const every = active ? 0 : 1000 / CALM_FPS[shown];
       if (!deep && gap >= every - 2) {

@@ -4,45 +4,48 @@ import Link from "next/link";
 import type { Commission } from "@/lib/types";
 
 import { orbAttr } from "./destinations";
+import { describeExams, emblemFor } from "./emblems";
 import { planetFor } from "./worlds";
 
 /**
- * An examination, as a world you can travel to. The planet itself is drawn by the
- * renderer where the empty .gateway-orb sits (and brightens while the link is hovered
- * or focused); without WebGL the CSS sphere underneath shows instead.
+ * An examination, as a gateway in deep space: a glass sphere holding the commission's official
+ * emblem (drawn by Universe.tsx where the empty .gateway-orb sits; it turns, drifts on its orbit
+ * and brightens while the link is hovered or focused), with the name and what it leads to beneath.
+ * Without WebGL the CSS shows the emblem flat in a glossy disc.
  */
-export function Gateway({ commission, index, size = "lg" }: { commission: Commission; index: number; size?: "lg" | "md" }) {
+export function Gateway({ commission, index }: { commission: Commission; index: number }) {
+  const emblem = emblemFor(commission.slug);
   const planet = planetFor(commission.slug, commission.theme, index);
-  const exams = commission.tracks.map((t) => t.group_name);
+  const orb = emblem ? orbAttr({ a: emblem.tint, b: emblem.tint, kind: 0, ring: false }) : orbAttr(planet);
   const css = (c: [number, number, number]) => `rgb(${c.map((v) => Math.round(Math.pow(v, 1 / 2.2) * 255)).join(" ")})`;
+  const tint = emblem ? `rgb(${emblem.tint.map((v) => Math.round(v * 255)).join(" ")})` : css(planet.a);
   return (
     <Link
       href={`/exams/${commission.slug}`}
-      className={`gateway gateway-${size}`}
+      className={`gateway ${emblem ? "has-emblem" : ""}`}
       data-orb-host
-      aria-label={`${commission.short_name}: ${commission.name}. ${exams.join(", ")}`}
+      aria-label={`${commission.short_name}: ${commission.name}. ${describeExams(commission)}`}
     >
       <span
-        className={`gateway-orb ${planet.ring ? "has-ring" : ""}`}
-        data-orb={orbAttr(planet)}
-        style={{ ["--orb-a" as string]: css(planet.a), ["--orb-b" as string]: css(planet.b) }}
+        className={`gateway-orb ${!emblem && planet.ring ? "has-ring" : ""}`}
+        data-orb={orb}
+        data-emblem={emblem?.src}
+        style={{
+          ["--orb-a" as string]: tint,
+          ["--orb-b" as string]: emblem ? tint : css(planet.b),
+          ...(emblem ? { ["--emblem" as string]: `url(${emblem.src.replace(/\.webp$/, "-s.webp")})` } : {}),
+        }}
         aria-hidden
       />
       <span className="gateway-text">
-        <span className="gateway-kicker">
-          {commission.status === "draft" ? (
-            <>
-              <EyeOff size={12} aria-hidden /> Hidden from students
-            </>
-          ) : (
-            `System ${String(index + 1).padStart(2, "0")}`
-          )}
-        </span>
+        {commission.status === "draft" && (
+          <span className="gateway-kicker">
+            <EyeOff size={12} aria-hidden /> Hidden from students
+          </span>
+        )}
         <span className="gateway-name">{commission.short_name}</span>
         <span className="gateway-full">{commission.name}</span>
-        <span className="gateway-info">
-          {exams.length > 0 ? exams.join("  ·  ") : "Being charted"}
-        </span>
+        <span className="gateway-desc">{describeExams(commission)}</span>
         <span className="gateway-enter">
           Enter <ArrowRight size={15} aria-hidden />
         </span>
