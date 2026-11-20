@@ -2072,3 +2072,14 @@ ul.destinations {
     height: 330px; /* ends above the first sphere */
   }
 }
+
+/* Day audit fixes: small labels on the pale planetary atmosphere, and quiet notes on cards */
+:root[data-theme="light"]:is([data-world="mars"], [data-world="moon"], [data-world="saturn"], [data-world="jupiter"], [data-world="earth"]) :is(.ws-title, .page-head) .eyebrow {
+  color: color-mix(in srgb, var(--accent-ink) 62%, #141838);
+}
+:root[data-theme="light"]:is([data-world="mars"], [data-world="moon"], [data-world="saturn"], [data-world="jupiter"], [data-world="earth"]) :is(.world-tab-place, .page-head p) {
+  color: var(--text);
+}
+.station-soon {
+  color: var(--muted);
+}
