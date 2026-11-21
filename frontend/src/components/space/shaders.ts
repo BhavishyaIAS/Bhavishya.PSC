@@ -832,7 +832,7 @@ void main() {
       if (d < 1.) {
         vec3 n = normalize(vec3(mq / lump, sqrt(max(1. - d * d, 0.))));
         float lit = clamp(dot(n, normalize(vec3(-.92, .05, .38))), 0., 1.);
-        vec3 mcol = vec3(.44, .37, .33) * (.7 + .5 * vnoise(mq * 4. + 3.)) * (lit * 1.5 + .03);
+        vec3 mcol = vec3(.56, .48, .42) * (.7 + .5 * vnoise(mq * 4. + 3.)) * (lit * 1.7 + .06);
         col = mix(col, mix(mcol, col, .3), smoothstep(1., .88, d));
       }
     }
