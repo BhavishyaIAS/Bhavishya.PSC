@@ -182,14 +182,9 @@ vec4 planet(vec2 q, float kind, vec3 ca, vec3 cb, float ring, float seed, float 
  * Always night, always deep space: survey stars (twinkling), drifting nebulae, dust lanes, star clusters,
  * the great galaxy and far ones; now and then a shooting star, a meteor or a comet. The examinations
  * are glass spheres holding their official emblems: the glass turns, the emblem keeps facing you. */
-const COSMOS = `
+const SKYLIB = `
 uniform float uGalaxy;        // how much of the great galaxy is in view
 uniform vec2 uGalaxyAt;       // where it sits, in view units
-uniform int uOrbN;
-uniform vec4 uOrb[6];         // x, y (px, y up), radius, hover
-uniform vec4 uOrbA[6];        // colour A, kind
-uniform vec4 uOrbB[6];        // colour B, ring
-uniform float uOrbE[6];       // emblem texture slot (0..2), or -1 for a computed planet
 uniform sampler2D uE0, uE1, uE2;
 uniform vec3 uEmblemOn;       // each emblem texture fades in once loaded
 uniform float uClock;         // seconds, from the real clock: when events happen
@@ -321,6 +316,14 @@ vec4 emblemTex(float slot, vec2 uv) {
   return vec4(toLinear(c.rgb), c.a * on);
 }
 
+`;
+
+const COSMOS = SKYLIB + `
+uniform int uOrbN;
+uniform vec4 uOrb[6];         // x, y (px, y up), radius, hover
+uniform vec4 uOrbA[6];        // colour A, kind
+uniform vec4 uOrbB[6];        // colour B, ring
+uniform float uOrbE[6];       // emblem texture slot (0..2), or -1 for a computed planet
 /* An examination's sphere: a glass orb that turns on a tilted axis, its official emblem held inside,
    facing the viewer with a gentle sway so it can always be read. Tint = the commission's colour. */
 vec4 emblemSphere(vec2 q, float slot, vec3 tint, float hover, float seed, vec3 L) {
@@ -440,7 +443,7 @@ void main() {
 }`;
 
 /* ═════════════════════════ SATURN: Mains ═════════════════════════ */
-const SATURN = `
+const GIANTS = `
 vec3 saturnBands(vec3 sp, float lat) {
   float w = fbm3(sp * vec3(2., 9., 2.) + 4.);
   float y = lat + (w - .5) * .05;
@@ -451,64 +454,6 @@ vec3 saturnBands(vec3 sp, float lat) {
   c = mix(c, vec3(.70, .60, .45), smoothstep(-1.0, -1.4, y) * .6);
   return c * (.92 + .16 * fbm3(sp * vec3(6., 46., 6.)));
 }
-void main() {
-  vec2 fc = gl_FragCoord.xy;
-  vec2 p = (fc - .5 * uRes) / uRes.y / (1. + uTravel * .45);
-  vec3 rd = viewRay(p, 4.1);
-  vec3 col = realSky(rd) * .7 + starField(rd, .75);
-
-  float R = uSubject.z * (1. + uTravel * .45);
-  vec2 q = (fc - uSubject.xy - uPointer * R * .03) / R;
-  vec3 L = normalize(vec3(-.62, .3, .72));
-  vec3 ax = vec3(0., cos(.42), sin(.42)); ax.xy *= rot(-.38);                  // rings open 24°, rolled across the frame
-  float obl = .9;                                                              // Saturn is visibly flattened
-  // express the pixel in the planet's own frame to apply the flattening along its axis
-  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(ax, e1);
-  float zr = -(q.x * ax.x + q.y * ax.y) / ax.z; vec3 rp = vec3(q, zr); float rho = length(rp);
-  float rA = 0.; vec3 rC = vec3(0);
-  if (rho > 1.2 && rho < 2.36) {
-    rA = clamp(ringTau(rho) * 1.2, 0., 1.);
-    float bl = dot(rp, L);
-    float sh = (bl < 0. && rho * rho - bl * bl < .97) ? .035 : 1.;
-    rC = ringColor(rho) * sh * 1.05;
-  }
-  // sphere, squeezed along its axis
-  vec2 qa = vec2(dot(q, normalize(vec2(ax.y, -ax.x))), dot(q, normalize(ax.xy)) / mix(1., obl, length(ax.xy)));
-  float d2 = dot(qa, qa);
-  if (d2 < 1.) {
-    vec3 n = vec3(q, sqrt(max(0., 1. - d2)));
-    float lat = asin(clamp(dot(normalize(n), ax), -1., 1.));
-    float lon = atan(dot(n, e2), dot(n, e1)) + uTime * .012;
-    vec3 sp = vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
-    vec3 alb = saturnBands(sp, lat);
-    float ndl = dot(normalize(n), L), lit = pow(clamp(ndl, 0., 1.), .8);
-    float s = -dot(n, ax) / dot(L, ax);
-    if (s > 0.) { float rr = length(n + L * s); if (rr > 1.2 && rr < 2.36) lit *= exp(-ringTau(rr) * 2.6); }   // ring shadow on the globe
-    vec3 pc = alb * (lit * 1.28 + .008) * mix(.55, 1., pow(n.z, .5));
-    pc += vec3(.9, .8, .6) * pow(1. - n.z, 4.) * smoothstep(-.2, .4, ndl) * .25;
-    float a = smoothstep(1., 1. - 3. / R, d2);
-    if (rA > 0. && zr > n.z) pc = mix(pc, rC, rA);
-    col = mix(col, pc, a);
-  } else if (rA > 0.) {
-    col = mix(col, rC, rA);
-  }
-  // moons, in the ring plane
-  for (int i = 0; i < 3; i++) {
-    float fi = float(i), orad = 3.1 + fi * 1.55, ang = uTime * (.02 - fi * .005) + fi * 2.3 + 1.;
-    vec3 mp = (e1 * cos(ang) + e2 * sin(ang)) * orad;
-    float mr = (i == 1 ? .085 : .04);
-    vec2 mq = (q - mp.xy) / mr; float md = dot(mq, mq);
-    if (md < 1. && (d2 >= 1. || mp.z > 0.)) {
-      vec3 mn = vec3(mq, sqrt(1. - md));
-      vec3 mc = (i == 1 ? vec3(.86, .62, .3) : vec3(.86, .86, .84)) * (.8 + .3 * vnoise(mq * 5. + fi));
-      col = mix(col, mc * pow(clamp(dot(mn, L), 0., 1.), .8) * 1.2, smoothstep(1., .8, md));
-    }
-  }
-  fragColor = vec4(finish(col, fc), 1.);
-}`;
-
-/* ═════════════════════════ JUPITER: Syllabus ═════════════════════════ */
-const JUPITER = `
 float belt(float y, float c, float w) { return exp(-pow((y - c) / w, 2.)); }
 vec3 jupiter(vec3 sp, float t) {
   float lat = asin(sp.y), lon = atan(sp.z, sp.x);
@@ -543,6 +488,69 @@ vec3 jupiter(vec3 sp, float t) {
   c = mix(c, vec3(.97, .94, .88), smoothstep(1., .6, length(ov)) * .7);
   return c * (.82 + .3 * w2) * (.94 + .12 * w3);
 }
+`;
+
+const SATURN = GIANTS + `
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  vec2 p = (fc - .5 * uRes) / uRes.y / (1. + uTravel * .45);
+  vec3 rd = viewRay(p, 4.1);
+  vec3 col = realSky(rd) * .7 + starField(rd, .75);
+
+  float R = uSubject.z * (1. + uTravel * .45);
+  vec2 q = (fc - uSubject.xy - uPointer * R * .03) / R;
+  vec3 L = normalize(vec3(-.62, .3, .72));
+  vec3 ax = vec3(0., cos(.42), sin(.42)); ax.xy *= rot(-.38);                  // rings open 24°, rolled across the frame
+  float obl = .9;                                                              // Saturn is visibly flattened
+  // express the pixel in the planet's own frame to apply the flattening along its axis
+  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(ax, e1);
+  float zr = -(q.x * ax.x + q.y * ax.y) / ax.z; vec3 rp = vec3(q, zr); float rho = length(rp);
+  float rA = 0.; vec3 rC = vec3(0);
+  if (rho > 1.2 && rho < 2.36) {
+    rA = clamp(ringTau(rho) * 1.2, 0., 1.);
+    float bl = dot(rp, L);
+    float sh = (bl < 0. && rho * rho - bl * bl < .97) ? .035 : 1.;
+    rC = ringColor(rho) * sh * 1.05;
+    vec2 gi = floor(rp.xy * 700.);                                              // sunlight glinting off single blocks of ice
+    rC += vec3(1., .97, .9) * step(.997, h21(gi)) * (.5 + .5 * sin(uTime * 2.5 + h21(gi + 3.) * 40.)) * sh * 1.2;
+  }
+  // sphere, squeezed along its axis
+  vec2 qa = vec2(dot(q, normalize(vec2(ax.y, -ax.x))), dot(q, normalize(ax.xy)) / mix(1., obl, length(ax.xy)));
+  float d2 = dot(qa, qa);
+  if (d2 < 1.) {
+    vec3 n = vec3(q, sqrt(max(0., 1. - d2)));
+    float lat = asin(clamp(dot(normalize(n), ax), -1., 1.));
+    float lon = atan(dot(n, e2), dot(n, e1)) + uTime * .012;
+    vec3 sp = vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
+    vec3 alb = saturnBands(sp, lat);
+    float ndl = dot(normalize(n), L), lit = pow(clamp(ndl, 0., 1.), .8);
+    float s = -dot(n, ax) / dot(L, ax);
+    if (s > 0.) { float rr = length(n + L * s); if (rr > 1.2 && rr < 2.36) lit *= exp(-ringTau(rr) * 2.6); }   // ring shadow on the globe
+    vec3 pc = alb * (lit * 1.28 + .008) * mix(.55, 1., pow(n.z, .5));
+    pc += vec3(.9, .8, .6) * pow(1. - n.z, 4.) * smoothstep(-.2, .4, ndl) * .25;
+    float a = smoothstep(1., 1. - 3. / R, d2);
+    if (rA > 0. && zr > n.z) pc = mix(pc, rC, rA);
+    col = mix(col, pc, a);
+  } else if (rA > 0.) {
+    col = mix(col, rC, rA);
+  }
+  // moons, in the ring plane
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i), orad = 2.7 + fi * 1.2, ang = uTime * (.022 - fi * .003) + fi * 2.3 + 1.;
+    vec3 mp = (e1 * cos(ang) + e2 * sin(ang)) * orad;
+    float mr = (i == 1 ? .085 : i == 3 ? .05 : .03);
+    vec2 mq = (q - mp.xy) / mr; float md = dot(mq, mq);
+    if (md < 1. && (d2 >= 1. || mp.z > 0.)) {
+      vec3 mn = vec3(mq, sqrt(1. - md));
+      vec3 mc = (i == 1 ? vec3(.86, .62, .3) : vec3(.86, .86, .84)) * (.8 + .3 * vnoise(mq * 5. + fi));
+      col = mix(col, mc * pow(clamp(dot(mn, L), 0., 1.), .8) * 1.2, smoothstep(1., .8, md));
+    }
+  }
+  fragColor = vec4(finish(col, fc), 1.);
+}`;
+
+/* ═════════════════════════ JUPITER: Syllabus ═════════════════════════ */
+const JUPITER = GIANTS + `
 void main() {
   vec2 fc = gl_FragCoord.xy;
   vec2 p = (fc - .5 * uRes) / uRes.y / (1. + uTravel * .45);
@@ -555,18 +563,18 @@ void main() {
   vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(ax, e1);
   float d2 = dot(q, q);
   // Io and Europa, and the shadows they drop on the cloud tops
-  vec3 moonP[2]; float moonR[2];
-  for (int i = 0; i < 2; i++) {
-    float fi = float(i), ang = uTime * (.03 - fi * .011) + 2.2 + fi * 1.9;
-    moonP[i] = (e1 * cos(ang) + e2 * sin(ang)) * (1.55 + fi * .55) + ax * (.05 - fi * .12);
-    moonR[i] = .034 - fi * .006;
+  vec3 moonP[4]; float moonR[4];
+  for (int i = 0; i < 4; i++) {                                               // Io, Europa, Ganymede, Callisto
+    float fi = float(i), ang = uTime * (.03 / (1. + fi * .9)) + 2.2 + fi * 1.9;
+    moonP[i] = (e1 * cos(ang) + e2 * sin(ang)) * (1.55 + fi * .62) + ax * (.05 - fi * .07);
+    moonR[i] = i == 0 ? .034 : i == 1 ? .029 : i == 2 ? .05 : .045;
   }
   if (d2 < 1.) {
     vec3 n = vec3(q, sqrt(1. - d2));
     float lat = asin(clamp(dot(n, ax), -1., 1.)), lon = atan(dot(n, e2), dot(n, e1));
     vec3 alb = jupiter(vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon)), uTime);
     float ndl = dot(n, L), lit = pow(clamp(ndl, 0., 1.), .78);
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 4; i++) {
       vec3 w = moonP[i] - n; float along = dot(w, L);
       if (along > 0.) lit *= mix(.12, 1., smoothstep(moonR[i] * .8, moonR[i] * 1.5, length(w - L * along)));
     }
@@ -574,11 +582,12 @@ void main() {
     pc += vec3(.95, .8, .6) * pow(1. - n.z, 4.) * smoothstep(-.2, .4, ndl) * .2;
     col = mix(col, pc, smoothstep(1., 1. - 3. / R, d2));
   }
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 4; i++) {
     vec2 mq = (q - moonP[i].xy) / moonR[i]; float md = dot(mq, mq);
     if (md < 1. && (d2 >= 1. || moonP[i].z > 0.)) {
       vec3 mn = vec3(mq, sqrt(1. - md));
-      vec3 mc = i == 0 ? vec3(.92, .82, .45) : vec3(.86, .83, .78);
+      vec3 mc = i == 0 ? vec3(.92, .82, .45) : i == 1 ? vec3(.86, .83, .78) : i == 2 ? vec3(.62, .58, .52) : vec3(.42, .38, .34);
+      mc *= .85 + .3 * vnoise(mq * 3. + float(i) * 5.);
       col = mix(col, mc * pow(clamp(dot(mn, L), 0., 1.), .8) * 1.25, smoothstep(1., .75, md));
     }
   }
@@ -589,6 +598,8 @@ void main() {
 const EARTH_FN = `
 uniform sampler2D uEarth;
 uniform float uEarthOn;
+uniform sampler2D uNight;     // NASA Black Marble: the night-side lights
+uniform float uNightOn;
 /* Earth, from NASA's Blue Marble, with computed weather, ocean glint and air. q in radii; returns rgb + coverage. */
 vec4 earth(vec2 q, vec3 L, float spin, float px) {
   float d2 = dot(q, q);
@@ -620,6 +631,8 @@ vec4 earth(vec2 q, vec3 L, float spin, float px) {
   col += air * pow(1. - n.z, 2.6) * smoothstep(-.15, .35, ndl) * .85;                            // the blue limb
   col += vec3(1., .45, .2) * smoothstep(.16, .0, abs(ndl)) * pow(1. - n.z, 1.5) * .1;            // dusk, along the terminator
   col += vec3(.01, .014, .03);                                                                   // night side, by starlight
+  vec3 city = toLinear(textureLod(uNight, uv, 0.).rgb) * uNightOn;
+  col += city * vec3(1., .82, .55) * smoothstep(.06, -.14, ndl) * (1. - cloud * .85) * 2.2;       // cities, where it is night
   return vec4(col, smoothstep(1., 1. - 3. * px, d2));
 }
 `;
@@ -638,8 +651,23 @@ void main() {
     float mare = fbm(mq * 2.2 + 4.), cr = fbm(mq * 9.);
     col = mix(col, vec3(.6, .59, .57) * (.55 + .5 * smoothstep(.35, .6, mare)) * (.8 + .3 * cr) * pow(clamp(dot(mn, L), 0., 1.), .8) * 1.3, smoothstep(1., .85, md));
   }
-  vec4 e = earth((fc - uSubject.xy - uPointer * R * .025) / R, L, uTime * .018 + 1.3, 1. / R);
+  vec2 eq = (fc - uSubject.xy - uPointer * R * .025) / R;
+  vec4 e = earth(eq, L, uTime * .018 + 1.3, 1. / R);
   col = mix(col, e.rgb, e.a);
+  // satellites on their orbits, catching the Sun (and vanishing into Earth's shadow)
+  for (int k = 0; k < 4; k++) {
+    float fk = float(k), ang = uTime * (.045 - fk * .007) + fk * 2.1;
+    vec3 ax = normalize(vec3(.35 - fk * .3, 1., .25 + fk * .2));
+    vec3 a1 = normalize(cross(ax, vec3(0, 0, 1))), a2 = cross(ax, a1);
+    vec3 sp = (a1 * cos(ang) + a2 * sin(ang)) * (1.07 + fk * .045);
+    if (sp.z < 0. && dot(sp.xy, sp.xy) < 1.) continue;                         // behind the planet
+    float al = dot(sp, L);
+    float sunlit = (al < 0. && length(sp - L * al) < 1.) ? 0. : 1.;
+    vec2 sq = (eq - sp.xy) * R;
+    vec2 pd = rot(.5 + fk * .7) * sq;
+    float g = exp(-dot(sq, sq) / 1.6) * 1.5 + exp(-pd.y * pd.y / .35) * smoothstep(6.5, 3., abs(pd.x)) * .55;
+    col += vec3(1., .94, .82) * g * sunlit * (k == 0 ? 1.4 : .8);
+  }
   fragColor = vec4(finish(col, fc), 1.);
 }`;
 
@@ -696,6 +724,11 @@ void main() {
     vec2 eq = (fc - uSubject.xy - uPointer * 5.) / R / zoom;
     vec4 e = earth(eq, normalize(vec3(-.6, .34, .72)), uTime * .014 + 2.6, 1. / R);
     col = mix(col, e.rgb, e.a);
+    // an orbiter crossing the black sky, its solar wings catching the Sun
+    vec2 oc = vec2(-1. + fract(uTime * .005 + .3) * 2., .34 + .03 * sin(uTime * .02));
+    vec2 oq = (p - oc) * uRes.y;
+    float ob = exp(-dot(oq, oq) / 2.) * 1.6 + exp(-oq.y * oq.y / .5) * smoothstep(7., 4., abs(oq.x)) * .6;
+    col += vec3(1., .86, .6) * ob * smoothstep(-.02, .02, oc.y - max(ridge1, ridge2));
   } else if (p.y > 0.) {
     // the highlands themselves
     bool nearRidge = ridge2 >= p.y;
@@ -718,6 +751,8 @@ void main() {
     float lit = smoothstep(-.04, .16, ndl) * pow(clamp(ndl * 1.7, 0., 1.), .55);     // regolith scatters light back towards the sun
     float alb = .30 + .12 * fbm(x * .25) + .06 * fbm(x * 2.4) * lod;
     alb *= .9 + .2 * h21(floor(x * 90.)) * lod * lod;                                // grains
+    float ru = x.x + 1.2 + x.y * -.22 - sin(x.y * .09) * 1.1;                        // a rover's tracks, curving away
+    alb *= 1. - .3 * smoothstep(.1, .04, abs(abs(ru) - .45)) * (.7 + .3 * step(.5, fract(x.y * 7.))) * smoothstep(0., .3, lod);
     col = vec3(alb, alb * .985, alb * .95) * lit * 1.35;
     col *= smoothstep(-.001, -.012, p.y) * .25 + .75;
     // a research outpost on the plain
@@ -726,8 +761,14 @@ void main() {
     float dome = min(sdDome(b - vec2(-34., 0.), 15.), sdDome(b - vec2(8., 0.), 22.));
     float hab = min(sdBox(b - vec2(52., 5.), vec2(20., 5.)), sdBox(b - vec2(-78., 4.), vec2(16., 4.)));
     float mast = min(sdBox(b - vec2(92., 22.), vec2(.9, 22.)), length(b - vec2(92., 45.)) - 3.5);
+    // a lander on its four legs, in gold foil
+    vec2 lb = b - vec2(-150., 0.);
+    float lander = min(sdBox(lb - vec2(0., 13.), vec2(10., 5.5)), min(sdBox(vec2(abs(lb.x) - 11. + lb.y * .35, lb.y - 4.), vec2(.8, 4.5)), sdBox(lb - vec2(3., 21.), vec2(.6, 3.))));
     float st = min(min(dome, hab), mast);
-    if (st < 0.) {
+    if (lander < 0.) {
+      col = vec3(.95, .74, .32) * clamp(.75 - lb.x * .04 + lb.y * .01, .15, 1.2);
+      if (abs(lb.y - 13.) < 5.5 && abs(lb.x) < 10. && fract(lb.x * .2 + lb.y * .1) > .8) col *= .75;  // the foil's creases
+    } else if (st < 0.) {
       float shade = clamp(.62 - (b.x - (dome < 0. ? (b.x > -13. ? 8. : -34.) : b.x)) * .034, .08, 1.);
       col = vec3(.9, .9, .88) * shade * (dome < 0. ? 1. : .8);
       if (hab < 0. && abs(b.y - 5.) < 1.5 && fract(b.x * .11) > .55) col = vec3(1., .82, .5) * 1.4;   // lit ports
@@ -780,6 +821,21 @@ void main() {
   float r3 = (fbm(vec2(az * 4.4 + 2., 8.)) - .5) * .035 + .001;
   if (p.y > max(r1, max(r2, r3))) {
     col = marsSky(p, sun);
+    // Phobos and Deimos: small and lumpy, lit from the Sun's side, seen through the dusty air
+    for (int m = 0; m < 2; m++) {
+      vec2 mc = m == 0 ? vec2(.17 - uPointer.x * .004, .27) : vec2(.5 - uPointer.x * .003, .38);
+      float mr = m == 0 ? .017 : .0075;
+      vec2 mq = (p - mc) / mr;
+      mq.x *= m == 0 ? .8 : .9;
+      float lump = 1. + (vnoise(mq * 1.4 + float(m) * 7.) - .5) * .3;
+      float d = length(mq) / lump;
+      if (d < 1.) {
+        vec3 n = normalize(vec3(mq / lump, sqrt(max(1. - d * d, 0.))));
+        float lit = clamp(dot(n, normalize(vec3(-.92, .05, .38))), 0., 1.);
+        vec3 mcol = vec3(.56, .48, .42) * (.7 + .5 * vnoise(mq * 4. + 3.)) * (lit * 1.7 + .06);
+        col = mix(col, mix(mcol, col, .3), smoothstep(1., .88, d));
+      }
+    }
   } else if (p.y > 0.) {
     float layer = p.y <= r3 ? 2. : (p.y <= r2 ? 1. : 0.);
     float prof = layer > 1.5 ? r3 : (layer > .5 ? r2 : r1);
@@ -803,6 +859,10 @@ void main() {
     vec3 alb = mix(vec3(.52, .22, .11), vec3(.70, .37, .19), v);
     alb = mix(alb, vec3(.30, .16, .12), smoothstep(.66, .82, fine) * lod * .45);                  // dark basalt
     alb *= .9 + .2 * h21(floor(x * 60.)) * lod * lod;
+    // a rover's tracks, from underfoot out towards the station
+    float ru = x.x - 40.6 + x.y * .3 - sin(x.y * .11) * 1.4;
+    float rut = smoothstep(.13, .05, abs(abs(ru) - .55)) * (.75 + .25 * step(.5, fract(x.y * 5.)));
+    alb *= 1. - .32 * rut * smoothstep(0., .3, lod);
     col = alb * (lit * vec3(1.15, .98, .86) * 1.25 + vec3(.34, .19, .13) * .42);                   // low sun, plus light from the sky
     float fog = 1. - exp(-t * .028);
     col = mix(col, haze, fog);
@@ -831,8 +891,346 @@ void main() {
   fragColor = vec4(finish(col, fc), 1.);
 }`;
 
+/* ═════════════════════════ THE SOLAR SYSTEM: the home page ═════════════════════════
+ *
+ * Ray-traced, per pixel, from a camera Universe.tsx places (see solar.ts for where everything is):
+ * the Sun (granulation, spots, limb darkening, prominences, corona), eight planets, the Moon and
+ * Pluto as lit spheres with their own surfaces, axes and spin; Saturn's and Uranus's rings with the
+ * shadows they cast and receive; the asteroid and Kuiper belts; every orbit as a fine line; and
+ * beyond Pluto, on tracks of their own, the examinations' spheres with their official emblems.
+ * Body i: 0 Sun · 1 Mercury · 2 Venus · 3 Earth · 4 Moon · 5 Mars · 6 Jupiter · 7 Saturn · 8 Uranus
+ *         9 Neptune · 10 Pluto · 11… the examinations */
+const SOLAR = SKYLIB + GIANTS + EARTH_FN + `
+#define NB 14
+#define NO 12
+uniform vec3 uCamPos, uCamR, uCamU, uCamF;
+uniform float uFocal;          // px
+uniform vec2 uCenter;          // where the camera looks, px (y up)
+uniform int uNB;
+uniform vec4 uB[NB];           // centre, radius
+uniform vec4 uAx[NB];          // spin axis, spin angle
+uniform float uHov[NB];
+uniform int uNO;
+uniform vec4 uOC[NO];          // ellipse centre, semi-major axis
+uniform vec4 uOU[NO];          // towards perihelion, semi-minor axis
+uniform vec4 uON[NO];          // orbit pole, the body's eccentric anomaly (-100: a fixed track)
+uniform float uOH[NO];         // highlight
+uniform float uOK[NO];         // 0 planet, 1 dwarf planet, 2 an examination's track
+uniform float uES[3];          // the examinations' emblem slots
+uniform vec3 uET[3];           // and their colours
+
+vec2 hitSphere(vec3 ro, vec3 rd, vec4 s) {                 // (distance to closest approach, miss distance)
+  vec3 oc = ro - s.xyz; float b = dot(oc, rd);
+  return vec2(-b, sqrt(max(dot(oc, oc) - b * b, 0.)));
+}
+float sdHeart(vec2 p) {
+  p.x = abs(p.x);
+  if (p.y + p.x > 1.) return sqrt(dot(p - vec2(.25, .75), p - vec2(.25, .75))) - .35355;
+  vec2 a = p - vec2(0., 1.), b = p - .5 * max(p.x + p.y, 0.);
+  return sqrt(min(dot(a, a), dot(b, b))) * sign(p.x - p.y);
+}
+/* A body's own frame: latitude/longitude on its surface, turning with it. */
+vec3 bodyFrame(vec3 n, vec4 ax, out float lat, out float lon) {
+  vec3 a = ax.xyz, ref = abs(a.y) < .9 ? vec3(0, 1, 0) : vec3(0, 0, 1);
+  vec3 e1 = normalize(cross(a, ref)), e2 = cross(a, e1);
+  lat = asin(clamp(dot(n, a), -1., 1.));
+  lon = atan(dot(n, e2), dot(n, e1)) - ax.w;
+  return vec3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon));
+}
+
+/* The Sun's face: granulation, supergranules, a few spots, limb darkening. */
+vec3 sunFace(vec3 n, vec3 rd) {
+  float lat, lon; vec3 sp = bodyFrame(n, uAx[0], lat, lon);
+  float g = vnoise3(sp * 70. + uTime * .06) * .6 + vnoise3(sp * 150. - uTime * .09) * .4;
+  float sg = fbm3(sp * 9. + 3.);
+  float spot = smoothstep(.76, .84, fbm3(sp * 3.2 + 17.)) * smoothstep(.75, .35, abs(lat));
+  float mu = clamp(dot(n, -rd), 0., 1.);
+  vec3 c = mix(vec3(1., .36, .08), vec3(1., .8, .5), pow(mu, .7));          // a warmer, whiter centre; deep orange limb
+  c *= (.66 + .5 * g) * (.86 + .28 * sg);
+  c *= 1. - spot * .8 * (.7 + .3 * g);
+  c *= .3 + .7 * pow(mu, .45);
+  return c * 1.55;
+}
+/* The corona, streamers and prominences, around the disc (x = miss distance in solar radii). */
+vec3 sunAura(vec3 w, float x) {
+  float ang = atan(dot(w, uCamU), dot(w, uCamR));
+  float streak = fbm(vec2(ang * 2.4 + 3., uTime * .01)) * .7 + .3;
+  float e = max(x - 1., 0.);
+  vec3 c = vec3(1., .66, .36) * (exp(-e * 7.) * .55 + exp(-e * 1.9) * .13 * streak) + vec3(1., .8, .58) * .03 / (x * x);
+  float pr = fbm(vec2(ang * 7., e * 10. - uTime * .03) + 5.);
+  c += vec3(1., .3, .12) * smoothstep(.6, .78, pr) * smoothstep(.16, .0, e) * step(1., x) * 1.4;
+  return c;
+}
+
+/* The planets' surfaces (albedo, linear), and the colour of their air. */
+vec3 surface(int i, vec3 n, out vec3 air, out float airK) {
+  float lat, lon; vec3 sp = bodyFrame(n, uAx[i], lat, lon);
+  air = vec3(0); airK = 0.;
+  if (i == 1) {                                                     // Mercury: grey, cratered, scorched
+    float h = fbm3(sp * 2.6 + 1.), c = fbm3(sp * 11. + 4.);
+    vec3 a = mix(vec3(.30, .28, .26), vec3(.62, .58, .54), h) * (.75 + .4 * c);
+    return a + vec3(.25) * smoothstep(.72, .8, fbm3(sp * 6. + 9.));
+  }
+  if (i == 2) {                                                     // Venus: a lid of sulphuric cloud
+    float w = fbm3(sp * vec3(2., 4.5, 2.) + vec3(uTime * .006, 0., 0.));
+    float c = fbm3(sp * vec3(3.4, 8., 3.4) + w * 2.2);
+    air = vec3(1., .82, .5); airK = .55;
+    return mix(vec3(.78, .6, .34), vec3(.98, .9, .72), c) * (.9 + .1 * sin(lat * 5. + w * 4.));
+  }
+  if (i == 3) {                                                     // Earth: NASA's Blue Marble, with weather
+    vec2 uv = vec2(fract(lon / (2. * PI) + .5), .5 - lat / PI);
+    vec3 day = toLinear(textureLod(uEarth, uv, 1.).rgb) * uEarthOn + vec3(.03, .07, .17) * (1. - uEarthOn);
+    float cl = fbm3(sp * vec3(5., 8., 5.) + fbm3(sp * 3. + 11.) * 2.);
+    float cloud = smoothstep(.55, .78, cl) * .85 * uEarthOn;
+    air = vec3(.3, .55, 1.); airK = 1.;
+    return mix(day * 1.35, vec3(.92), cloud);
+  }
+  if (i == 4) {                                                     // the Moon: highlands and maria
+    float m = smoothstep(.5, .62, fbm3(sp * 2.2 + 4.));
+    return mix(vec3(.62, .6, .58), vec3(.3, .29, .28), m) * (.82 + .3 * fbm3(sp * 9.));
+  }
+  if (i == 5) {                                                     // Mars: rust, dark basalt, white poles
+    float d = fbm3(sp * 2.2 + 7.), f = fbm3(sp * 8. + 2.);
+    vec3 a = mix(vec3(.74, .38, .2), vec3(.56, .27, .14), smoothstep(.45, .6, f));
+    a = mix(a, vec3(.3, .18, .13), smoothstep(.52, .64, d) * smoothstep(1.1, .5, abs(lat)));
+    a = mix(a, vec3(.4, .2, .13), smoothstep(.05, .0, abs(lat + .14 + (f - .5) * .08)) * step(-1.2, lon) * step(lon, -.2) * .7);  // Valles Marineris
+    air = vec3(1., .66, .5); airK = .3;
+    return mix(a, vec3(.95, .93, .9), smoothstep(1.2, 1.32, abs(lat) + (f - .5) * .2));
+  }
+  if (i == 6) { air = vec3(.95, .8, .6); airK = .25; return jupiter(sp, uTime); }
+  if (i == 7) { air = vec3(.95, .85, .6); airK = .25; return saturnBands(sp, lat); }
+  if (i == 8) {                                                     // Uranus: pale cyan methane haze
+    float b = fbm3(sp * vec3(1.5, 10., 1.5) + 3.);
+    air = vec3(.6, .9, 1.); airK = .7;
+    return mix(vec3(.55, .8, .84), vec3(.7, .9, .92), b * .6 + smoothstep(.9, 1.4, lat) * .4);
+  }
+  if (i == 9) {                                                     // Neptune: deep blue, bands, a dark spot, bright streaks
+    float w = fbm3(sp * vec3(2., 9., 2.) + 6.);
+    vec3 a = mix(vec3(.14, .27, .74), vec3(.26, .44, .9), smoothstep(.3, .8, sin(lat * 9. + w * 3.) * .5 + .5));
+    vec2 g = vec2(mod(lon + 2.2 + PI, 2. * PI) - PI, (lat + .35) * 1.6) / .2;
+    a = mix(a, vec3(.06, .12, .4), smoothstep(1., .6, length(g)) * .8);
+    a = mix(a, vec3(.92, .95, 1.), smoothstep(.72, .82, fbm3(sp * vec3(3., 22., 3.) + 2.)) * .7);
+    air = vec3(.4, .6, 1.); airK = .7;
+    return a;
+  }
+  // Pluto: tan and rust, the dark Cthulhu belt, and the bright nitrogen heart, Tombaugh Regio
+  float f = fbm3(sp * 6. + 3.);
+  vec3 a = mix(vec3(.56, .46, .38), vec3(.78, .7, .6), fbm3(sp * 2.5 + 1.)) * (.85 + .3 * f);
+  float cth = smoothstep(.2, .0, abs(lat + .12 + (f - .5) * .2)) * smoothstep(.2, -.5, lon);
+  a = mix(a, vec3(.28, .14, .1), cth * .85);
+  float hd = sdHeart(vec2(lon - .25, lat + .5) / .95);
+  float heart = smoothstep(.04, -.04, hd + (f - .5) * .08);
+  a = mix(a, mix(vec3(.93, .9, .85), vec3(.99, .97, .94), step(lon, .25)), heart);
+  air = vec3(.6, .7, 1.); airK = .15;
+  return a;
+}
+
+/* An examination's sphere: a metallic globe in the commission's colours that turns on its own axis,
+   carrying the official emblem as an inlaid medallion on both faces (the turn slows as a face comes
+   round, so the emblem is held to be read). n and the lights are in view space: z towards you. */
+vec3 examSphere(vec3 n, int k, float hov, vec3 Ls) {
+  float slot = uES[k]; vec3 tint = toLinear(uET[k]);
+  float tt = uTime * .05 + float(k) * .31;
+  float f = fract(tt), spin = PI * (floor(tt) + f - sin(2. * PI * f) * .135);
+  vec3 ax = normalize(vec3(.05, 1., .16));
+  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(e1, ax);
+  float lx = dot(n, e1), ly = dot(n, ax), lz = dot(n, e2);
+  float c = cos(spin), s = sin(spin);
+  float rx = c * lx - s * lz, rz = s * lx + c * lz;
+  float side = rz >= 0. ? 1. : -1., K = .66;
+  vec2 uv = vec2(.5 + side * rx / (2. * K), .5 - ly / (2. * K));
+  vec4 em = emblemTex(slot, clamp(uv, 0., 1.));
+  if (slot < -.5) em.a = 0.;
+  em.a *= smoothstep(.3, .55, abs(rz)) * smoothstep(1., .98, length(uv - .5) * 2.);
+  float rr = length(uv - .5) * 2.;                                   // 1 = the edge of the texture
+  // the shell: dark metal in the commission's colour, reflecting space and the Sun behind
+  vec3 Lk = normalize(vec3(-.5, .55, .68));
+  vec3 rf = reflect(vec3(0, 0, -1), n);
+  vec3 env = mix(vec3(.015, .02, .04), vec3(.3, .34, .46), smoothstep(-.3, .9, rf.y)) + vec3(1., .78, .5) * pow(max(dot(rf, Ls), 0.), 6.) * 1.4;
+  vec3 shell = tint * (.16 + .55 * max(dot(n, Lk), 0.)) + mix(tint, vec3(1.), .35) * env * .7;
+  float lat = asin(clamp(ly, -1., 1.)), lon = atan(rx, rz);
+  float mer = abs(fract(lon * 6. / PI) - .5) * 2.;                   // 1 on a meridian, 0 between
+  float lines = smoothstep(.93, .985, mer) * smoothstep(1.25, .95, abs(lat))
+              + smoothstep(.035, 0., abs(abs(lat) - .62)) + smoothstep(.03, 0., abs(lat)) * .8;
+  vec3 gold = vec3(.86, .63, .28);
+  shell = mix(shell, gold * (.35 + .75 * max(dot(n, Lk), 0.)) + gold * env * .5, clamp(lines, 0., 1.) * .8);
+  // the medallion, in a gold bezel
+  vec3 col = mix(shell, em.rgb * (.86 + .3 * max(dot(n, Lk), 0.)), em.a);
+  float bez = smoothstep(.06, .0, abs(rr - 1.04)) * smoothstep(.3, .55, abs(rz));
+  col = mix(col, gold * (.5 + .9 * max(dot(n, Lk), 0.)) + gold * env * .4, bez * .9);
+  // light: a key from the upper left, the Sun as a rim from behind, a sharp highlight
+  vec3 h = normalize(Lk + vec3(0, 0, 1));
+  col += vec3(1.) * pow(max(dot(n, h), 0.), 120.) * 1.1 * (1. - em.a * .6);
+  col += vec3(1., .8, .55) * pow(1. - n.z, 2.5) * smoothstep(-.2, .6, dot(n, Ls)) * .9;
+  col += mix(tint, vec3(.7, .8, 1.), .5) * pow(1. - n.z, 3.) * .35;
+  col *= mix(mix(.7, .92, em.a), 1., smoothstep(-.6, .5, dot(n, Lk)));
+  return col * (1. + hov * .18);
+}
+
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  float zt = 1. + uTravel * .45;
+  vec2 p = (fc - .5 * uRes) / uRes.y / zt;
+
+  // ── the deep sky, held back so the system leads ──
+  vec3 sd = viewRay(p, 2.3);
+  vec3 col = realSky(sd) * .8 + starField(sd, .85);
+  float band = smoothstep(.0, .09, dot(col, vec3(.3)));
+  vec3 drift = vec3(uTime * .0021, 0., uTime * .0013);
+  float neb = fbm3(sd * 2.4 + drift + fbm3(sd * 3.6 - drift) * 1.1);
+  col += (vec3(.5, .13, .2) * smoothstep(.52, .9, neb) + vec3(.07, .2, .26) * smoothstep(.56, .9, fbm3(sd * 3.1 + 7. + drift))) * (.04 + band * .24);
+  float dust = fbm3(sd * 1.7 + vec3(3., 1., 7.) + drift * .5);
+  col *= 1. - .38 * smoothstep(.5, .78, dust) * band;
+  vec3 rv = normalize(vec3(p, -1.55)); rv.yz *= rot(uPointer.y * .012); rv.xz *= rot(uPointer.x * .018);
+  col += galaxy(rv) * uGalaxy;
+  if (uLite < .5) col += farGalaxies(sd) + clusters(sd);
+  if (uEvents > .5) { col += meteors(fc); col += comet(fc); }
+
+  // ── the system ──
+  vec3 ro = uCamPos;
+  vec3 rd = normalize(uCamR * (fc.x - uCenter.x) / zt + uCamU * (fc.y - uCenter.y) / zt + uCamF * uFocal);
+  float tNear = 1e9;
+  for (int i = 0; i < NB; i++) {                                   // what is solidly in front, pixel by pixel
+    if (i >= uNB) break;
+    vec2 h = hitSphere(ro, rd, uB[i]);
+    float px = h.x / uFocal;
+    if (h.x > 0. && h.y < uB[i].w - px * .5) tNear = min(tNear, h.x - sqrt(max(uB[i].w * uB[i].w - h.y * h.y, 0.)));
+  }
+
+  // the Sun's light in the space around it
+  vec2 hs = hitSphere(ro, rd, uB[0]);
+  float xs = hs.y / uB[0].w;
+  if (hs.x < tNear + 1e-3) col += sunAura(ro + rd * hs.x - uB[0].xyz, xs) * (1. + uHov[0] * .25);
+
+  // the belts, in the plane of the ecliptic
+  float tb = -ro.y / rd.y;
+  if (tb > 0. && tb < tNear) {
+    vec3 bp = ro + rd * tb; float r = length(bp.xz), pxw = tb / uFocal;
+    for (int belt = 0; belt < 2; belt++) {
+      float r0 = belt == 0 ? 6.45 : 15.9, r1 = belt == 0 ? 7.55 : 19.;
+      if (r < r0 || r > r1) continue;
+      float edge = smoothstep(r0, r0 + .35, r) * smoothstep(r1, r1 - .35, r);
+      float ang = atan(-bp.z, bp.x) - uTime * (belt == 0 ? .012 : .002);
+      float sc = belt == 0 ? 10. : 6.;
+      vec2 g = vec2(ang * r * sc, r * sc), id = floor(g), hh = h22(id + float(belt) * 17.);
+      vec3 rock = belt == 0 ? mix(vec3(.5, .44, .38), vec3(.78, .7, .6), hh.y) : mix(vec3(.62, .68, .78), vec3(.9, .92, 1.), hh.y);
+      col += (belt == 0 ? vec3(.5, .42, .34) * .012 : vec3(.4, .46, .6) * .004) * edge;        // fine dust
+      if (hh.x > (belt == 0 ? .5 : .7)) {
+        vec2 cc = id + .2 + .6 * h22(id + 3.1);
+        float size = (.012 + .05 * pow(hh.y, 5.)) * (belt == 0 ? 1. : .8);
+        float d = length(g - cc) / sc, rad = max(size, pxw * .75);
+        float a = smoothstep(rad, rad * .45, d) * pow(size / rad, 1.4) * edge;
+        col = mix(col, rock * (belt == 0 ? 1.1 : .7), clamp(a * 1.6, 0., 1.));
+      }
+    }
+  }
+
+  // the orbits: fine lines, brighter where a body has just passed and when it is pointed at
+  for (int k = 0; k < NO; k++) {
+    if (k >= uNO) break;
+    vec3 N = uON[k].xyz, U = uOU[k].xyz, V = cross(N, U);
+    float t = dot(uOC[k].xyz - ro, N) / dot(rd, N);
+    vec3 q3 = ro + rd * t - uOC[k].xyz;
+    vec2 q = vec2(dot(q3, U) / uOC[k].w, dot(q3, V) / uOU[k].w);
+    float F = length(q) - 1.;
+    float line = 1. - smoothstep(.0, 1.25, abs(F) / max(fwidth(F), 1e-6));
+    if (t <= 0. || t >= tNear || line <= 0.) continue;
+    float kind = uOK[k], hl = uOH[k], ang = atan(q.y, q.x);
+    vec3 lc; float a;
+    if (kind > 1.5) {                                               // an examination's track: gold
+      lc = vec3(1., .8, .5); a = (.22 + .5 * hl) * smoothstep(-.45, .25, (ro + rd * t).z / uOC[k].w);
+    } else {
+      float behind = mod(uON[k].w - ang, 2. * PI);
+      float trail = exp(-behind * 2.2);
+      lc = kind > .5 ? vec3(.8, .72, 1.) : vec3(.6, .72, 1.);
+      a = (.12 + .55 * trail + .5 * hl);
+      if (kind > .5) a *= .45 + .55 * step(.42, fract(ang * 36. / (2. * PI)));   // Pluto's: dashed, a different kind of path
+    }
+    col += lc * line * a * .55;
+  }
+
+  // the bodies themselves
+  for (int i = 0; i < NB; i++) {
+    if (i >= uNB) break;
+    vec4 s = uB[i];
+    vec2 h = hitSphere(ro, rd, s);
+    float px = h.x / uFocal;
+    float cov = clamp((s.w - h.y) / px + .5, 0., 1.);
+    float tHit = h.x - sqrt(max(s.w * s.w - h.y * h.y, 0.));
+    if (h.x <= 0. || cov <= 0. || tHit > tNear + px * 2.) {
+      // a soft halo round a body that is pointed at, and round the examinations
+      if (i >= 11 && h.x > 0. && h.x < tNear + s.w) {
+        float e = (h.y - s.w) / s.w;
+        if (e > 0.) col += mix(toLinear(uET[i - 11]), vec3(1.), .55) * exp(-e * 9.) * (.14 + .4 * uHov[i]);
+      } else if (i > 0 && h.x > 0. && h.x < tNear) {
+        float e = (h.y - s.w) / max(s.w, px * 3.);
+        if (e > 0.) col += vec3(.75, .85, 1.) * exp(-e * 5.) * .35 * uHov[i];
+      }
+      continue;
+    }
+    vec3 hp = ro + rd * tHit;
+    vec3 n = h.y < s.w ? normalize(hp - s.xyz) : normalize(ro + rd * h.x - s.xyz);
+    vec3 L = normalize(uB[0].xyz - hp);
+    vec3 c;
+    if (i == 0) {
+      c = sunFace(n, rd) * (1. + uHov[0] * .1);
+    } else if (i >= 11) {
+      vec3 nv = vec3(dot(n, uCamR), dot(n, uCamU), -dot(n, uCamF));
+      vec3 Lv = vec3(dot(L, uCamR), dot(L, uCamU), -dot(L, uCamF));
+      c = examSphere(nv, i - 11, uHov[i], Lv);
+    } else {
+      vec3 air; float airK;
+      vec3 alb = surface(i, n, air, airK);
+      float ndl = dot(n, L);
+      float lit = pow(clamp(ndl, 0., 1.), .8);
+      if (i == 7) {                                                 // the rings' shadow on Saturn
+        vec3 ax = uAx[7].xyz; float sr = s.w;
+        float k = -dot(n * sr, ax) / dot(L, ax);
+        if (k > 0.) { float rr = length(n * sr + L * k) / sr; if (rr > 1.2 && rr < 2.36) lit *= exp(-ringTau(rr) * 2.2); }
+      }
+      if (i == 3 || i == 4) {                                       // eclipses: the Moon's shadow on Earth, Earth's on the Moon
+        vec4 o = uB[i == 3 ? 4 : 3]; vec3 w = o.xyz - hp; float al = dot(w, L);
+        if (al > 0.) lit *= smoothstep(o.w * .8, o.w * 1.3, length(w - L * al));
+      }
+      c = alb * (lit * 1.5 + .03);
+      if (i == 3) {                                                 // sun glint on the sea, city light on the night side
+        vec3 hv = normalize(L - rd);
+        c += vec3(1., .9, .75) * pow(max(dot(n, hv), 0.), 60.) * lit * .6;
+      }
+      float mu = clamp(dot(n, -rd), 0., 1.);
+      c += air * airK * pow(1. - mu, 3.) * smoothstep(-.25, .35, ndl) * .7;
+      c *= 1. + uHov[i] * .3;
+    }
+    col = mix(col, c, cov);
+  }
+
+  // rings: Saturn's (bright, broad) and Uranus's (faint, narrow, standing on edge)
+  for (int j = 0; j < 2; j++) {
+    int i = j == 0 ? 7 : 8;
+    vec4 s = uB[i]; vec3 ax = uAx[i].xyz;
+    float tr = dot(s.xyz - ro, ax) / dot(rd, ax);
+    if (tr <= 0. || tr >= tNear) continue;
+    vec3 rp = ro + rd * tr - s.xyz;
+    float rho = length(rp) / s.w;
+    float tau = j == 0 ? (smoothstep(1.22, 1.32, rho) * smoothstep(1.56, 1.5, rho) * .18 + smoothstep(1.5, 1.6, rho) * smoothstep(1.98, 1.92, rho) * .9
+                         + smoothstep(1.99, 2.06, rho) * smoothstep(2.3, 2.22, rho) * .6)                          // C, B and A, softened: here they are a few pixels wide
+                       : (smoothstep(.012, .0, abs(rho - 1.64)) * .3 + smoothstep(.016, .0, abs(rho - 1.79)) * .3 + smoothstep(.03, .0, abs(rho - 2.0)) * .8) * .5;
+    if (tau <= 0.) continue;
+    vec3 L = normalize(uB[0].xyz - (s.xyz + rp));
+    float bb = dot(rp, L), sh = (bb < 0. && dot(rp, rp) - bb * bb < s.w * s.w) ? .06 : 1.;   // the planet's shadow across the ring
+    vec3 rc = (j == 0 ? ringColor(rho) : vec3(.6, .66, .7)) * sh * (1.2 + uHov[i] * .3);
+    col = mix(col, rc, clamp(tau, 0., 1.) * (j == 0 ? 1. : .8));
+  }
+
+  float iris = smoothstep(0., 1., uReveal * 1.9 - length(p) * .85);
+  col *= mix(iris, 1., smoothstep(.75, 1., uReveal)) * smoothstep(0., .35, uReveal);
+  fragColor = vec4(finish(col, fc), 1.);
+}`;
+
+
 export const FRAGMENT = {
   cosmos: COMMON + COSMOS,
+  solar: COMMON + SOLAR,
   saturn: COMMON + SATURN,
   jupiter: COMMON + JUPITER,
   earth: COMMON + EARTH,

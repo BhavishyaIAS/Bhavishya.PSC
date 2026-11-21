@@ -4,14 +4,15 @@ import Link from "next/link";
 import { brand } from "@/brand.config";
 import { GroupCards } from "@/components/GroupCards";
 import { DESTINATIONS } from "@/components/space/destinations";
-import { Gateway } from "@/components/space/Gateway";
+import { Gateway, SolarSpot } from "@/components/space/Gateway";
 import { Globe } from "@/components/space/Globe";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
 
 /**
- * The arrival. Deep space, the name, and the examinations as worlds to travel to.
+ * The arrival: the Solar System (drawn by the renderer, see space/solar.ts), the name above it, and
+ * beyond Pluto the examinations, each a sphere on its own track, with their plates beneath.
  * Everything the old home page did is still here: the greeting, the admin's own
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
@@ -26,15 +27,30 @@ export default async function LandingPage() {
 
   return (
     <div className="landing">
-      <section className="arrival" aria-labelledby="arrival-h">
-        <p className="arrival-eyebrow">{eyebrow}</p>
-        <h1 id="arrival-h" className="arrival-title">
-          {brand.name} <span>{brand.suffix}</span>
-        </h1>
-        <p className="arrival-tagline">{brand.tagline}</p>
-        <p className="arrival-lead">
-          {site.hero_lead || "Syllabus, notes, previous-year questions and your progress. Choose your examination and begin."}
-        </p>
+      <section className="arrival arrival-solar" aria-labelledby="arrival-h">
+        <div className="arrival-head" data-solar-top>
+          <p className="arrival-eyebrow">{eyebrow}</p>
+          <h1 id="arrival-h" className="arrival-title">
+            {brand.name} <span>{brand.suffix}</span>
+          </h1>
+          <p className="arrival-tagline">{brand.tagline}</p>
+          <p className="arrival-lead">
+            {site.hero_lead || "Syllabus, notes, previous-year questions and your progress. Choose your examination and begin."}
+          </p>
+        </div>
+
+        {/* the Solar System is drawn here; beyond Pluto, on tracks of their own, the examinations */}
+        <div className="solar-stage" aria-hidden />
+        <div className="solar-front" data-solar-front>
+          {shown.map((c, i) => (
+            <SolarSpot key={c.slug} commission={c} index={i} />
+          ))}
+        </div>
+        <div className="solar-tip" data-solar-tip aria-hidden>
+          <span className="solar-tip-kind" />
+          <b className="solar-tip-name" />
+          <span className="solar-tip-text" />
+        </div>
 
         {shown.length === 0 ? (
           <div className="arrival-empty">

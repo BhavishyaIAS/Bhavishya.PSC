@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { FRAGMENT, VERTEX, type ShaderName } from "./shaders";
+import { BODIES, FIRST_EXAM, MAX_EXAMS, N_ORBITS, PLUTO, SUN, layout as solarLayout, pick, toScreen, type Layout } from "./solar";
 import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 
 /** Called on a click that leaves the page (see Interactions): the view starts to pull away at once. */
@@ -11,9 +12,9 @@ let leave: () => void = () => {};
 export const depart = () => leave();
 
 /** Shooting stars, meteors and comets cross these skies; the admin station stays quiet. */
-const EVENTS: Partial<Record<World, boolean>> = { cosmos: true, system: true };
+const EVENTS: Partial<Record<World, boolean>> = { solar: true, cosmos: true, system: true };
 /** How often each world needs redrawing when nothing is being touched. Most of space moves very slowly. */
-const CALM_FPS: Record<World, number> = { cosmos: 30, system: 30, saturn: 24, jupiter: 24, earth: 24, mars: 12, moon: 5, station: 10 };
+const CALM_FPS: Record<World, number> = { solar: 30, cosmos: 30, system: 30, saturn: 24, jupiter: 24, earth: 24, mars: 12, moon: 5, station: 10 };
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 /**
@@ -95,6 +96,7 @@ export default function Universe() {
         img.src = src;
       });
     let skyOn = 0, earthOn = 0, skyAsked = false, earthAsked = false, skyReady = false, earthReady = false;
+    let nightOn = 0, nightAsked = false, nightReady = false;
     const sky = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_CUBE_MAP, sky);
@@ -103,6 +105,26 @@ export default function Universe() {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, earth);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([4, 10, 24, 255]));
+    // the night side's city lights (unit 5), for Earth up close and Earth seen from the Moon
+    const night = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE5);
+    gl.bindTexture(gl.TEXTURE_2D, night);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+    const askNight = async () => {
+      if (nightAsked) return;
+      nightAsked = true;
+      const img = await load(`/space/earth-night-${phone() ? "1k" : "2k"}.webp`);
+      if (dead || !img) return;
+      gl.activeTexture(gl.TEXTURE5);
+      gl.bindTexture(gl.TEXTURE_2D, night);
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
+      gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      nightReady = true;
+      start();
+    };
     const askSky = async () => {
       if (skyAsked) return;
       skyAsked = true;
@@ -125,7 +147,8 @@ export default function Universe() {
       gl.activeTexture(gl.TEXTURE1);
       gl.bindTexture(gl.TEXTURE_2D, earth);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+      gl.generateMipmap(gl.TEXTURE_2D); // the home page's Earth is a few pixels across
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
       earthReady = true;
@@ -170,6 +193,16 @@ export default function Universe() {
       return k;
     };
     const orbE = new Float32Array(6).fill(-1);
+    // the home page's solar system (solar.ts): what is pointed at, and the last layout, for picking
+    const NB = FIRST_EXAM + MAX_EXAMS;
+    const bodyHover = new Float32Array(NB), orbitHover = new Float32Array(N_ORBITS);
+    const uB = new Float32Array(NB * 4), uAx = new Float32Array(NB * 4);
+    const uOC = new Float32Array(N_ORBITS * 4), uOU = new Float32Array(N_ORBITS * 4), uON = new Float32Array(N_ORBITS * 4), uOK = new Float32Array(N_ORBITS);
+    const uES = new Float32Array(MAX_EXAMS), uET = new Float32Array(MAX_EXAMS * 3);
+    const t0 = performance.now();
+    let solar: Layout | null = null, pointed = -1, pointedUntil = 0, tipShown = -1;
+    let mx = 0, my = 0, mouseIn = false; // the mouse, when it is over open space (not over text or a control)
+    let spotKey = "";
     const orb = new Float32Array(24), orbA = new Float32Array(24), orbB = new Float32Array(24);
     // The opening: on the first page of a visit, space comes up out of darkness.
     try {
@@ -196,10 +229,133 @@ export default function Universe() {
       if (current) gl.useProgram(current.handle);
       askSky();
       if (NEEDS_EARTH[world]) askEarth();
+      if (world === "earth" || world === "moon") askNight();
       calibrating = 50;
       slow = 0;
     };
 
+    /** The home page: fit the system to the page, place the examinations' spheres, and hand it all to the shader. */
+    const drawSolar = (now: number, dt: number, frozen: boolean, sc: number, H: number) => {
+      const front = document.querySelector<HTMLElement>("[data-solar-front]");
+      const head = document.querySelector<HTMLElement>("[data-solar-top]");
+      if (!front || !head) return;
+      const spots = Array.from(front.querySelectorAll<HTMLElement>("[data-solar-spot]")).slice(0, MAX_EXAMS);
+      const fr = front.getBoundingClientRect(), hr = head.getBoundingClientRect();
+      // the examinations sit over their plates where the plates stand in a row; otherwise evenly across
+      const plates = spots.map((el) => document.querySelector<HTMLElement>(`.gateway[data-slug="${el.dataset.solarSpot}"]`)?.getBoundingClientRect());
+      const row = plates.length > 1 && plates.every((r) => r && Math.abs(r.top - plates[0]!.top) < 4);
+      const targets = spots.map((_, k) => (row ? plates[k]!.left + plates[k]!.width / 2 : fr.left + (fr.width * (k + 0.5)) / spots.length));
+      const examR = (spots[0]?.offsetWidth ?? 140) / 2;
+      const isPhone = phone();
+      const t = frozen ? 30 : (now - t0) / 1000;
+      const l = solarLayout({
+        t, phone: isPhone, stageX: fr.left + fr.width / 2, stageW: fr.width, top: hr.bottom + (isPhone ? 10 : 18),
+        front: fr.top + fr.height / 2, targets, examR, lean: frozen ? [0, 0] : [px, py],
+      });
+      solar = l;
+      // what the pointer (or a finger) is on: a planet by picking, an examination by its link or its plate
+      const examOver = spots.map((el) => (el.matches(":hover, :focus-visible") || document.querySelector(`.gateway[data-slug="${el.dataset.solarSpot}"]`)?.matches(":hover, :focus-visible") ? 1 : 0));
+      const hit = mouseIn ? pick(l, mx, my) : -1;
+      const over = now < pointedUntil ? pointed : hit >= 0 && hit < FIRST_EXAM ? hit : -1;
+      for (let i = 0; i < NB; i++) {
+        const want = i >= FIRST_EXAM ? (examOver[i - FIRST_EXAM] ?? 0) : i === over ? 1 : 0;
+        bodyHover[i] += (want - bodyHover[i]) * Math.min(1, dt * 8);
+      }
+      const nb = FIRST_EXAM + spots.length;
+      for (let i = 0; i < nb; i++) {
+        const P = l.scene.pos[i], r = l.scene.rad[i] * (1 + bodyHover[i] * (i === SUN ? 0.03 : i >= FIRST_EXAM ? 0.06 : 0.14));
+        uB.set([P[0], P[1], P[2], r], i * 4);
+        const A = l.scene.axis[i];
+        uAx.set([A[0], A[1], A[2], l.scene.spin[i]], i * 4);
+      }
+      l.scene.orbits.forEach((o, k) => {
+        uOC.set([o.c[0], o.c[1], o.c[2], o.a], k * 4);
+        uOU.set([o.U[0], o.U[1], o.U[2], o.b], k * 4);
+        uON.set([o.N[0], o.N[1], o.N[2], o.E], k * 4);
+        uOK[k] = o.body >= FIRST_EXAM ? 2 : o.body === PLUTO ? 1 : 0;
+        orbitHover[k] = bodyHover[o.body];
+      });
+      spots.forEach((el, k) => {
+        const url = el.dataset.emblem;
+        uES[k] = url ? emblemSlot(isPhone ? url.replace(/\.webp$/, "-s.webp") : url) : -1;
+        const tint = (el.dataset.tint ?? "0.2,0.3,0.6").split(",").map(Number);
+        uET.set(tint.slice(0, 3), k * 3);
+      });
+      for (let k = 0; k < 3; k++) emblemOn[k] = Math.min(1, emblemOn[k] + (emblemReady[k] ? dt * 2.5 : 0));
+      // the spheres' links sit exactly over the spheres
+      const key = l.exams.map((e) => `${Math.round(e.x - fr.left)},${Math.round(e.y - fr.top)}`).join(";");
+      if (key !== spotKey) {
+        spotKey = key;
+        l.exams.forEach((e, k) => {
+          spots[k].style.transform = `translate(${(e.x - fr.left - e.r).toFixed(1)}px, ${(e.y - fr.top - e.r).toFixed(1)}px)`;
+        });
+        front.dataset.placed = "";
+      }
+      showTip(over >= 0 ? over : examOver.indexOf(1) >= 0 ? FIRST_EXAM + examOver.indexOf(1) : -1, spots);
+
+      const c = l.cam;
+      gl.uniform3f(U("uCamPos"), ...c.pos);
+      gl.uniform3f(U("uCamR"), ...c.R);
+      gl.uniform3f(U("uCamU"), ...c.U);
+      gl.uniform3f(U("uCamF"), ...c.F);
+      gl.uniform1f(U("uFocal"), c.zoom * c.D * sc);
+      gl.uniform2f(U("uCenter"), c.cx * sc, H - c.cy * sc);
+      gl.uniform1i(U("uNB"), nb);
+      gl.uniform4fv(U("uB"), uB);
+      gl.uniform4fv(U("uAx"), uAx);
+      gl.uniform1fv(U("uHov"), bodyHover);
+      gl.uniform1i(U("uNO"), l.scene.orbits.length);
+      gl.uniform4fv(U("uOC"), uOC);
+      gl.uniform4fv(U("uOU"), uOU);
+      gl.uniform4fv(U("uON"), uON);
+      gl.uniform1fv(U("uOH"), orbitHover);
+      gl.uniform1fv(U("uOK"), uOK);
+      gl.uniform1fv(U("uES"), uES);
+      gl.uniform3fv(U("uET"), uET);
+      gl.uniform1i(U("uE0"), 2);
+      gl.uniform1i(U("uE1"), 3);
+      gl.uniform1i(U("uE2"), 4);
+      gl.uniform3fv(U("uEmblemOn"), emblemOn);
+      gl.uniform1f(U("uGalaxy"), 0.55);
+      gl.uniform2f(U("uGalaxyAt"), isPhone ? 0.3 : 0.62, isPhone ? 0.62 : 0.36); // high, off to the side, clear of the name
+      gl.uniform1f(U("uClock"), frozen ? 0.5 : (Date.now() / 1000) % 100000);
+      gl.uniform1f(U("uEvents"), !frozen ? 1 : 0);
+    };
+
+    /** The label beside what is pointed at: its name, what it is, a line about it. */
+    const KIND = { star: "Star", planet: "Planet", moon: "Natural satellite", dwarf: "Dwarf planet" } as const;
+    const showTip = (i: number, spots: HTMLElement[]) => {
+      const tip = document.querySelector<HTMLElement>("[data-solar-tip]");
+      if (!tip || !solar) return;
+      if (i < 0) {
+        if (tipShown !== -1) tip.removeAttribute("data-open");
+        tipShown = -1;
+        return;
+      }
+      const s = toScreen(solar.cam, solar.scene.pos[i]);
+      const r = solar.scene.rad[i] * s.k;
+      if (tipShown !== i) {
+        tipShown = i;
+        const [kind, name, text] = tip.children as unknown as HTMLElement[];
+        if (i >= FIRST_EXAM) {
+          const el = spots[i - FIRST_EXAM];
+          kind.textContent = el.dataset.kind ?? "Examination";
+          name.textContent = el.dataset.name ?? "";
+          text.textContent = el.dataset.text ?? "";
+        } else {
+          const b = BODIES[i];
+          kind.textContent = i === SUN ? "The centre" : KIND[b.kind];
+          name.textContent = b.name;
+          text.textContent = b.blurb;
+        }
+        tip.dataset.open = "";
+      }
+      const below = s.y - r - 14 < 150; // no room above: show it underneath
+      const w = tip.offsetWidth || 260, hgt = tip.offsetHeight || 90;
+      const x = Math.max(10, Math.min(window.innerWidth - w - 10, s.x - w / 2));
+      const y = below ? s.y + r + 14 : s.y - r - 14 - hgt;
+      tip.style.transform = `translate(${x.toFixed(0)}px, ${y.toFixed(0)}px)`;
+    };
     const draw = (now: number) => {
       const dt = Math.min(0.1, (now - lastDraw) / 1000 || 0.016);
       lastDraw = now;
@@ -216,6 +372,7 @@ export default function Universe() {
       reveal = frozen ? 1 : Math.min(1, reveal + dt / 2.4);
       skyOn = Math.min(1, skyOn + (skyReady ? dt * 1.4 : 0));
       earthOn = Math.min(1, earthOn + (earthReady ? dt * 1.6 : 0));
+      nightOn = Math.min(1, nightOn + (nightReady ? dt * 1.6 : 0));
       px += (tx - px) * Math.min(1, dt * 4);
       py += (ty - py) * Math.min(1, dt * 4);
       if (!current) return;
@@ -232,6 +389,8 @@ export default function Universe() {
       gl.uniform1f(U("uSkyOn"), skyOn);
       gl.uniform1i(U("uEarth"), 1);
       gl.uniform1f(U("uEarthOn"), earthOn);
+      gl.uniform1i(U("uNight"), 5);
+      gl.uniform1f(U("uNightOn"), nightOn);
 
       // Where the page wants its world: the [data-stage] element, pinned to the viewport
       // (measured as if the page were at the top, so the backdrop never moves under the reader).
@@ -240,11 +399,12 @@ export default function Universe() {
       const cx = (stage ? stage.left + sw / 2 : w * 0.78) * sc, cy = H - (top + sh / 2) * sc;
       const fit: Record<World, number> = {
         saturn: Math.min(sw / 5.4, sh / 2.5), jupiter: Math.min(sw / 2.4, sh / 1.15), earth: Math.min(sw / 2.6, sh / 1.5),
-        moon: Math.min(sw / 9, sh / 4.6), mars: sh, cosmos: sh, system: sh, station: sh,
+        moon: Math.min(sw / 9, sh / 4.6), mars: sh, solar: sh, cosmos: sh, system: sh, station: sh,
       };
       gl.uniform3f(U("uSubject"), cx, cy, Math.max(8, fit[shown] * sc));
       gl.uniform1f(U("uHorizon"), H - (top + sh + (phone() ? 6 : 18)) * sc);
 
+      if (SHADER[shown] === "solar") drawSolar(now, dt, frozen, sc, H);
       if (SHADER[shown] === "cosmos") {
         // the worlds the page has put in view: [data-orb] elements, drawn where they are
         const marks = shown === "station" ? [] : Array.from(document.querySelectorAll<HTMLElement>("[data-orb]")).slice(0, 6);
@@ -318,7 +478,25 @@ export default function Universe() {
       start();
     };
 
+    const onPick = (e: PointerEvent) => {
+      if (shown !== "solar" || !solar) return;
+      const target = e.target as Element | null;
+      const blocked = target?.closest?.("a, button, input, select, textarea, [data-solar-tip], .topbar, .bottom-nav");
+      if (e.pointerType === "mouse") {
+        mx = e.clientX;
+        my = e.clientY;
+        mouseIn = !blocked;
+      } else if (e.type === "pointerdown" && !blocked) {
+        // a tap on a planet shows what it is for a few seconds
+        const i = pick(solar, e.clientX, e.clientY, 14);
+        pointed = i >= 0 && i < FIRST_EXAM ? i : -1;
+        pointedUntil = pointed >= 0 ? performance.now() + 4000 : 0;
+      }
+      busyUntil = performance.now() + 600;
+      start();
+    };
     const onPointer = (e: PointerEvent) => {
+      onPick(e);
       if (e.pointerType !== "mouse") return;
       tx = (e.clientX / w) * 2 - 1;
       ty = (e.clientY / h) * 2 - 1;
@@ -339,6 +517,7 @@ export default function Universe() {
     canvas.addEventListener("webglcontextlost", onLost);
     window.addEventListener("resize", onResize);
     window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("pointerdown", onPick, { passive: true });
     window.addEventListener("scroll", start, { passive: true });
     document.addEventListener("visibilitychange", start);
     resize();
@@ -352,6 +531,7 @@ export default function Universe() {
       canvas.removeEventListener("webglcontextlost", onLost);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("pointerdown", onPick);
       window.removeEventListener("scroll", start);
       document.removeEventListener("visibilitychange", start);
     };

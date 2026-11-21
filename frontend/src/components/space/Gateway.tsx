@@ -13,6 +13,32 @@ import { planetFor } from "./worlds";
  * and brightens while the link is hovered or focused), with the name and what it leads to beneath.
  * Without WebGL the CSS shows the emblem flat in a glossy disc.
  */
+/**
+ * The same examination as a sphere on its own track beyond Pluto (the home page's solar system):
+ * an empty link that Universe.tsx moves over the sphere it draws, with the name beneath. The plates
+ * (Gateway) are the accessible way in; this is the same way in, for the pointer and the finger.
+ */
+export function SolarSpot({ commission, index }: { commission: Commission; index: number }) {
+  const emblem = emblemFor(commission.slug);
+  const tint = emblem ? emblem.tint : planetFor(commission.slug, commission.theme, index).a;
+  return (
+    <Link
+      href={`/exams/${commission.slug}`}
+      className="solar-spot"
+      data-solar-spot={commission.slug}
+      data-emblem={emblem?.src}
+      data-tint={tint.join(",")}
+      data-kind={commission.status === "draft" ? "Examination · hidden from students" : "Examination"}
+      data-name={`${commission.short_name} · ${commission.name}`}
+      data-text={`${describeExams(commission)}. Select the sphere to enter.`}
+      aria-hidden
+      tabIndex={-1}
+    >
+      <span className="solar-spot-name">{commission.short_name}</span>
+    </Link>
+  );
+}
+
 export function Gateway({ commission, index }: { commission: Commission; index: number }) {
   const emblem = emblemFor(commission.slug);
   const planet = planetFor(commission.slug, commission.theme, index);
@@ -24,6 +50,7 @@ export function Gateway({ commission, index }: { commission: Commission; index: 
       href={`/exams/${commission.slug}`}
       className={`gateway ${emblem ? "has-emblem" : ""}`}
       data-orb-host
+      data-slug={commission.slug}
       aria-label={`${commission.short_name}: ${commission.name}. ${describeExams(commission)}`}
     >
       <span

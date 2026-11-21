@@ -2,15 +2,17 @@ import type { ShaderName } from "./shaders";
 
 /**
  * Every part of the site is a place:
- *   cosmos   the landing page, search, signing in — deep space, with the great galaxy
+ *   solar    the home page — the Solar System, and beyond Pluto the examinations
+ *   cosmos   search, signing in — deep space, with the great galaxy
  *   system   one examination's own planetary system (UPSC, APPSC…)
  *   mars     Notes            moon     Prelims PYQs      saturn   Mains PYQs
  *   jupiter  Syllabus         earth    Progress
  *   station  the admin area — a quiet view from orbit
  */
-export type World = "cosmos" | "system" | "mars" | "moon" | "saturn" | "jupiter" | "earth" | "station";
+export type World = "solar" | "cosmos" | "system" | "mars" | "moon" | "saturn" | "jupiter" | "earth" | "station";
 
 export function worldForPath(path: string): World {
+  if (path === "/") return "solar";
   if (path.startsWith("/manage")) return "station";
   if (path === "/progress" || path.endsWith("/progress")) return "earth";
   if (path.endsWith("/prelims")) return "moon";
@@ -23,11 +25,11 @@ export function worldForPath(path: string): World {
 }
 
 export const SHADER: Record<World, ShaderName> = {
-  cosmos: "cosmos", system: "cosmos", station: "cosmos",
+  solar: "solar", cosmos: "cosmos", system: "cosmos", station: "cosmos",
   mars: "mars", moon: "moon", saturn: "saturn", jupiter: "jupiter", earth: "earth",
 };
 /** Which worlds need NASA's Earth map (the Moon's sky has Earth in it). */
-export const NEEDS_EARTH: Partial<Record<World, boolean>> = { earth: true, moon: true };
+export const NEEDS_EARTH: Partial<Record<World, boolean>> = { earth: true, moon: true, solar: true };
 
 /** The planet an examination is, on the landing page and in its own system. Colours are linear-ish RGB, 0..1. */
 export interface Planet {
