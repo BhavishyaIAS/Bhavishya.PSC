@@ -133,7 +133,7 @@
 
 /* ───────────────────────────── Paper ───────────────────────────── */
 
-:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty) {
+:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip) {
   color-scheme: light;
   --bg: var(--w-paper);
   --surface: var(--w-paper);
@@ -163,7 +163,7 @@
   box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
 }
 /* the reader's dark theme: the same sheets, in the world's own darkness */
-:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty) {
+:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip) {
   color-scheme: dark;
   --w-sheet: color-mix(in srgb, var(--w-lite) 3%, var(--w-glass));
   --bg: var(--w-sheet);
@@ -195,6 +195,7 @@
 
 /* ───────────────────────────── The worlds ───────────────────────────── */
 
+:root[data-world="solar"],
 :root[data-world="cosmos"],
 :root[data-world="system"] {
   --poster: url("/space/poster-cosmos.webp");
@@ -1680,7 +1681,7 @@ html {
 :root[data-world="jupiter"] { --poster-at: 76% 40%; }
 :root[data-world="earth"] { --poster-at: 74% 40%; }
 :root[data-world="moon"] { --poster-at: 78% 50%; }
-:root:is([data-world="cosmos"], [data-world="system"]) { --poster-at: 70% 30%; }
+:root:is([data-world="solar"], [data-world="cosmos"], [data-world="system"]) { --poster-at: 70% 30%; }
 
 /* ── the landing: a quiet halo behind the name and lead, and a plate under each gateway's label ── */
 .arrival {
@@ -1859,7 +1860,7 @@ ul.destinations {
 }
 
 /* On the sky, secondary text is held to the same 4.5:1 as the rest (the sky's haze is computed for it). */
-:root:root:is([data-world="cosmos"], [data-world="system"]) {
+:root:root:is([data-world="solar"], [data-world="cosmos"], [data-world="system"]) {
   --muted: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
   --faint: color-mix(in srgb, var(--w-lite) 84%, var(--w-deep));
 }
@@ -2092,4 +2093,189 @@ ul.destinations {
 .diagram :is(p, span, text) {
   color: var(--text);
   fill: var(--text);
+}
+
+/* ───────────────────────────── The home page: the Solar System ─────────────────────────────
+ *
+ * The name and the lead at the top; under them the Solar System (drawn by the renderer, laid out
+ * by space/solar.ts to fit between the lead and .solar-front); on .solar-front the examinations'
+ * spheres, each on its own track beyond Pluto, with a link over each; then their plates. Without
+ * WebGL the system is not drawn: the stage folds away and each plate shows its emblem instead. */
+.arrival-solar {
+  justify-content: flex-start;
+  min-height: 0;
+  padding-top: clamp(18px, 3.2vh, 34px);
+  padding-bottom: 84px;
+}
+.arrival-head {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.arrival-solar .arrival-eyebrow {
+  margin-bottom: 16px;
+}
+.arrival-solar .arrival-title {
+  font-size: clamp(30px, 5.4vw, 86px);
+}
+.arrival-solar .arrival-tagline {
+  margin-top: 16px;
+  font-size: clamp(19px, 2.2vw, 30px);
+}
+.arrival-solar .arrival-lead {
+  margin-top: 12px;
+}
+.arrival-solar::before {
+  height: 440px;
+}
+.solar-stage {
+  width: 100%;
+  height: clamp(250px, 44vh, 480px);
+  pointer-events: none;
+}
+.solar-front {
+  --sphere: clamp(118px, 10.6vw, 170px);
+  position: relative;
+  width: 100%;
+  height: calc(var(--sphere) + 30px);
+}
+.solar-spot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--sphere);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.6s;
+  -webkit-tap-highlight-color: transparent;
+}
+:root[data-space="live"] .solar-front[data-placed] .solar-spot {
+  opacity: 1;
+}
+.solar-spot-name {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 8px);
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
+  white-space: nowrap;
+  color: #f4f1ea;
+  background: rgb(6 8 20 / 0.72);
+  border: 1px solid rgb(255 255 255 / 0.16);
+  transition: background 0.3s, border-color 0.3s;
+}
+.solar-spot:hover .solar-spot-name {
+  background: rgb(6 8 20 / 0.9);
+  border-color: rgb(232 196 120 / 0.7);
+}
+/* with plates right beneath (wide screens), the names on the spheres would only repeat them */
+@media (min-width: 901px) {
+  .solar-spot-name {
+    opacity: 0;
+  }
+  .solar-spot:hover .solar-spot-name {
+    opacity: 0;
+  }
+}
+/* the label beside a planet or an examination that is pointed at */
+.solar-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  gap: 3px;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 20px));
+  padding: 11px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.6);
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.solar-tip[data-open] {
+  opacity: 1;
+}
+.solar-tip-kind {
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.solar-tip-name {
+  font-size: 16px;
+  color: var(--text-strong);
+}
+.solar-tip-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
+}
+/* the plates: one level row, close under the spheres */
+.arrival-solar .gateways {
+  margin-top: 14px;
+  align-items: stretch;
+  gap: clamp(18px, 3vw, 44px);
+}
+.arrival-solar .gateways-3 .gateway:nth-child(2) {
+  margin-top: 0;
+}
+.arrival-solar .gateway {
+  width: clamp(220px, 23vw, 300px);
+}
+.arrival-solar .gateway-text {
+  height: 100%;
+}
+.arrival-solar .gateway-orb {
+  display: none;
+}
+.arrival-solar .arrival-cta {
+  margin-top: 26px;
+}
+/* no live renderer (no WebGL, or backdrops turned off): no system to fit, the plates carry the emblems */
+:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar :is(.solar-stage, .solar-front) {
+  display: none;
+}
+:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar .gateway-orb {
+  display: block;
+}
+:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar .gateways {
+  margin-top: 40px;
+}
+@media (max-width: 900px) {
+  .arrival-solar {
+    padding-top: 18px;
+  }
+  .arrival-solar::before {
+    height: 300px;
+  }
+  .solar-stage {
+    height: clamp(200px, 50vw, 330px);
+  }
+  .solar-front {
+    --sphere: clamp(84px, 24vw, 118px);
+    height: calc(var(--sphere) + 44px);
+  }
+  .arrival-solar .gateway {
+    width: min(100%, 340px);
+  }
+  .arrival-solar .gateways {
+    margin-top: 10px;
+    gap: 14px;
+  }
 }

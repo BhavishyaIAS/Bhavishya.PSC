@@ -107,17 +107,19 @@ Every part of the site is a place, with its own environment, type and controls:
 
 | Where | World | Its design system |
 |---|---|---|
-| Landing, sign-in, search | Deep space: the real night sky, a spiral galaxy, the examinations as planets (UPSC, APPSC…) | Syncopate capitals for the name and labels, Fraunces italic for the tagline |
+| Home page | **The Solar System**: the Sun, eight planets, the Moon and Pluto on their orbits, and beyond Pluto the examinations (UPSC, APPSC, TGPSC) as emblem spheres on tracks of their own | Syncopate capitals for the name and labels, Fraunces italic for the tagline |
+| Sign-in, search | Deep space: the real night sky, a spiral galaxy | as above |
 | `/exams/<commission>` | That examination's own system: its planet, close | as above |
-| Material / Notes | **Mars**: a research station on a plain, under a dusty sky | IBM Plex (Condensed / Sans / Mono); rust, basalt, sand; square, chamfered controls, segmented gauges |
-| Prelims PYQs | **The Moon**: a lunar facility, Earth in the black sky | Geist / Geist Mono; graphite, lunar white, one restrained blue; machined hairline controls |
-| Mains PYQs | **Saturn**: the ringed planet | Cormorant Garamond headings, Literata for answers; gold, ivory, umber; ruled editorial pages |
-| Syllabus Detailer | **Jupiter**: the banded giant with the Red Spot | Space Grotesk; amber and blue; capsules, orbit rings per subject, the outline drawn as a connected system |
-| Progress Tracker | **Earth** from orbit, the Moon beside it | Manrope; ocean blue and green; mission-control readings, subject-by-subject bars |
+| Material / Notes | **Mars**: a research station on a plain, rover tracks, Phobos and Deimos in a dusty sky | IBM Plex (Condensed / Sans / Mono); rust, basalt, sand; square, chamfered controls, segmented gauges |
+| Prelims PYQs | **The Moon**: a lunar facility and a lander, rover tracks, Earth (with its city lights) and an orbiter in the black sky | Geist / Geist Mono; graphite, lunar white, one restrained blue; machined hairline controls |
+| Mains PYQs | **Saturn**: the ringed planet, ice glinting in the rings, five moons | Cormorant Garamond headings, Literata for answers; gold, ivory, umber; ruled editorial pages |
+| Syllabus Detailer | **Jupiter**: the banded giant with the Red Spot and the four Galilean moons | Space Grotesk; amber and blue; capsules, orbit rings per subject, the outline drawn as a connected system |
+| Progress Tracker | **Earth** from orbit: day side, night-side city lights, satellites, the Moon beside it | Manrope; ocean blue and green; mission-control readings, subject-by-subject bars |
 | Manage | The station: a quiet view of space | neutral, everything on paper |
 
-**What is real and what is computed.** Earth is NASA's *Blue Marble* map
-(public domain) with computed clouds, oceans and terminator; the star field is
+**What is real and what is computed.** Earth is NASA's *Blue Marble* map, and
+its night side NASA's *Black Marble* city lights (both public domain), with
+computed clouds, oceans and terminator; the star field is
 the Tycho-2 star survey. Saturn, Jupiter, Mars and the Moon are rendered
 procedurally (physically based shading: ring shadows, limb atmospheres, haze),
 not photographs.
@@ -126,20 +128,39 @@ not photographs.
 
 | File | What it does |
 |---|---|
-| `shaders.ts` | One full-screen WebGL2 fragment shader per world (deep space with planets, Saturn, Jupiter, Earth, the Moon, Mars) |
+| `shaders.ts` | One full-screen WebGL2 fragment shader per world (the Solar System, deep space, Saturn, Jupiter, Earth, the Moon, Mars) |
+| `solar.ts` | The home page's Solar System in plain TypeScript: every body's size, orbit (J2000 elements), axial tilt and spin; Kepler's equation for where each is now; the camera that fits the system to the page; picking for hover and tap |
 | `Universe.tsx` | The renderer: one fixed canvas, compiles a world's shader when it is first needed, places the subject on the page's `[data-stage]` and planets on `[data-orb]` elements, travels between worlds on navigation, renders at a calm frame rate (5–30 fps by world) and only fast while something moves, lowers its resolution on slow devices, rests when hidden or scrolled into the content |
 | `SpaceLayer.tsx` | The layers behind every page: a poster still (instant, and all there is without WebGL or with motion off), the canvas, and a veil that deepens as you read |
 | `worlds.ts` | Which world a URL is (`worldForPath`) and the planet an examination is (`planetFor`, from its slug or the palette chosen in Manage → Exams) |
 | `destinations.ts`, `Gateway.tsx`, `Globe.tsx` | The five worlds inside an exam, the landing-page gateways, the small globes used in navigation |
 
-**The home page** is always deep space, day or night: survey stars (twinkling), drifting nebulae,
-dust lanes, star clusters, the great galaxy and far ones, and now and then a shooting star, a meteor
-(some break up) or a comet, timed by the real clock rather than a loop. The examinations are glass
-spheres holding their **official emblems** (`public/brand/emblems/`, built from the commissions'
-artwork without redrawing, on a white enamel disc; mapping in `space/emblems.ts`): the glass turns on
-a tilted axis, the emblem faces the viewer with a gentle sway so it can always be read, and each
-sphere drifts on its own orbit with a small moon going round it. Without WebGL the emblems show flat
-in a glossy disc.
+**The home page** is the Solar System, ray-traced per pixel in deep space (survey stars, drifting
+nebulae, a far galaxy, now and then a shooting star, a meteor or a comet, timed by the real clock):
+
+- **The Sun** at the centre: granulation, sunspots, limb darkening, prominences and a corona; it is
+  the light, so every planet's day side faces it and its night side turns away as it goes round.
+- **The eight planets, the Moon and Pluto**, in their real order, each with its own surface
+  (Earth from NASA's map; Jupiter's belts and Great Red Spot; Saturn's rings, casting and catching
+  shadow; Uranus on its side with faint upright rings; Pluto's heart), axial tilt and spin. Their
+  orbits are elliptical and inclined as the real ones are (J2000 elements) and they start where the
+  planets really are today. Distances, sizes and periods are compressed so everything is visible at
+  once (periods ∝ √P: Mercury laps the Sun in ~40 s, Pluto in ~20 min). The asteroid belt lies
+  between Mars and Jupiter, the icy Kuiper belt around Pluto, whose dashed, steeply tilted orbit
+  marks it out as a dwarf planet.
+- **Beyond Pluto, the examinations**, in order (UPSC, APPSC, TGPSC as shown to the viewer), each on
+  a gold track of its own. They **never revolve**: each is fixed at its place on its track and only
+  turns on its own axis. Each is a metal globe in the commission's colours with gold engraving,
+  carrying the **official emblem** (`public/brand/emblems/`, the commissions' own artwork,
+  undistorted) as an inlaid medallion on both faces; the turn slows as a face comes round, so the
+  emblem is held to be read.
+
+Pointing at a planet (or tapping it on a phone) enlarges it, lights it and its orbit, and shows its
+name and a line about it; planets lead nowhere. Each examination sphere is a link (over the drawn
+sphere) to that examination, and its plate beneath is the same link for the keyboard and screen
+readers. `solar.ts` fits the system between the lead and the spheres' row, and places each sphere on
+its track straight above its plate. Without WebGL (or with backdrops off) the system is not drawn and
+the plates show the emblems instead.
 
 **Day and Night** switch the interface only. Night: deep navy and graphite surfaces, light ink.
 Day: ivory, white and pale-lavender surfaces, deep navy ink, antique gold; the home page stays deep

@@ -8,7 +8,7 @@ import type { Commission } from "@/lib/types";
  * `tint` is the glass around the emblem, in the emblem's own colours (sRGB 0..1).
  */
 export const EMBLEMS: Record<string, { src: string; tint: [number, number, number] }> = {
-  upsc: { src: "/brand/emblems/upsc.webp", tint: [0.5, 0.13, 0.14] }, // maroon and gold
+  upsc: { src: "/brand/emblems/upsc.webp", tint: [0.13, 0.19, 0.42] }, // deep navy, with gold
   appsc: { src: "/brand/emblems/appsc.webp", tint: [0.03, 0.42, 0.21] }, // the Andhra Pradesh green
   tgpsc: { src: "/brand/emblems/tgpsc.webp", tint: [0.62, 0.5, 0.29] }, // the Telangana gold
 };
