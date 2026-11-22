@@ -1130,10 +1130,11 @@ vec3 surface(int i, vec3 n, out vec3 air, out float airK) {
    shallow cup that catches light on its far wall), with the commission's official emblem printed on both
    faces. It turns on its own axis; the turn slows as a face comes round, so the emblem is held to be read.
    n and the lights are in view space: z towards you. */
-vec3 examSphere(vec3 n, int k, float hov, vec3 Ls) {
+vec3 examSphere(vec3 n, int k, float hov, vec3 Ls, float hero) {
   float slot = uES[k];
-  float tt = uTime * .05 + float(k) * .31;
-  float f = fract(tt), spin = PI * (floor(tt) + f - sin(2. * PI * f) * .135) + hov * .3;
+  // a portal's sphere (hero = 1) turns slower and rests longer face-on, so its emblem is there to be read
+  float tt = uTime * mix(.05, .03, hero) + float(k) * .31;
+  float f = fract(tt), spin = PI * (floor(tt) + f - sin(2. * PI * f) * mix(.135, .156, hero)) + hov * .3;
   vec3 ax = normalize(vec3(.05, 1., .16));
   vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(e1, ax);
   float lx = dot(n, e1), ly = dot(n, ax), lz = dot(n, e2);
@@ -1199,7 +1200,7 @@ void main() {
   col += (nebulaCloud(fc) * .28 + andromeda(fc) * .7 + ringNebula(fc) * .7 + pulsar(fc) * .45);   // far, and quiet
   vec4 bh = blackHole(fc);
   col = col * (1. - bh.a) + bh.rgb * .6;
-  if (uEvents > .5) { col += meteors(fc); col += comet(fc); }
+  if (uEvents > .5) { col += meteors(fc) * .7; col += comet(fc) * .45; }   // now and then, and quietly
 
   // ── the system ──
   vec3 ro = uCamPos;
@@ -1293,7 +1294,7 @@ void main() {
     } else if (i >= 11) {
       vec3 nv = vec3(dot(n, uCamR), dot(n, uCamU), -dot(n, uCamF));
       vec3 Lv = vec3(dot(L, uCamR), dot(L, uCamU), -dot(L, uCamF));
-      c = examSphere(nv, i - 11, uHov[i], Lv);
+      c = examSphere(nv, i - 11, uHov[i], Lv, 0.);
     } else {
       vec3 air; float airK;
       vec3 alb = surface(i, n, air, airK);
@@ -1346,7 +1347,7 @@ void main() {
     float d2 = dot(q, q);
     if (d2 < 1.) {
       vec3 n = vec3(q, sqrt(1. - d2));
-      vec3 c = examSphere(n, k, o.w, normalize(vec3(.55, .35, -.75)));
+      vec3 c = examSphere(n, k, o.w, normalize(vec3(.55, .35, -.75)), 1.);
       col = mix(col, c, smoothstep(1., 1. - 2.5 / o.z, d2));
     }
   }
