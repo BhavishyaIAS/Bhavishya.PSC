@@ -2095,215 +2095,6 @@ ul.destinations {
   fill: var(--text);
 }
 
-/* ───────────────────────────── The home page: the Solar System ─────────────────────────────
- *
- * The name and the lead at the top; under them the Solar System (drawn by the renderer, laid out
- * by space/solar.ts to fit between the lead and .solar-front); on .solar-front the examinations'
- * spheres, each on its own track beyond Pluto, with a link over each; then their plates. Without
- * WebGL the system is not drawn: the stage folds away and each plate shows its emblem instead. */
-.arrival-solar {
-  justify-content: flex-start;
-  min-height: 0;
-  padding-top: clamp(18px, 3.2vh, 34px);
-  padding-bottom: 84px;
-}
-.arrival-head {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.arrival-solar .arrival-eyebrow {
-  margin-bottom: 16px;
-}
-.arrival-solar .arrival-title {
-  font-size: clamp(30px, 5.4vw, 86px);
-}
-.arrival-solar .arrival-tagline {
-  margin-top: 16px;
-  font-size: clamp(19px, 2.2vw, 30px);
-}
-.arrival-solar .arrival-lead {
-  margin-top: 12px;
-}
-.arrival-solar::before {
-  height: 440px;
-}
-.solar-stage {
-  width: 100%;
-  height: clamp(250px, 44vh, 480px);
-  pointer-events: none;
-}
-.solar-front {
-  --sphere: clamp(118px, 10.6vw, 170px);
-  position: relative;
-  width: 100%;
-  height: calc(var(--sphere) + 30px);
-}
-.solar-spot {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--sphere);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 0.6s;
-  -webkit-tap-highlight-color: transparent;
-}
-:root[data-space="live"] .solar-front[data-placed] .solar-spot {
-  opacity: 1;
-}
-.solar-spot-name {
-  position: absolute;
-  left: 50%;
-  top: calc(100% + 8px);
-  transform: translateX(-50%);
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-family: var(--font-wide), var(--font-body);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.22em;
-  margin-right: -0.22em;
-  white-space: nowrap;
-  color: #f4f1ea;
-  background: rgb(6 8 20 / 0.72);
-  border: 1px solid rgb(255 255 255 / 0.16);
-  transition: background 0.3s, border-color 0.3s;
-}
-.solar-spot:hover .solar-spot-name {
-  background: rgb(6 8 20 / 0.9);
-  border-color: rgb(232 196 120 / 0.7);
-}
-/* with plates right beneath (wide screens), the names on the spheres would only repeat them */
-@media (min-width: 901px) {
-  .solar-spot-name {
-    opacity: 0;
-  }
-  .solar-spot:hover .solar-spot-name {
-    opacity: 0;
-  }
-}
-/* the label beside a planet or an examination that is pointed at */
-.solar-tip {
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 30;
-  display: grid;
-  gap: 3px;
-  width: max-content;
-  max-width: min(340px, calc(100vw - 20px));
-  padding: 11px 14px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.6);
-  text-align: left;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s;
-}
-.solar-tip[data-open] {
-  opacity: 1;
-}
-.solar-tip-kind {
-  font-family: var(--font-wide), var(--font-body);
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.24em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.solar-tip-name {
-  font-size: 16px;
-  color: var(--text-strong);
-}
-.solar-tip-text {
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text);
-}
-/* the plates: one level row, close under the spheres */
-.arrival-solar .gateways {
-  margin-top: 14px;
-  align-items: stretch;
-  gap: clamp(18px, 3vw, 44px);
-}
-.arrival-solar .gateways-3 .gateway:nth-child(2) {
-  margin-top: 0;
-}
-.arrival-solar .gateway {
-  width: clamp(220px, 23vw, 300px);
-}
-.arrival-solar .gateway-text {
-  height: 100%;
-}
-.arrival-solar .gateway-orb {
-  display: none;
-}
-.arrival-solar .arrival-cta {
-  margin-top: 26px;
-}
-/* no live renderer (no WebGL, or backdrops turned off): no system to fit, the plates carry the emblems */
-:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar :is(.solar-stage, .solar-front) {
-  display: none;
-}
-:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar .gateway-orb {
-  display: block;
-}
-:root:is([data-space="still"], [data-backdrops="off"]) .arrival-solar .gateways {
-  margin-top: 40px;
-}
-@media (max-width: 900px) {
-  .arrival-solar {
-    padding-top: 18px;
-  }
-  .arrival-solar::before {
-    height: 300px;
-  }
-  .solar-stage {
-    height: clamp(200px, 50vw, 330px);
-  }
-  .solar-front {
-    --sphere: clamp(84px, 24vw, 118px);
-    height: calc(var(--sphere) + 44px);
-  }
-  .arrival-solar .gateway {
-    width: min(100%, 340px);
-  }
-  .arrival-solar .gateways {
-    margin-top: 10px;
-    gap: 14px;
-  }
-}
-
-/* Wide screens: the Solar System on the left (its examinations' plates and the calls to action under it),
- * the rest of the sky on the right: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (solar.ts). */
-@media (min-width: 1100px) {
-  .arrival-solar .solar-stage {
-    height: clamp(230px, 34vh, 380px);
-  }
-  .arrival-solar :is(.gateways, .arrival-cta) {
-    align-self: flex-start;
-    width: 60%;
-    justify-content: center;
-  }
-  .arrival-solar .gateways {
-    gap: clamp(14px, 1.6vw, 26px);
-  }
-  .arrival-solar .gateway {
-    width: clamp(200px, 15.5vw, 250px);
-  }
-}
-@media (min-width: 1100px) {
-  .arrival-solar .solar-front {
-    --sphere: clamp(104px, 8.4vw, 138px);
-  }
-}
-
 /* ───────────────────────────── The Moon's phase (Prelims, the lunar facility) ─────────────────────────────
  * A window onto the sky beside the questions: the Moon as it really is on the chosen date (MoonPhase.tsx),
  * its phase, illumination, age and the next New and Full Moons. The window stays dark in both themes (it
@@ -2531,4 +2322,516 @@ ul.destinations {
   .moon-canvas {
     transition: none;
   }
+}
+
+/* ── the Moon, alive: a live badge, twinkling stars, a halo as bright as the Moon is lit, play and scrub ── */
+.moon-view {
+  isolation: isolate;
+  overflow: hidden;
+}
+.moon-view::before,
+.moon-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+/* the Moon's own glow in the window: brighter towards Full */
+.moon-view::before {
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgb(255 246 224 / calc(var(--glow, 0.5) * 0.3)) 0%, rgb(255 246 224 / calc(var(--glow, 0.5) * 0.1)) 46%, transparent 62%);
+  transition: background 0.6s;
+}
+/* a few stars that twinkle, each at its own pace */
+.moon-view::after {
+  background:
+    radial-gradient(1.2px 1.2px at 24% 12%, rgb(255 255 255 / 0.9), transparent),
+    radial-gradient(1px 1px at 90% 38%, rgb(210 225 255 / 0.9), transparent),
+    radial-gradient(1.3px 1.3px at 8% 58%, rgb(255 240 220 / 0.85), transparent),
+    radial-gradient(1px 1px at 70% 94%, rgb(255 255 255 / 0.8), transparent);
+  animation: moon-twinkle 3.8s ease-in-out infinite alternate;
+}
+@keyframes moon-twinkle {
+  0% { opacity: 0.25; }
+  40% { opacity: 1; }
+  70% { opacity: 0.5; }
+  100% { opacity: 0.95; }
+}
+.moon-view.is-playing {
+  box-shadow: 0 0 0 5px color-mix(in srgb, #b9b2e6 70%, transparent), 0 0 30px -4px color-mix(in srgb, #b9b2e6 60%, transparent), inset 0 0 24px rgb(0 0 0 / 0.6);
+}
+.moon-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.moon-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #0f6b46;
+  background: rgb(22 163 106 / 0.12);
+}
+:root[data-theme="dark"] .moon-live {
+  color: #5ee3a8;
+  background: rgb(94 227 168 / 0.12);
+}
+.moon-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: moon-pulse 1.6s ease-out infinite;
+}
+@keyframes moon-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+  100% { box-shadow: 0 0 0 7px transparent; }
+}
+.moon-tick {
+  font-variant-numeric: tabular-nums;
+}
+.moon-play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.moon-scrub {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.moon-scrub input {
+  flex: 1;
+  height: 6px;
+  accent-color: #7c72c4;
+  cursor: pointer;
+}
+.moon-scrub input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+.moon-strip li {
+  transition: background 0.35s, box-shadow 0.35s;
+}
+@media (max-width: 639px) {
+  .moon-play {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moon-view::after,
+  .moon-live::before {
+    animation: none;
+  }
+  .moon-view::before,
+  .moon-strip li {
+    transition: none;
+  }
+}
+:root[data-motion="off"] .moon-view::after,
+:root[data-motion="off"] .moon-live::before {
+  animation: none;
+}
+
+/* ───────────────────────────── The home page: minimalist cosmic elegance ─────────────────────────────
+ *
+ * Foreground: a slim bar, the name, a short line, and three slender examination portals.
+ * Behind: the Solar System as a distant panorama in .solar-band (space/solar.ts layoutBand), with the
+ * examinations fixed on their own tracks beyond Pluto, and the deep sky faint at the edges.
+ * Each portal is a near-opaque panel with one round window at its left, through which the renderer
+ * shows that examination's sphere (the official emblem on a turning golf ball). No glass blur: the
+ * window must stay sharp. Ivory and navy by day, deep navy and ivory by night; lavender and antique gold
+ * for the fine lines. */
+
+/* the bar: slim, with the examinations beside the name */
+:root {
+  --topbar-h: 60px;
+}
+.brand-logo {
+  width: 36px;
+  height: 36px;
+}
+.brand-name {
+  font-size: 21px;
+}
+.topbar-exams {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.topbar-exams a {
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  color: var(--text);
+  transition: color 0.25s, background 0.25s;
+}
+.topbar-exams a:hover,
+.topbar-exams a:focus-visible {
+  color: var(--text-strong);
+  background: color-mix(in srgb, #b9b2e6 18%, transparent);
+}
+@media (max-width: 1040px) {
+  .topbar-exams {
+    display: none;
+  }
+}
+.topbar-inner {
+  padding-block: 8px;
+}
+.topbar-inner:has(.topbar-exams) {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+.topbar-inner:has(.topbar-exams) .topbar-center .topbar-search {
+  max-width: 340px;
+  margin-left: auto;
+}
+@media (max-width: 1040px) {
+  .topbar-inner:has(.topbar-exams) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+}
+
+/* the arrival */
+.hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(26px, 5.5vh, 60px) 24px 64px;
+  text-align: center;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 330px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(ellipse 46% 60% at 50% 38%, rgb(4 6 16 / 0.62), transparent 75%);
+}
+.hero-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 10px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: #d8c08c;
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+  content: "";
+  width: 34px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgb(216 192 140 / 0.8));
+}
+.hero-eyebrow::after {
+  transform: scaleX(-1);
+}
+.hero-title {
+  margin: 16px 0 0;
+  margin-right: -0.16em;
+  font-family: var(--font-wide), var(--font-body);
+  font-size: clamp(30px, 4.3vw, 62px);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #ff4655;
+  text-shadow: 0 0 40px rgb(255 70 85 / 0.28), 0 2px 18px rgb(0 0 0 / 0.5);
+}
+.hero-title span {
+  font-weight: 300;
+}
+.hero-tagline {
+  margin: 14px 0 0;
+  font-family: var(--font-display-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 360;
+  font-size: clamp(17px, 1.65vw, 23px);
+  letter-spacing: 0.01em;
+  color: #efe9dc;
+}
+.hero-lead {
+  max-width: 460px;
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgb(226 228 240 / 0.86);
+}
+/* the distant Solar System: the whole page behind the hero, faint and far (Universe.tsx lays it out here) */
+.solar-band {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.hero {
+  min-height: calc(100svh - var(--topbar-h));
+  justify-content: center;
+  gap: clamp(22px, 4vh, 44px);
+}
+.hero-head {
+  position: relative;
+  z-index: 1;
+}
+
+/* the portals: the centre of the page, three equal seals in a row */
+.portals {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2.2vw, 30px);
+  width: min(1040px, 100%);
+}
+.portals-2 {
+  grid-template-columns: repeat(2, minmax(0, 340px));
+  justify-content: center;
+}
+.portals-1 {
+  grid-template-columns: minmax(0, 360px);
+  justify-content: center;
+}
+.portal {
+  --portal-bg: rgb(252 250 246 / 0.97);
+  --portal-ink: #141838;
+  --portal-text: #3a3e60;
+  --portal-accent: #5a4bb5;
+  --portal-line: rgb(110 98 190 / 0.22);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: clamp(22px, 2.6vw, 34px) clamp(18px, 2vw, 28px) 22px;
+  border: 1px solid var(--portal-line);
+  border-radius: 20px;
+  text-align: center;
+  color: var(--portal-ink);
+  background: var(--portal-bg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 26px 50px -34px rgb(6 8 24 / 0.9);
+  transition: transform 0.5s var(--ease), border-color 0.4s, box-shadow 0.5s;
+}
+:root[data-theme="dark"] .portal {
+  --portal-bg: rgb(15 18 40 / 0.95);
+  --portal-ink: #f4f1ea;
+  --portal-text: #c9cbe0;
+  --portal-accent: #c4b8ff;
+  --portal-line: rgb(185 178 230 / 0.2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 26px 50px -34px rgb(0 0 0 / 0.95);
+}
+.portal:hover,
+.portal:focus-visible {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, #c9a86a 60%, var(--portal-line));
+  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.5), 0 34px 60px -34px rgb(6 8 24 / 0.95);
+}
+.portal:focus-visible {
+  outline: 2px solid var(--portal-accent);
+  outline-offset: 3px;
+}
+/* the official emblem, undistorted, as a seal: the artwork on its white enamel disc, with a fine gold ring */
+.portal-seal {
+  display: block;
+  width: clamp(124px, 11vw, 158px);
+  aspect-ratio: 1;
+  margin-bottom: 10px;
+  border-radius: 50%;
+  background: var(--emblem) center / 100% 100% no-repeat;
+  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.85), 0 0 0 6px rgb(201 168 106 / 0.1), 0 14px 26px -14px rgb(6 8 24 / 0.5);
+  transition: box-shadow 0.5s, transform 0.5s var(--ease);
+}
+.portal:hover .portal-seal {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 1px rgb(222 192 128 / 1), 0 0 0 7px rgb(201 168 106 / 0.18), 0 18px 32px -14px rgb(6 8 24 / 0.6);
+}
+.portal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.portal-hidden {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--portal-text);
+}
+.portal-name {
+  font-family: var(--font-wide), var(--font-body);
+  font-size: clamp(18px, 1.6vw, 23px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
+  line-height: 1.1;
+}
+.portal-full {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--portal-text);
+}
+.portal-exams {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--portal-accent);
+}
+.portal-line {
+  max-width: 260px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--portal-text);
+}
+.portal-go {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 12px;
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--portal-accent);
+}
+.portal:hover .portal-go svg {
+  transform: translateX(4px);
+}
+.portal-go svg {
+  transition: transform 0.4s var(--ease);
+}
+.hero-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 22px;
+  margin: 0;
+}
+.hero-cta-link {
+  font-size: 14px;
+  color: #e4e2ee;
+  text-decoration: underline;
+  text-decoration-color: rgb(216 192 140 / 0.6);
+  text-underline-offset: 4px;
+}
+.hero-cta-link:hover {
+  color: #fff;
+}
+@media (max-width: 980px) {
+  .portals,
+  .portals-2 {
+    grid-template-columns: minmax(0, 360px);
+    justify-content: center;
+  }
+  .portal {
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    width: min(100%, 520px);
+    margin-inline: auto;
+  }
+  .portal-body {
+    align-items: flex-start;
+  }
+  .portal-seal {
+    width: 96px;
+    margin: 0;
+  }
+  .portal-line {
+    display: none;
+  }
+  .portal-go {
+    margin-top: 6px;
+  }
+}
+@media (max-width: 560px) {
+  .hero {
+    min-height: 0;
+    padding: 20px 16px 48px;
+  }
+  .portal-seal {
+    width: 84px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .portal,
+  .portal-seal,
+  .portal-go svg {
+    transition: none;
+  }
+}
+/* the label beside a planet, a deep-sky object or a distant examination that is pointed at */
+.solar-tip {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  gap: 3px;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 20px));
+  padding: 11px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.6);
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.solar-tip[data-open] {
+  opacity: 1;
+}
+.solar-tip-kind {
+  font-family: var(--font-wide), var(--font-body);
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.solar-tip-name {
+  font-size: 15px;
+  color: var(--text-strong);
+}
+.solar-tip-text {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text);
 }

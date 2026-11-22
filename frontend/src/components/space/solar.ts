@@ -323,3 +323,86 @@ export function deepPlaces(front: DOMRect, head: DOMRect, split: boolean): DeepP
 }
 /** The reach of each deep-sky object for pointing, as a multiple of its size. */
 export const DEEP_REACH = [0.62, 0.55, 3.2, 1.4, 1.2];
+
+/**
+ * The refined home page: the whole system, its examination tracks included, fitted into a wide, shallow
+ * band behind the page, a distant panorama. The examinations sit at fixed places on their tracks (front
+ * left, front, front right) and never move from them; they only turn.
+ */
+export const EXAM_ANGLES: Record<number, number[]> = { 1: [0], 2: [-0.42, 0.42], 3: [-0.6, 0, 0.6] };
+export function layoutBand(opts: {
+  t: number;
+  phone: boolean;
+  band: { x: number; y: number; w: number; h: number }; // CSS px, viewport
+  exams: number;
+  lean: [number, number];
+}): Layout {
+  const { phone, band } = opts;
+  const big = phone ? 1.45 : 0.9;
+  const base = bodiesAt(opts.t, big);
+  const cam0 = makeCamera((phone ? 0.4 : 0.2) + opts.lean[1] * 0.01, -0.32 + opts.lean[0] * 0.015, 70);
+  const angles = EXAM_ANGLES[opts.exams] ?? [];
+  const examP: Vec3[] = angles.map((a, k) => {
+    const r = EXAM_TRACK(k), th = 1.5 * Math.PI + a; // 3π/2 is the front, towards us
+    return [r * Math.cos(th), 0, -r * Math.sin(th)];
+  });
+  // the box round everything: every orbit and every examination's track
+  let xmin = Infinity, xmax = -Infinity, ymin = Infinity, ymax = -Infinity;
+  const take = (P: Vec3) => {
+    const p = projectRaw(cam0, P);
+    xmin = Math.min(xmin, p.x); xmax = Math.max(xmax, p.x); ymin = Math.min(ymin, p.y); ymax = Math.max(ymax, p.y);
+  };
+  base.orbits.forEach((o) => {
+    for (let k = 0; k < 48; k++) {
+      const a = (k / 48) * Math.PI * 2;
+      take(add(o.c, add(mul(o.U, o.a * Math.cos(a)), mul(o.V, o.b * Math.sin(a)))));
+    }
+  });
+  for (let k = 0; k < angles.length; k++) {
+    for (let j = 0; j < 48; j++) {
+      const a = (j / 48) * Math.PI * 2, r = EXAM_TRACK(k);
+      take([r * Math.cos(a), 0, -r * Math.sin(a)]);
+    }
+  }
+  // a margin below, so the examinations on the near side of their tracks sit clear of what follows
+  const zoom = Math.min((band.w * 0.9) / (xmax - xmin), (band.h * 0.7) / (ymax - ymin));
+  const cam: Camera = {
+    ...cam0, zoom,
+    cx: band.x + band.w / 2 - (zoom * (xmax + xmin)) / 2,
+    cy: band.y + band.h * 0.6 + (zoom * (ymax + ymin)) / 2,
+  };
+  const pos = base.pos.slice(), rad = base.rad.slice(), axis = base.axis.slice(), spin = base.spin.slice();
+  const orbits = base.orbits.slice();
+  const exams = examP.map((P, k) => {
+    pos.push(P);
+    rad.push((phone ? 0.85 : 0.62) * (big / 0.9));
+    axis.push([0, 1, 0]);
+    spin.push(0);
+    const r = EXAM_TRACK(k);
+    orbits.push({ c: [0, 0, 0], U: [1, 0, 0], V: [0, 0, -1], N: [0, 1, 0], a: r, b: r, E: -100, body: FIRST_EXAM + k });
+    const s = toScreen(cam, P);
+    return { x: s.x, y: s.y, r: rad[rad.length - 1] * s.k };
+  });
+  return { cam, scene: { pos, rad, axis, spin, E: base.E, orbits }, exams };
+}
+
+/** The deep-sky objects for the refined home page: small, faint, at the edges of the band and above it. */
+export function deepPlacesBand(band: { x: number; y: number; w: number; h: number }, phone: boolean): DeepPlace[] {
+  const { x, y, w, h } = band;
+  if (phone) {
+    return [
+      { x: x + w * 0.86, y: y - h * 0.15, s: Math.min(w * 0.15, 70), a: 0.42 },
+      { x: 0, y: 0, s: 0, a: 0 },
+      { x: 0, y: 0, s: 0, a: 0 },
+      { x: x + w * 0.08, y: y + h * 0.05, s: 7, a: 0.5 },
+      { x: 0, y: 0, s: 0, a: 0 },
+    ];
+  }
+  return [
+    { x: x + w * 0.9, y: y - h * 0.55, s: Math.min(w * 0.085, 135), a: 0.42 }, // Andromeda, high on the right
+    { x: x + w * 0.02, y: y + h * 0.2, s: w * 0.09, a: 0 }, // a faint nursery at the far left
+    { x: x + w * 0.955, y: y + h * 0.62, s: 8, a: -0.18 }, // a small black hole at the far right
+    { x: x + w * 0.06, y: y - h * 0.62, s: 9, a: 0.5 }, // a ring nebula high on the left
+    { x: x + w * 0.18, y: y - h * 0.95, s: 14, a: 0 }, // a pulsar, far off
+  ];
+}

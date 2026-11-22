@@ -1,9 +1,9 @@
 "use client";
 
-import { CalendarDays, ChevronLeft, ChevronRight, RotateCcw } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
-import { PHASES, lunarReport, type LunarReport } from "@/lib/lunar";
+import { PHASES, lunarReport, moonState, type MoonState, type PhaseName } from "@/lib/lunar";
 
 /**
  * Tonight's Moon, for the Prelims (lunar) page: the Moon's real phase for the reader's own calendar
@@ -11,7 +11,11 @@ import { PHASES, lunarReport, type LunarReport } from "@/lib/lunar";
  * The figures come from lib/lunar.ts (Meeus); the picture is rendered here, pixel by pixel, from the
  * same geometry: the Sun's direction (phase angle and the bright limb's position angle), the tilt of
  * the Moon's axis and its libration, over a map of the real maria and craters (scripts/moon-map.py).
- * It is drawn once each time the date changes; nothing animates.
+ * It is alive without being busy: today's card ticks (the countdowns by the second, the Moon itself
+ * recomputed every minute); changing the date sweeps the terminator through the days between; "Play the
+ * month" runs a whole lunation from the real positions (libration's slow rocking included) and the
+ * slider scrubs through it. Frames are drawn only while something moves; with reduced motion, changes
+ * are instant.
  *
  * Orientation: celestial north up and east to the left, as the Moon looks to the naked eye from
  * India (and the rest of the northern hemisphere) when it is due south.
@@ -125,40 +129,34 @@ const parseLocal = (s: string) => {
   const [y, m, d] = s.split("-").map(Number);
   return new Date(y, m - 1, d, 12, 0, 0); // a chosen day is shown at local noon
 };
+const DAY = 86400000;
+const PLAY_SECONDS = 12; // one lunation, played
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
 
-function Moon({ report, size, small }: { report: LunarReport; size: number; small: boolean }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    let live = true;
-    const canvas = ref.current;
-    if (!canvas) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    canvas.width = canvas.height = Math.round(size * dpr);
-    const g = {
-      i: report.phaseAngle, chi: report.brightLimb, P: report.axis, lon: report.libration.lon, lat: report.libration.lat,
-      // earthshine: sunlight off the Earth on the night side, seen on a young or old crescent; a New Moon is lost in the Sun's glare
-      earthshine: 0.009 * (1 - report.illuminated) ** 2 * Math.max(0, Math.min(1, (172 - report.phaseAngle) / 22)),
-    };
-    renderMoon(canvas, null, g); // the shape at once, the surface when the map arrives
-    loadMap(small).then((map) => live && map && renderMoon(canvas, map, g));
-    return () => {
-      live = false;
-    };
-  }, [report, size, small]);
-  return (
-    <canvas
-      ref={ref}
-      className="moon-canvas"
-      style={{ width: size, height: size }}
-      role="img"
-      aria-label={`${report.phase}: ${Math.round(report.illuminated * 100)}% of the Moon's disc lit${report.waxing ? ", waxing" : ", waning"}`}
-    />
-  );
+/** What the renderer needs from the Moon's state. */
+const geometry = (s: MoonState) => ({
+  i: s.phaseAngle, chi: s.brightLimb, P: s.axis, lon: s.libration.lon, lat: s.libration.lat,
+  // earthshine: sunlight off the Earth on the night side, seen on a young or old crescent; a New Moon is lost in the Sun's glare
+  earthshine: 0.0055 * (1 - s.illuminated) ** 2 * clamp01((172 - s.phaseAngle) / 22),
+});
+/** A phase name from the elongation alone, for moments between whole days (principal within ±12 hours). */
+function phaseOf(elong: number): PhaseName {
+  for (let k = 0; k < 4; k++) {
+    const d = ((elong - k * 90 + 540) % 360) - 180;
+    if (Math.abs(d) < 6.1) return PHASES[k * 2];
+  }
+  return PHASES[elong < 90 ? 1 : elong < 180 ? 3 : elong < 270 ? 5 : 7];
+}
+/** "2d 03h 12m 08s" */
+function countdown(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d}d ${p(h)}h ${p(m)}m ${p(sec)}s`;
 }
 
-/** The eight principal phases, each drawn with the same renderer: where this date sits in the cycle. */
-function PhaseStrip({ report }: { report: LunarReport }) {
-  const current = PHASES.indexOf(report.phase);
+/** The eight principal phases, each drawn with the same renderer: where this moment sits in the cycle. */
+function PhaseStrip({ current }: { current: number }) {
   return (
     <ol className="moon-strip" aria-label="The eight phases of the Moon">
       {PHASES.map((name, k) => (
@@ -204,60 +202,195 @@ function subscribeDay(onChange: () => void) {
     document.removeEventListener("visibilitychange", onChange);
   };
 }
+/** A clock that ticks once a second (for the live countdowns). */
+const subscribeSecond = (onChange: () => void) => {
+  const t = window.setInterval(onChange, 1000);
+  return () => window.clearInterval(t);
+};
 const subscribeWidth = (onChange: () => void) => {
   const mq = matchMedia("(max-width: 639px)");
   mq.addEventListener("change", onChange);
   return () => mq.removeEventListener("change", onChange);
 };
+/** Reduced motion: the system setting, or "Animations: off" in the footer. */
+const subscribeMotion = (onChange: () => void) => {
+  const mq = matchMedia("(prefers-reduced-motion: reduce)");
+  mq.addEventListener("change", onChange);
+  const mo = new MutationObserver(onChange);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-motion"] });
+  return () => {
+    mq.removeEventListener("change", onChange);
+    mo.disconnect();
+  };
+};
+const stillNow = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "off";
 
 export function MoonPhase() {
-  // known only in the browser: the reader's own calendar, not the server's
+  // known only in the browser: the reader's own calendar and clock, not the server's
   const today = useSyncExternalStore(subscribeDay, () => iso(new Date()), () => "");
+  const second = useSyncExternalStore(subscribeSecond, () => Math.floor(Date.now() / 1000), () => 0);
   const narrow = useSyncExternalStore(subscribeWidth, () => matchMedia("(max-width: 639px)").matches, () => false);
+  const still = useSyncExternalStore(subscribeMotion, stillNow, () => true);
   const [picked, setPicked] = useState<string | null>(null); // null = today, live
+  const [sim, setSim] = useState<number | null>(null); // a moment being played or scrubbed to (ms), else null
+  const [playing, setPlaying] = useState(false);
+  const size = narrow ? 104 : 168;
 
   const day = picked ?? today;
+  const isToday = day === today;
+  const minute = isToday ? Math.floor(second / 60) : 0; // today, the figures are recomputed each minute
   const report = useMemo(() => {
     if (!day) return null;
-    const isToday = day === today;
     const noon = parseLocal(day);
     const start = new Date(noon.getFullYear(), noon.getMonth(), noon.getDate(), 0, 0, 0);
     const end = new Date(noon.getFullYear(), noon.getMonth(), noon.getDate() + 1, 0, 0, 0);
-    // today: this very moment; another day: its local noon
-    return lunarReport(isToday ? new Date() : noon, start, end);
-  }, [day, today]);
+    // today: this very minute; another day: its local noon
+    return lunarReport(minute ? new Date(minute * 60000) : noon, start, end);
+  }, [day, minute]);
 
-  const step = useCallback((days: number) => {
-    const base = parseLocal(picked ?? today);
-    base.setDate(base.getDate() + days);
-    const s = iso(base);
-    setPicked(s === today ? null : s);
-  }, [picked, today]);
+  // a moment that is played or scrubbed to: exact figures once it holds still, quick ones while it moves
+  const held = useMemo(() => {
+    if (sim === null || playing) return null;
+    const t = new Date(sim);
+    return lunarReport(t, new Date(t.getFullYear(), t.getMonth(), t.getDate()), new Date(t.getFullYear(), t.getMonth(), t.getDate() + 1));
+  }, [sim, playing]);
+  const quick = useMemo(() => (sim !== null && playing ? moonState(new Date(sim)) : null), [sim, playing]);
+
+  // ── the picture: drawn only when something changes, in motion only while it moves ──
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mapRef = useRef<Awaited<ReturnType<typeof loadMap>>>(null);
+  const shownRef = useRef<number | null>(null);
+  const frameRef = useRef(0);
+  const draw = useCallback(
+    (t: number, hi: boolean) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const n = Math.round(size * (hi ? dpr : Math.min(dpr, 1.25)));
+      if (canvas.width !== n) canvas.width = canvas.height = n;
+      renderMoon(canvas, mapRef.current, geometry(moonState(new Date(t))));
+      shownRef.current = t;
+    },
+    [size],
+  );
+  useEffect(() => {
+    let live = true;
+    loadMap(narrow).then((map) => {
+      if (!live) return;
+      mapRef.current = map;
+      if (shownRef.current !== null) draw(shownRef.current, true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [narrow, draw]);
+
+  // the date (or minute) changed: sweep the terminator through the time between
+  const target = sim ?? report?.at.getTime() ?? null;
+  useEffect(() => {
+    if (target === null || playing) return;
+    cancelAnimationFrame(frameRef.current);
+    const from = shownRef.current;
+    const gap = from === null ? 0 : target - from;
+    if (from === null || still || Math.abs(gap) < 3600000 || sim !== null) {
+      draw(target, true);
+      return;
+    }
+    // far jumps: arrive with a short sweep rather than spinning through months
+    const start = Math.abs(gap) > 31 * DAY ? target - Math.sign(gap) * 4 * DAY : from;
+    const span = target - start;
+    const dur = Math.min(1600, Math.max(420, (Math.abs(span) / DAY) * 140));
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const k = clamp01((now - t0) / dur);
+      const e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+      if (k < 1) {
+        draw(start + span * e, false);
+        frameRef.current = requestAnimationFrame(step);
+      } else draw(target, true);
+    };
+    frameRef.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frameRef.current);
+  }, [target, playing, still, sim, draw]);
+
+  // "Play the month": a whole lunation in PLAY_SECONDS, from the real positions, until paused
+  useEffect(() => {
+    if (!playing) return;
+    let t = shownRef.current ?? Date.now();
+    let last = performance.now(), told = 0;
+    const rate = (29.530588 * DAY) / (PLAY_SECONDS * 1000); // simulated ms per real ms
+    const step = (now: number) => {
+      t += Math.min(80, now - last) * rate;
+      last = now;
+      draw(t, false);
+      if (now - told > 90) {
+        told = now;
+        setSim(t);
+      }
+      frameRef.current = requestAnimationFrame(step);
+    };
+    frameRef.current = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      setSim(t);
+      draw(t, true);
+    };
+  }, [playing, draw]);
+
+  const step = useCallback(
+    (days: number) => {
+      const base = parseLocal(picked ?? today);
+      base.setDate(base.getDate() + days);
+      const s = iso(base);
+      setPlaying(false);
+      setSim(null);
+      setPicked(s === today ? null : s);
+    },
+    [picked, today],
+  );
 
   if (!report) return <section className="moon-card moon-card-empty" aria-label="The Moon's phase" />;
+
+  // what is on show: the chosen day, or a moment being played / scrubbed to
+  const view = held ?? report;
+  const phase: PhaseName = quick ? phaseOf(quick.elongation) : view.phase;
+  const illuminated = quick ? quick.illuminated : view.illuminated;
+  const lunation = report.lunation;
+  const age = quick ? ((((sim! - report.previousNew.getTime()) / DAY) % lunation) + lunation) % lunation : view.age;
+  const live = isToday && sim === null;
+  const at = sim ?? view.at.getTime();
 
   const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "long", year: "numeric" });
   const whenFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
-  const daysTo = (t: Date) => (t.getTime() - report.at.getTime()) / 86400000;
-  const isToday = day === today;
   const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit", timeZoneName: "short" });
+  const until = (t: Date) => (live ? countdown(t.getTime() - second * 1000) : `in ${((t.getTime() - at) / DAY).toFixed(1)} days`);
 
   return (
     <section className="moon-card" aria-labelledby="moon-h">
-      <div className="moon-view">
-        <Moon report={report} size={narrow ? 104 : 168} small={narrow} />
+      <div className={`moon-view ${playing ? "is-playing" : ""}`} style={{ ["--glow" as string]: illuminated.toFixed(3) }}>
+        <canvas
+          ref={canvasRef}
+          className="moon-canvas"
+          style={{ width: size, height: size }}
+          role="img"
+          aria-label={`${phase}: ${Math.round(illuminated * 100)}% of the Moon's disc lit`}
+        />
       </div>
       <div className="moon-info">
         <div className="moon-top">
           <div>
-            <p className="moon-kicker">{isToday ? "Tonight's Moon" : "The Moon on"}</p>
-            <h2 id="moon-h" className="moon-name" aria-live="polite">
-              {report.phase}
+            <p className="moon-kicker">
+              {live && <span className="moon-live">Live</span>}
+              {sim !== null ? (playing ? "Playing the lunar month" : "The Moon at") : isToday ? "Tonight's Moon" : "The Moon on"}
+            </p>
+            <h2 id="moon-h" className="moon-name" aria-live={playing ? "off" : "polite"}>
+              {phase}
             </h2>
             <p className="moon-date">
-              {dateFmt.format(parseLocal(day))}
-              {report.exact ? ` · exact at ${timeFmt.format(report.exact)}` : isToday ? ` · now, ${timeFmt.format(report.at)}` : " · at local noon"}
+              {sim !== null
+                ? whenFmt.format(new Date(sim))
+                : `${dateFmt.format(parseLocal(day))}${view.exact ? ` · exact at ${timeFmt.format(view.exact)}` : isToday ? ` · now, ${timeFmt.format(view.at)}` : " · at local noon"}`}
             </p>
           </div>
           <div className="moon-pick">
@@ -272,14 +405,27 @@ export function MoonPhase() {
                 value={day}
                 min="1900-01-01"
                 max="2100-12-31"
-                onChange={(e) => e.target.value && setPicked(e.target.value === today ? null : e.target.value)}
+                onChange={(e) => {
+                  if (!e.target.value) return;
+                  setPlaying(false);
+                  setSim(null);
+                  setPicked(e.target.value === today ? null : e.target.value);
+                }}
               />
             </label>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => step(1)} aria-label="Next day">
               <ChevronRight size={16} aria-hidden />
             </button>
-            {!isToday && (
-              <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPicked(null)}>
+            {(!isToday || sim !== null) && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => {
+                  setPlaying(false);
+                  setSim(null);
+                  setPicked(null);
+                }}
+              >
                 <RotateCcw size={14} aria-hidden /> Today
               </button>
             )}
@@ -288,35 +434,61 @@ export function MoonPhase() {
         <dl className="moon-facts">
           <div>
             <dt>Illuminated</dt>
-            <dd>{(report.illuminated * 100).toFixed(1)}%</dd>
+            <dd>{(illuminated * 100).toFixed(live ? 2 : 1)}%</dd>
           </div>
           <div>
             <dt>Lunar age</dt>
-            <dd>{report.age.toFixed(1)} days</dd>
+            <dd>{age.toFixed(quick ? 1 : 2)} days</dd>
           </div>
-          <div>
-            <dt>Next Full Moon</dt>
-            <dd>
-              in {daysTo(report.nextFull).toFixed(1)} days
-              <small>{whenFmt.format(report.nextFull)}</small>
-            </dd>
-          </div>
-          <div>
-            <dt>Next New Moon</dt>
-            <dd>
-              in {daysTo(report.nextNew).toFixed(1)} days
-              <small>{whenFmt.format(report.nextNew)}</small>
-            </dd>
-          </div>
+          {!quick && (
+            <>
+              <div>
+                <dt>Next Full Moon</dt>
+                <dd className={live ? "moon-tick" : undefined}>
+                  {until(view.nextFull)}
+                  <small>{whenFmt.format(view.nextFull)}</small>
+                </dd>
+              </div>
+              <div>
+                <dt>Next New Moon</dt>
+                <dd className={live ? "moon-tick" : undefined}>
+                  {until(view.nextNew)}
+                  <small>{whenFmt.format(view.nextNew)}</small>
+                </dd>
+              </div>
+            </>
+          )}
           <div className="moon-extra">
             <dt>Distance</dt>
-            <dd>{Math.round(report.distance).toLocaleString()} km</dd>
+            <dd>{Math.round((quick ?? view).distance).toLocaleString()} km</dd>
           </div>
         </dl>
-        <PhaseStrip report={report} />
+        <div className="moon-play">
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setPlaying((p) => !p)} aria-pressed={playing}>
+            {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />} {playing ? "Pause" : "Play the month"}
+          </button>
+          <label className="moon-scrub">
+            <span>New</span>
+            <input
+              type="range"
+              min={0}
+              max={lunation}
+              step={0.05}
+              value={Math.min(lunation, age)}
+              aria-label="Days into the lunar month"
+              aria-valuetext={`${age.toFixed(1)} days: ${phase}`}
+              onChange={(e) => {
+                setPlaying(false);
+                setSim(report.previousNew.getTime() + Number(e.target.value) * DAY);
+              }}
+            />
+            <span>New</span>
+          </label>
+        </div>
+        <PhaseStrip current={PHASES.indexOf(phase)} />
         <p className="moon-note">
           Computed for your time zone ({zone}) from the positions of the Sun and Moon (Meeus, <i>Astronomical Algorithms</i>).
-          This lunation lasts {report.lunation.toFixed(2)} days. North is up, as seen with the naked eye from the northern hemisphere.
+          This lunation lasts {lunation.toFixed(2)} days. North is up, as seen with the naked eye from the northern hemisphere.
         </p>
       </div>
     </section>

@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { FRAGMENT, VERTEX, type ShaderName } from "./shaders";
-import { BODIES, DEEP, DEEP_REACH, FIRST_EXAM, MAX_EXAMS, N_ORBITS, PLUTO, SUN, deepPlaces, layout as solarLayout, pick, toScreen, type DeepPlace, type Layout } from "./solar";
+import { BODIES, DEEP, DEEP_REACH, FIRST_EXAM, MAX_EXAMS, N_ORBITS, PLUTO, SUN, deepPlacesBand, layoutBand, pick, toScreen, type DeepPlace, type Layout } from "./solar";
 import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 
 /** Called on a click that leaves the page (see Interactions): the view starts to pull away at once. */
@@ -202,12 +202,11 @@ export default function Universe() {
     const t0 = performance.now();
     let solar: Layout | null = null, pointed = -1, pointedUntil = 0, tipShown = -1;
     let mx = 0, my = 0, mouseIn = false; // the mouse, when it is over open space (not over text or a control)
-    let spotKey = "";
+    let spots: HTMLElement[] = []; // the portals, in order
     // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (solar.ts DEEP)
     let deep: DeepPlace[] = [];
     const uDeep = new Float32Array(DEEP.length * 4), deepHover = new Float32Array(DEEP.length);
     const DEEP_TIP = 200; // tip index of the first deep-sky object
-    const wide = matchMedia("(min-width: 1100px)"); // the system on the left, the rest of the sky on the right (worlds.css)
     const pickDeep = (x: number, y: number) =>
       deep.findIndex((d, k) => d.s > 0 && (x - d.x) ** 2 + (y - d.y) ** 2 < (d.s * DEEP_REACH[k]) ** 2);
     const orb = new Float32Array(24), orbA = new Float32Array(24), orbB = new Float32Array(24);
@@ -243,40 +242,34 @@ export default function Universe() {
 
     /** The home page: fit the system to the page, place the examinations' spheres, and hand it all to the shader. */
     const drawSolar = (now: number, dt: number, frozen: boolean, sc: number, H: number) => {
-      const front = document.querySelector<HTMLElement>("[data-solar-front]");
-      const head = document.querySelector<HTMLElement>("[data-solar-top]");
-      if (!front || !head) return;
-      const spots = Array.from(front.querySelectorAll<HTMLElement>("[data-solar-spot]")).slice(0, MAX_EXAMS);
-      const fr = front.getBoundingClientRect(), hr = head.getBoundingClientRect();
-      // the examinations sit over their plates where the plates stand in a row; otherwise evenly across
-      const plates = spots.map((el) => document.querySelector<HTMLElement>(`.gateway[data-slug="${el.dataset.solarSpot}"]`)?.getBoundingClientRect());
-      const row = plates.length > 1 && plates.every((r) => r && Math.abs(r.top - plates[0]!.top) < 4);
-      const targets = spots.map((_, k) => (row ? plates[k]!.left + plates[k]!.width / 2 : fr.left + (fr.width * (k + 0.5)) / spots.length));
-      const examR = (spots[0]?.offsetWidth ?? 140) / 2;
-      const isPhone = phone(), split = wide.matches;
+      // the page: a band where the distant system lies, and the portals (each with its sphere's window)
+      const bandEl = document.querySelector<HTMLElement>("[data-solar-band]");
+      if (!bandEl) return;
+      const portals = Array.from(document.querySelectorAll<HTMLElement>("[data-portal]")).slice(0, MAX_EXAMS);
+      const br = bandEl.getBoundingClientRect();
+      const band = { x: br.left, y: br.top, w: br.width, h: br.height };
+      const isPhone = phone();
       const t = frozen ? 30 : (now - t0) / 1000;
-      const l = solarLayout({
-        t, phone: isPhone, stageX: fr.left + fr.width * (split ? 0.3 : 0.5), stageW: fr.width * (split ? 0.6 : 1), top: hr.bottom + (isPhone ? 10 : 18),
-        front: fr.top + fr.height / 2, targets, examR, lean: frozen ? [0, 0] : [px, py],
-      });
+      const l = layoutBand({ t, phone: isPhone, band, exams: portals.length, lean: frozen ? [0, 0] : [px, py] });
       solar = l;
-      // what the pointer (or a finger) is on: a planet by picking, an examination by its link or its plate
-      const examOver = spots.map((el) => (el.matches(":hover, :focus-visible") || document.querySelector(`.gateway[data-slug="${el.dataset.solarSpot}"]`)?.matches(":hover, :focus-visible") ? 1 : 0));
-      deep = deepPlaces(fr, hr, split);
-      const hit = mouseIn ? pick(l, mx, my) : -1;
+      spots = portals;
+      // what is pointed at: a planet (or a distant examination) by picking, an examination by its portal
+      const examOver = portals.map((el) => (el.matches(":hover, :focus-visible") ? 1 : 0));
+      deep = deepPlacesBand(band, isPhone);
+      const hit = mouseIn ? pick(l, mx, my, 4) : -1;
       const deepHit = mouseIn && hit < 0 ? pickDeep(mx, my) : -1;
-      const over = now < pointedUntil ? pointed : hit >= 0 && hit < FIRST_EXAM ? hit : deepHit >= 0 ? DEEP_TIP + deepHit : -1;
+      const over = now < pointedUntil ? pointed : hit >= 0 ? hit : deepHit >= 0 ? DEEP_TIP + deepHit : -1;
       deep.forEach((d, k) => {
         deepHover[k] += ((over === DEEP_TIP + k ? 1 : 0) - deepHover[k]) * Math.min(1, dt * 8);
         uDeep.set([d.x * sc, H - d.y * sc, d.s * sc, d.a], k * 4);
       });
       for (let i = 0; i < NB; i++) {
-        const want = i >= FIRST_EXAM ? (examOver[i - FIRST_EXAM] ?? 0) : i === over ? 1 : 0;
-        bodyHover[i] += (want - bodyHover[i]) * Math.min(1, dt * 8);
+        const want = i === over || (i >= FIRST_EXAM && examOver[i - FIRST_EXAM]) ? 1 : 0;
+        bodyHover[i] += (want - bodyHover[i]) * Math.min(1, dt * 7);
       }
-      const nb = FIRST_EXAM + spots.length;
+      const nb = FIRST_EXAM + portals.length;
       for (let i = 0; i < nb; i++) {
-        const P = l.scene.pos[i], r = l.scene.rad[i] * (1 + bodyHover[i] * (i === SUN ? 0.03 : i >= FIRST_EXAM ? 0.06 : 0.14));
+        const P = l.scene.pos[i], r = l.scene.rad[i] * (1 + bodyHover[i] * (i === SUN ? 0.03 : 0.14));
         uB.set([P[0], P[1], P[2], r], i * 4);
         const A = l.scene.axis[i];
         uAx.set([A[0], A[1], A[2], l.scene.spin[i]], i * 4);
@@ -288,23 +281,16 @@ export default function Universe() {
         uOK[k] = o.body >= FIRST_EXAM ? 2 : o.body === PLUTO ? 1 : 0;
         orbitHover[k] = bodyHover[o.body];
       });
-      spots.forEach((el, k) => {
+      // each portal's sphere, in its window: the same examination, close up
+      portals.forEach((el, k) => {
         const url = el.dataset.emblem;
         uES[k] = url ? emblemSlot(isPhone ? url.replace(/\.webp$/, "-s.webp") : url) : -1;
         const tint = (el.dataset.tint ?? "0.2,0.3,0.6").split(",").map(Number);
         uET.set(tint.slice(0, 3), k * 3);
       });
       for (let k = 0; k < 3; k++) emblemOn[k] = Math.min(1, emblemOn[k] + (emblemReady[k] ? dt * 2.5 : 0));
-      // the spheres' links sit exactly over the spheres
-      const key = l.exams.map((e) => `${Math.round(e.x - fr.left)},${Math.round(e.y - fr.top)}`).join(";");
-      if (key !== spotKey) {
-        spotKey = key;
-        l.exams.forEach((e, k) => {
-          spots[k].style.transform = `translate(${(e.x - fr.left - e.r).toFixed(1)}px, ${(e.y - fr.top - e.r).toFixed(1)}px)`;
-        });
-        front.dataset.placed = "";
-      }
-      showTip(over >= 0 ? over : examOver.indexOf(1) >= 0 ? FIRST_EXAM + examOver.indexOf(1) : -1, spots);
+      showTip(over, portals);
+      document.body.style.cursor = mouseIn && hit >= FIRST_EXAM ? "pointer" : ""; // a distant examination is a way in too
 
       const c = l.cam;
       gl.uniform3f(U("uCamPos"), ...c.pos);
@@ -507,7 +493,15 @@ export default function Universe() {
         mx = e.clientX;
         my = e.clientY;
         mouseIn = !blocked;
-      } else if (e.type === "pointerdown" && !blocked) {
+      }
+      if (e.type === "pointerdown" && !blocked) {
+        const hitExam = pick(solar, e.clientX, e.clientY, 6);
+        if (hitExam >= FIRST_EXAM && spots[hitExam - FIRST_EXAM]) {
+          spots[hitExam - FIRST_EXAM].click(); // a distant examination leads where its portal does
+          return;
+        }
+      }
+      if (e.pointerType !== "mouse" && e.type === "pointerdown" && !blocked) {
         // a tap on a planet shows what it is for a few seconds
         const i = pick(solar, e.clientX, e.clientY, 14);
         const k = i < 0 ? pickDeep(e.clientX, e.clientY) : -1;

@@ -1048,14 +1048,14 @@ vec3 sunFace(vec3 n, vec3 rd) {
   c *= (.66 + .5 * g) * (.86 + .28 * sg);
   c *= 1. - spot * .8 * (.7 + .3 * g);
   c *= .3 + .7 * pow(mu, .45);
-  return c * 1.55;
+  return c * 1.2;
 }
 /* The corona, streamers and prominences, around the disc (x = miss distance in solar radii). */
 vec3 sunAura(vec3 w, float x) {
   float ang = atan(dot(w, uCamU), dot(w, uCamR));
   float streak = fbm(vec2(ang * 2.4 + 3., uTime * .01)) * .7 + .3;
   float e = max(x - 1., 0.);
-  vec3 c = vec3(1., .66, .36) * (exp(-e * 7.) * .55 + exp(-e * 1.9) * .13 * streak) + vec3(1., .8, .58) * .03 / (x * x);
+  vec3 c = vec3(1., .66, .36) * (exp(-e * 8.) * .38 + exp(-e * 2.2) * .08 * streak) + vec3(1., .8, .58) * .016 / (x * x);
   float pr = fbm(vec2(ang * 7., e * 10. - uTime * .03) + 5.);
   c += vec3(1., .3, .12) * smoothstep(.6, .78, pr) * smoothstep(.16, .0, e) * step(1., x) * 1.4;
   return c;
@@ -1124,58 +1124,26 @@ vec3 surface(int i, vec3 n, out vec3 air, out float airK) {
   return a;
 }
 
-/* An examination's sphere: a white golf ball, densely dimpled (rows of dimples packed hexagonally, each a
-   shallow cup that catches light on its far wall), with the commission's official emblem printed on both
-   faces. It turns on its own axis; the turn slows as a face comes round, so the emblem is held to be read.
+/* An examination's emblem, shown flat: the official artwork on its white enamel disc, facing you, with
+   the commission's colour as a fine rim. It turns only a little (a slow sway), so it is always legible.
    n and the lights are in view space: z towards you. */
-vec3 examSphere(vec3 n, int k, float hov, vec3 Ls) {
+vec3 examSphere(vec3 n, int k, float hov, vec3 Ls, float hero) {
   float slot = uES[k];
-  float tt = uTime * .05 + float(k) * .31;
-  float f = fract(tt), spin = PI * (floor(tt) + f - sin(2. * PI * f) * .135);
-  vec3 ax = normalize(vec3(.05, 1., .16));
-  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(e1, ax);
-  float lx = dot(n, e1), ly = dot(n, ax), lz = dot(n, e2);
-  float c = cos(spin), s = sin(spin);
-  float rx = c * lx - s * lz, rz = s * lx + c * lz;                  // the ball's own frame, turning
-  // the dimples: rows of latitude, each holding as many as fit round it, alternate rows offset half a step
-  float lat = asin(clamp(ly, -1., 1.)), lon = atan(rx, rz);
-  float h = PI / 26.;
-  float j = floor((lat + PI * .5) / h), latc = -PI * .5 + (j + .5) * h;
-  float cnt = max(1., floor(2. * PI * cos(latc) / h + .5));
-  float off = mod(j, 2.) * .5;
-  float cell = floor(lon / (2. * PI) * cnt + off), lonc = (cell + .5 - off) * 2. * PI / cnt;
-  vec2 dv = vec2((mod(lon - lonc + PI, 2. * PI) - PI) * cos(lat), lat - latc);
-  float rho = length(dv) / (h * .47);
-  // the printed emblem (stamped across the dimples, so they are shallower under the ink)
-  float side = rz >= 0. ? 1. : -1., K = .7;
-  vec2 uv = vec2(.5 + side * rx / (2. * K), .5 - ly / (2. * K));
+  float sway = sin(uTime * .09 + float(k) * 1.7) * .22 + hov * .16;
+  vec3 m = n;
+  m.xz *= rot(sway);
+  vec2 uv = vec2(.5 + m.x / (2. * .62), .5 - m.y / (2. * .62));
   vec4 em = emblemTex(slot, clamp(uv, 0., 1.));
   if (slot < -.5) em.a = 0.;
-  em.a *= smoothstep(.3, .55, abs(rz)) * smoothstep(1., .98, length(uv - .5) * 2.);
-  float depth = rho < 1. ? (1. - em.a * .85) : 0.;
-  // the dimpled normal: inside a cup the surface leans back towards its centre
-  vec3 P = vec3(cos(lat) * sin(lon), sin(lat), cos(lat) * cos(lon));
-  vec3 east = vec3(cos(lon), 0., -sin(lon)), north = vec3(-sin(lat) * sin(lon), cos(lat), -sin(lat) * cos(lon));
-  vec2 dir = length(dv) > 1e-5 ? dv / length(dv) : vec2(0);
-  float tilt = rho < 1. ? rho * .62 * depth : 0.;
-  vec3 nl = normalize(P - (east * dir.x + north * dir.y) * tilt);
-  float bx = c * nl.x + s * nl.z, bz = -s * nl.x + c * nl.z;           // back to view space
-  vec3 nd = normalize(e1 * bx + ax * nl.y + e2 * bz);
-  // light: a key from the upper left, a soft fill, the Sun as a warm rim from behind
-  vec3 Lk = normalize(vec3(-.5, .55, .68)), Lf = normalize(vec3(.6, -.2, .75));
-  float ao = rho < 1. ? mix(.72, 1., smoothstep(.15, 1., rho)) * mix(1., .9, depth) : 1.;   // cups hold a little shadow
-  float diff = max(dot(nd, Lk), 0.) * .95 + max(dot(nd, Lf), 0.) * .22 + .1;
-  vec3 ball = vec3(.86, .86, .84);
-  vec3 ink = pow(em.rgb, vec3(1.12)) * .86;                                               // printed ink: true colour, not lifted to white
-  float lit = mix(diff, .78 + .3 * max(dot(nd, Lk), 0.), em.a);                         // the print stays even and readable
-  vec3 col = mix(ball, ink, em.a) * lit * mix(ao, 1., em.a);
-  vec3 hv = normalize(Lk + vec3(0, 0, 1));
-  col += vec3(1.) * pow(max(dot(nd, hv), 0.), 70.) * .55 * (1. - em.a * .8);             // the clear coat glints on the dimples' rims
-  col += vec3(1.) * pow(max(dot(n, hv), 0.), 18.) * .16 * (1. - em.a * .7);                // and a broad sheen over the whole ball
-  col += vec3(1., .82, .6) * pow(1. - n.z, 2.6) * smoothstep(-.2, .6, dot(n, Ls)) * .7;
-  col += mix(toLinear(uET[k]), vec3(.8, .88, 1.), .5) * pow(1. - n.z, 3.) * .3;           // a breath of the commission's colour on the edge
-  col *= mix(.5, 1., smoothstep(-.7, .45, dot(n, Lk)));
-  return col * (1. + hov * .15);
+  em.a *= smoothstep(1., .985, length(uv - .5) * 2.);
+  vec3 Lk = normalize(vec3(-.5, .55, .68));
+  float diff = max(dot(n, Lk), 0.) * .6 + .4;
+  vec3 disc = vec3(.94, .93, .9) * diff;
+  vec3 col = mix(disc, em.rgb * (.9 + .25 * diff), em.a);
+  float rim = smoothstep(.97, .995, length(vec2(n.x, n.y)));
+  col = mix(col, toLinear(uET[k]) * (.5 + .5 * diff), rim * .9);
+  col += vec3(1.) * pow(max(dot(n, normalize(Lk + vec3(0, 0, 1))), 0.), 60.) * .12 * (1. - em.a);
+  return col * (1. + hov * .12);
 }
 
 void main() {
@@ -1194,10 +1162,10 @@ void main() {
   col *= 1. - .38 * smoothstep(.5, .78, dust) * band;
   if (uLite < .5) col += farGalaxies(sd) + clusters(sd);
   // ── beyond the Solar System ──
-  col += nebulaCloud(fc) + andromeda(fc) + ringNebula(fc) + pulsar(fc);
+  col += (nebulaCloud(fc) * .28 + andromeda(fc) * .7 + ringNebula(fc) * .7 + pulsar(fc) * .45);   // far, and quiet
   vec4 bh = blackHole(fc);
-  col = col * (1. - bh.a) + bh.rgb;
-  if (uEvents > .5) { col += meteors(fc); col += comet(fc); }
+  col = col * (1. - bh.a) + bh.rgb * .6;
+  if (uEvents > .5) { col += meteors(fc) * .7; col += comet(fc) * .45; }   // now and then, and quietly
 
   // ── the system ──
   vec3 ro = uCamPos;
@@ -1227,13 +1195,13 @@ void main() {
       float sc = belt == 0 ? 10. : 6.;
       vec2 g = vec2(ang * r * sc, r * sc), id = floor(g), hh = h22(id + float(belt) * 17.);
       vec3 rock = belt == 0 ? mix(vec3(.5, .44, .38), vec3(.78, .7, .6), hh.y) : mix(vec3(.62, .68, .78), vec3(.9, .92, 1.), hh.y);
-      col += (belt == 0 ? vec3(.5, .42, .34) * .012 : vec3(.4, .46, .6) * .004) * edge;        // fine dust
+      col += (belt == 0 ? vec3(.5, .42, .34) * .006 : vec3(.4, .46, .6) * .002) * edge;        // fine dust
       if (hh.x > (belt == 0 ? .5 : .7)) {
         vec2 cc = id + .2 + .6 * h22(id + 3.1);
         float size = (.012 + .05 * pow(hh.y, 5.)) * (belt == 0 ? 1. : .8);
         float d = length(g - cc) / sc, rad = max(size, pxw * .75);
         float a = smoothstep(rad, rad * .45, d) * pow(size / rad, 1.4) * edge;
-        col = mix(col, rock * (belt == 0 ? 1.1 : .7), clamp(a * 1.6, 0., 1.));
+        col = mix(col, rock * (belt == 0 ? .8 : .5), clamp(a * 1.1, 0., 1.));
       }
     }
   }
@@ -1251,15 +1219,16 @@ void main() {
     float kind = uOK[k], hl = uOH[k], ang = atan(q.y, q.x);
     vec3 lc; float a;
     if (kind > 1.5) {                                               // an examination's track: gold
-      lc = vec3(1., .8, .5); a = (.22 + .5 * hl) * smoothstep(-.45, .25, (ro + rd * t).z / uOC[k].w);
+      lc = vec3(1., .8, .5); a = (.16 + .6 * hl) * smoothstep(-.45, .25, (ro + rd * t).z / uOC[k].w);
     } else {
       float behind = mod(uON[k].w - ang, 2. * PI);
       float trail = exp(-behind * 2.2);
       lc = kind > .5 ? vec3(.8, .72, 1.) : vec3(.6, .72, 1.);
-      a = (.12 + .55 * trail + .5 * hl);
+      a = (.075 + .3 * trail + .5 * hl);
       if (kind > .5) a *= .45 + .55 * step(.42, fract(ang * 36. / (2. * PI)));   // Pluto's: dashed, a different kind of path
     }
-    col += lc * line * a * .55;
+    a *= mix(.35, 1., smoothstep(-.7, .2, (ro + rd * t).z / uOC[k].w));   // the far side recedes
+    col += lc * line * a * .5;
   }
 
   // the bodies themselves
@@ -1290,7 +1259,7 @@ void main() {
     } else if (i >= 11) {
       vec3 nv = vec3(dot(n, uCamR), dot(n, uCamU), -dot(n, uCamF));
       vec3 Lv = vec3(dot(L, uCamR), dot(L, uCamU), -dot(L, uCamF));
-      c = examSphere(nv, i - 11, uHov[i], Lv);
+      c = examSphere(nv, i - 11, uHov[i], Lv, 0.);
     } else {
       vec3 air; float airK;
       vec3 alb = surface(i, n, air, airK);
@@ -1305,7 +1274,7 @@ void main() {
         vec4 o = uB[i == 3 ? 4 : 3]; vec3 w = o.xyz - hp; float al = dot(w, L);
         if (al > 0.) lit *= smoothstep(o.w * .8, o.w * 1.3, length(w - L * al));
       }
-      c = alb * (lit * 1.5 + .03);
+      c = alb * (lit * 1.3 + .025);
       if (i == 3) {                                                 // sun glint on the sea, city light on the night side
         vec3 hv = normalize(L - rd);
         c += vec3(1., .9, .75) * pow(max(dot(n, hv), 0.), 60.) * lit * .6;

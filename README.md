@@ -107,7 +107,7 @@ Every part of the site is a place, with its own environment, type and controls:
 
 | Where | World | Its design system |
 |---|---|---|
-| Home page | **The Solar System**: the Sun, eight planets, the Moon and Pluto on their orbits, and beyond Pluto the examinations (UPSC, APPSC, TGPSC) as emblem spheres on tracks of their own | Syncopate capitals for the name and labels, Fraunces italic for the tagline |
+| Home page | **The Solar System**: the Sun, eight planets, the Moon and Pluto on their orbits, and beyond Pluto the examinations (UPSC, APPSC, TGPSC) on tracks of their own, as small flat emblems | Syncopate capitals for the name and labels, Fraunces italic for the tagline |
 | Sign-in, search | Deep space: the real night sky, a spiral galaxy | as above |
 | `/exams/<commission>` | That examination's own system: its planet, close | as above |
 | Material / Notes | **Mars**: a research station on a plain, rover tracks, Phobos and Deimos in a dusty sky | IBM Plex (Condensed / Sans / Mono); rust, basalt, sand; square, chamfered controls, segmented gauges |
@@ -150,17 +150,12 @@ nebulae, a far galaxy, now and then a shooting star, a meteor or a comet, timed 
   marks it out as a dwarf planet.
 - **Beyond Pluto, the examinations**, in order (UPSC, APPSC, TGPSC as shown to the viewer), each on
   a gold track of its own. They **never revolve**: each is fixed at its place on its track and only
-  turns on its own axis. Each is a metal globe in the commission's colours with gold engraving,
-  carrying the **official emblem** (`public/brand/emblems/`, the commissions' own artwork,
-  undistorted) as an inlaid medallion on both faces; the turn slows as a face comes round, so the
-  emblem is held to be read.
+  turns on its own axis. Each shows its official emblem flat, facing you, with a slow sway.
+  `solar.ts` fits the whole system to the page behind the portals.
 
-Pointing at a planet (or tapping it on a phone) enlarges it, lights it and its orbit, and shows its
-name and a line about it; planets lead nowhere. Each examination sphere is a link (over the drawn
-sphere) to that examination, and its plate beneath is the same link for the keyboard and screen
-readers. `solar.ts` fits the system between the lead and the spheres' row, and places each sphere on
-its track straight above its plate. Without WebGL (or with backdrops off) the system is not drawn and
-the plates show the emblems instead.
+The home page's three **portals** are the centre of the page: each shows the official emblem as a seal,
+with its name, what it covers and the way in. A distant examination in the sky is a link to its portal.
+Without WebGL (or with backdrops off) the system is not drawn and the seals stand alone.
 
 **The Moon's phase on Prelims** (`components/MoonPhase.tsx`, `lib/lunar.ts`). The lunar facility's
 window shows the Moon as it really is on the reader's own calendar date (or any date picked, 1900–2100):
