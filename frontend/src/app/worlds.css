@@ -2298,3 +2298,8 @@ ul.destinations {
     width: clamp(200px, 15.5vw, 250px);
   }
 }
+@media (min-width: 1100px) {
+  .arrival-solar .solar-front {
+    --sphere: clamp(104px, 8.4vw, 138px);
+  }
+}

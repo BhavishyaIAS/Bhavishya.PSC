@@ -307,7 +307,7 @@ export function deepPlaces(front: DOMRect, head: DOMRect, split: boolean): DeepP
     const x0 = front.left + front.width * 0.6, W = front.width * 0.4;
     return [
       { x: x0 + W * 0.5, y: top + H * 0.3, s: Math.min(W * 0.46, 270), a: 0.42 },
-      { x: x0 + W * 0.34, y: top + H * 0.82, s: W * 0.42, a: 0 },
+      { x: x0 + W * 0.6, y: top + H * 0.9, s: W * 0.34, a: 0 },
       { x: x0 + W * 0.8, y: top + H * 0.7, s: 20, a: -0.18 },
       { x: x0 + W * 0.1, y: top + H * 0.56, s: 16, a: 0.5 },
       { x: x0 + W * 0.9, y: top + H * 0.04, s: 26, a: 0 },
