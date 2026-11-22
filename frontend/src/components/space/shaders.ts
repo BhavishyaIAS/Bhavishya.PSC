@@ -918,6 +918,105 @@ uniform float uOH[NO];         // highlight
 uniform float uOK[NO];         // 0 planet, 1 dwarf planet, 2 an examination's track
 uniform float uES[3];          // the examinations' emblem slots
 uniform vec3 uET[3];           // and their colours
+uniform vec4 uDeep[5];         // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (px, y up; size px; angle)
+uniform float uDeepH[5];       // pointed at
+
+/* The Andromeda Galaxy, seen as it is from here: a great spiral tipped 77° from face-on, a yellow core,
+   blue arms with pink star-forming knots, dark dust lanes on the near side, and its companions M32 and M110. */
+vec3 andromeda(vec2 fc) {
+  vec4 d = uDeep[0];
+  if (d.z < 1.) return vec3(0);
+  vec2 q = (fc - d.xy) * rot(d.w) / d.z;
+  if (dot(q, q) > 2.4) return vec3(0);
+  vec2 g = vec2(q.x, q.y / .3);                                    // the disc, deprojected
+  float r = length(g), th = atan(g.y, g.x);
+  float n = fbm(g * 4. + 2.), n2 = fbm(g * 12. + n * 2.);
+  float phase = th * 2. - log(r + .04) * 4.6;
+  float arm = pow(.5 + .5 * cos(phase + (n - .5) * 1.4), 2.);
+  float disc = exp(-r * 3.1), bulge = exp(-dot(q * vec2(1., 1.7), q * vec2(1., 1.7)) * 46.);
+  vec3 c = vec3(1., .86, .62) * bulge * 2.4 + vec3(1., .9, .78) * disc * .5;
+  c += vec3(.58, .72, 1.) * disc * arm * (.4 + 1.4 * n2) * 1.25;
+  c += vec3(1., .42, .55) * disc * arm * smoothstep(.66, .82, n2) * 1.3;
+  float lane = pow(.5 + .5 * cos(phase + 1.05 + (n2 - .5) * 1.2), 7.) * smoothstep(.12, .35, r);
+  c *= 1. - lane * (g.y < 0. ? .8 : .35);
+  c *= smoothstep(1.5, .55, r) * (.88 + .24 * h21(fc));
+  vec2 m32 = q - vec2(.1, -.13);
+  c += vec3(1., .9, .74) * exp(-dot(m32, m32) * 1300.) * 1.1;
+  vec2 m110 = (q - vec2(-.3, .3)) * rot(.7);
+  c += vec3(1., .9, .78) * exp(-(m110.x * m110.x * 110. + m110.y * m110.y * 520.)) * .45;
+  return c * .6 * (1. + uDeepH[0] * .4);
+}
+/* A stellar nursery: hydrogen glowing red, oxygen teal near the hot young stars, cut by dark dust. */
+vec3 nebulaCloud(vec2 fc) {
+  vec4 d = uDeep[1];
+  if (d.z < 1.) return vec3(0);
+  vec2 q = (fc - d.xy) / d.z;
+  float r = length(q);
+  if (r > 1.5) return vec3(0);
+  float t = uTime * .004;
+  float w = fbm(q * 2.1 + 4. + t), n = fbm(q * 3.4 + w * 1.7 - t);
+  vec3 c = mix(vec3(.16, .62, .68), vec3(.92, .2, .32), smoothstep(.25, .75, r + (w - .5) * .7));
+  c *= smoothstep(.4, .85, n) * smoothstep(1.45, .15, r);
+  c *= 1. - smoothstep(.56, .74, fbm(q * 4.2 + 9. + w)) * .85;                        // dust pillars
+  c += vec3(.85, .92, 1.) * exp(-r * r * 14.) * .16;                                  // the young cluster lighting it
+  return c * .5 * (1. + uDeepH[1] * .5);
+}
+/* Gravitational lensing: the sky seen near a black hole comes from nearer its centre, so stars are pushed outwards. */
+vec2 lensed(vec2 fc) {
+  vec4 d = uDeep[2];
+  if (d.z < 1.) return fc;
+  vec2 v = fc - d.xy; float r = max(length(v), 1e-3);
+  return fc - v / r * (d.z * d.z * 2.2 / max(r, d.z));
+}
+/* A black hole: the shadow, the thin photon ring, the accretion disc crossing in front, and the disc's far
+   side bent over the top and under the bottom; the side turning towards us is brighter. rgb, shadow. */
+vec4 blackHole(vec2 fc) {
+  vec4 d = uDeep[2];
+  if (d.z < 1.) return vec4(0);
+  vec2 q = (fc - d.xy) * rot(d.w) / d.z;
+  float r = length(q);
+  if (r > 7.) return vec4(0);
+  vec3 hot = vec3(1., .62, .26);
+  vec2 e = vec2(q.x, q.y / .17); float er = length(e);
+  float flow = fbm(vec2(atan(e.y, e.x) * 3. - uTime * .7, er * 2.5));
+  float disc = smoothstep(1.45, 1.8, er) * smoothstep(4.6, 2.4, er);
+  vec3 discC = mix(hot, vec3(1., .94, .8), smoothstep(3.2, 1.6, er)) * disc * (.45 + .9 * flow) * (1. - .6 * e.x / max(er, 1.));
+  float halo = smoothstep(1.06, 1.3, r) * smoothstep(2.3, 1.35, r) * smoothstep(.1, .7, abs(q.y) / r);
+  vec3 haloC = mix(hot, vec3(1., .9, .7), .4) * halo * (.35 + .55 * fbm(vec2(atan(q.y, q.x) * 3. - uTime * .5, r * 4.))) * (1. - .45 * q.x / r);
+  vec3 ring = vec3(1., .86, .62) * exp(-pow((r - 1.05) / .03, 2.)) * 1.3;
+  float shadow = smoothstep(1.03, .97, r);
+  vec3 c = (haloC + ring) * (1. - shadow);
+  if (e.y < 0. || r > 1.) c += discC;                                                 // the near half of the disc passes in front
+  return vec4(c * (1. + uDeepH[2] * .35), shadow);
+}
+/* A planetary nebula: a glowing shell, red at the edge and blue-green within, round a white dwarf. */
+vec3 ringNebula(vec2 fc) {
+  vec4 d = uDeep[3];
+  if (d.z < 1.) return vec3(0);
+  vec2 q = (fc - d.xy) * rot(d.w) / d.z; q.x *= .8;
+  float r = length(q);
+  if (r > 2.) return vec3(0);
+  float n = fbm(q * 3. + 5.);
+  float shell = exp(-pow((r - .72 - (n - .5) * .22) / .24, 2.));
+  vec3 c = mix(vec3(.25, .62, .95), vec3(1., .32, .26), smoothstep(.5, .95, r)) * shell * (.55 + .7 * n);
+  c += vec3(.3, .6, .8) * exp(-r * r * 4.) * .2 + vec3(1.) * exp(-r * r * 500.) * 1.5;
+  return c * .8 * (1. + uDeepH[3] * .5);
+}
+/* A pulsar: a point of light sweeping two beams round, flashing as one points our way, in a faint wind nebula. */
+vec3 pulsar(vec2 fc) {
+  vec4 d = uDeep[4];
+  if (d.z < 1.) return vec3(0);
+  vec2 q = (fc - d.xy) / d.z;
+  if (dot(q, q) > 30.) return vec3(0);
+  float ang = uTime * 1.4;
+  vec2 dir = normalize(vec2(cos(ang), sin(ang) * .4));
+  float along = dot(q, dir), across = abs(q.x * dir.y - q.y * dir.x);
+  float beam = exp(-across * across / (.002 + along * along * .012)) * exp(-abs(along) * .7);
+  float flash = .55 + .45 * pow(abs(cos(ang)), 10.);
+  vec3 c = vec3(.62, .76, 1.) * beam * .9 * flash + vec3(.86, .92, 1.) * exp(-dot(q, q) * 160.) * 2. * flash;
+  c += vec3(.5, .42, .85) * exp(-dot(q, q) * .9) * fbm(q * 3. + 2.) * .12;
+  return c * (1. + uDeepH[4] * .5);
+}
 
 vec2 hitSphere(vec3 ro, vec3 rd, vec4 s) {                 // (distance to closest approach, miss distance)
   vec3 oc = ro - s.xyz; float b = dot(oc, rd);
@@ -1072,8 +1171,8 @@ void main() {
   float zt = 1. + uTravel * .45;
   vec2 p = (fc - .5 * uRes) / uRes.y / zt;
 
-  // ── the deep sky, held back so the system leads ──
-  vec3 sd = viewRay(p, 2.3);
+  // ── the deep sky, held back so the system leads (seen through the black hole's lens) ──
+  vec3 sd = viewRay((lensed(fc) - .5 * uRes) / uRes.y / zt, 2.3);
   vec3 col = realSky(sd) * .8 + starField(sd, .85);
   float band = smoothstep(.0, .09, dot(col, vec3(.3)));
   vec3 drift = vec3(uTime * .0021, 0., uTime * .0013);
@@ -1081,9 +1180,11 @@ void main() {
   col += (vec3(.5, .13, .2) * smoothstep(.52, .9, neb) + vec3(.07, .2, .26) * smoothstep(.56, .9, fbm3(sd * 3.1 + 7. + drift))) * (.04 + band * .24);
   float dust = fbm3(sd * 1.7 + vec3(3., 1., 7.) + drift * .5);
   col *= 1. - .38 * smoothstep(.5, .78, dust) * band;
-  vec3 rv = normalize(vec3(p, -1.55)); rv.yz *= rot(uPointer.y * .012); rv.xz *= rot(uPointer.x * .018);
-  col += galaxy(rv) * uGalaxy;
   if (uLite < .5) col += farGalaxies(sd) + clusters(sd);
+  // ── beyond the Solar System ──
+  col += nebulaCloud(fc) + andromeda(fc) + ringNebula(fc) + pulsar(fc);
+  vec4 bh = blackHole(fc);
+  col = col * (1. - bh.a) + bh.rgb;
   if (uEvents > .5) { col += meteors(fc); col += comet(fc); }
 
   // ── the system ──

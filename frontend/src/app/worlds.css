@@ -2279,3 +2279,22 @@ ul.destinations {
     gap: 14px;
   }
 }
+
+/* Wide screens: the Solar System on the left (its examinations' plates and the calls to action under it),
+ * the rest of the sky on the right: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (solar.ts). */
+@media (min-width: 1100px) {
+  .arrival-solar .solar-stage {
+    height: clamp(230px, 34vh, 380px);
+  }
+  .arrival-solar :is(.gateways, .arrival-cta) {
+    align-self: flex-start;
+    width: 60%;
+    justify-content: center;
+  }
+  .arrival-solar .gateways {
+    gap: clamp(14px, 1.6vw, 26px);
+  }
+  .arrival-solar .gateway {
+    width: clamp(200px, 15.5vw, 250px);
+  }
+}

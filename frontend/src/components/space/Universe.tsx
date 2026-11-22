@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 
 import { FRAGMENT, VERTEX, type ShaderName } from "./shaders";
-import { BODIES, FIRST_EXAM, MAX_EXAMS, N_ORBITS, PLUTO, SUN, layout as solarLayout, pick, toScreen, type Layout } from "./solar";
+import { BODIES, DEEP, DEEP_REACH, FIRST_EXAM, MAX_EXAMS, N_ORBITS, PLUTO, SUN, deepPlaces, layout as solarLayout, pick, toScreen, type DeepPlace, type Layout } from "./solar";
 import { NEEDS_EARTH, SHADER, worldForPath, type World } from "./worlds";
 
 /** Called on a click that leaves the page (see Interactions): the view starts to pull away at once. */
@@ -203,6 +203,13 @@ export default function Universe() {
     let solar: Layout | null = null, pointed = -1, pointedUntil = 0, tipShown = -1;
     let mx = 0, my = 0, mouseIn = false; // the mouse, when it is over open space (not over text or a control)
     let spotKey = "";
+    // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (solar.ts DEEP)
+    let deep: DeepPlace[] = [];
+    const uDeep = new Float32Array(DEEP.length * 4), deepHover = new Float32Array(DEEP.length);
+    const DEEP_TIP = 200; // tip index of the first deep-sky object
+    const wide = matchMedia("(min-width: 1100px)"); // the system on the left, the rest of the sky on the right (worlds.css)
+    const pickDeep = (x: number, y: number) =>
+      deep.findIndex((d, k) => d.s > 0 && (x - d.x) ** 2 + (y - d.y) ** 2 < (d.s * DEEP_REACH[k]) ** 2);
     const orb = new Float32Array(24), orbA = new Float32Array(24), orbB = new Float32Array(24);
     // The opening: on the first page of a visit, space comes up out of darkness.
     try {
@@ -246,17 +253,23 @@ export default function Universe() {
       const row = plates.length > 1 && plates.every((r) => r && Math.abs(r.top - plates[0]!.top) < 4);
       const targets = spots.map((_, k) => (row ? plates[k]!.left + plates[k]!.width / 2 : fr.left + (fr.width * (k + 0.5)) / spots.length));
       const examR = (spots[0]?.offsetWidth ?? 140) / 2;
-      const isPhone = phone();
+      const isPhone = phone(), split = wide.matches;
       const t = frozen ? 30 : (now - t0) / 1000;
       const l = solarLayout({
-        t, phone: isPhone, stageX: fr.left + fr.width / 2, stageW: fr.width, top: hr.bottom + (isPhone ? 10 : 18),
+        t, phone: isPhone, stageX: fr.left + fr.width * (split ? 0.3 : 0.5), stageW: fr.width * (split ? 0.6 : 1), top: hr.bottom + (isPhone ? 10 : 18),
         front: fr.top + fr.height / 2, targets, examR, lean: frozen ? [0, 0] : [px, py],
       });
       solar = l;
       // what the pointer (or a finger) is on: a planet by picking, an examination by its link or its plate
       const examOver = spots.map((el) => (el.matches(":hover, :focus-visible") || document.querySelector(`.gateway[data-slug="${el.dataset.solarSpot}"]`)?.matches(":hover, :focus-visible") ? 1 : 0));
+      deep = deepPlaces(fr, hr, split);
       const hit = mouseIn ? pick(l, mx, my) : -1;
-      const over = now < pointedUntil ? pointed : hit >= 0 && hit < FIRST_EXAM ? hit : -1;
+      const deepHit = mouseIn && hit < 0 ? pickDeep(mx, my) : -1;
+      const over = now < pointedUntil ? pointed : hit >= 0 && hit < FIRST_EXAM ? hit : deepHit >= 0 ? DEEP_TIP + deepHit : -1;
+      deep.forEach((d, k) => {
+        deepHover[k] += ((over === DEEP_TIP + k ? 1 : 0) - deepHover[k]) * Math.min(1, dt * 8);
+        uDeep.set([d.x * sc, H - d.y * sc, d.s * sc, d.a], k * 4);
+      });
       for (let i = 0; i < NB; i++) {
         const want = i >= FIRST_EXAM ? (examOver[i - FIRST_EXAM] ?? 0) : i === over ? 1 : 0;
         bodyHover[i] += (want - bodyHover[i]) * Math.min(1, dt * 8);
@@ -316,6 +329,8 @@ export default function Universe() {
       gl.uniform1i(U("uE1"), 3);
       gl.uniform1i(U("uE2"), 4);
       gl.uniform3fv(U("uEmblemOn"), emblemOn);
+      gl.uniform4fv(U("uDeep"), uDeep);
+      gl.uniform1fv(U("uDeepH"), deepHover);
       gl.uniform1f(U("uGalaxy"), 0.55);
       gl.uniform2f(U("uGalaxyAt"), isPhone ? 0.3 : 0.62, isPhone ? 0.62 : 0.36); // high, off to the side, clear of the name
       gl.uniform1f(U("uClock"), frozen ? 0.5 : (Date.now() / 1000) % 100000);
@@ -332,12 +347,18 @@ export default function Universe() {
         tipShown = -1;
         return;
       }
-      const s = toScreen(solar.cam, solar.scene.pos[i]);
-      const r = solar.scene.rad[i] * s.k;
+      const dp = i >= DEEP_TIP ? deep[i - DEEP_TIP] : null;
+      const s = dp ? { x: dp.x, y: dp.y } : toScreen(solar.cam, solar.scene.pos[i]);
+      const r = dp ? dp.s * Math.min(DEEP_REACH[i - DEEP_TIP], 1) : solar.scene.rad[i] * toScreen(solar.cam, solar.scene.pos[i]).k;
       if (tipShown !== i) {
         tipShown = i;
         const [kind, name, text] = tip.children as unknown as HTMLElement[];
-        if (i >= FIRST_EXAM) {
+        if (dp) {
+          const o = DEEP[i - DEEP_TIP];
+          kind.textContent = o.kind;
+          name.textContent = o.name;
+          text.textContent = o.blurb;
+        } else if (i >= FIRST_EXAM) {
           const el = spots[i - FIRST_EXAM];
           kind.textContent = el.dataset.kind ?? "Examination";
           name.textContent = el.dataset.name ?? "";
@@ -489,7 +510,8 @@ export default function Universe() {
       } else if (e.type === "pointerdown" && !blocked) {
         // a tap on a planet shows what it is for a few seconds
         const i = pick(solar, e.clientX, e.clientY, 14);
-        pointed = i >= 0 && i < FIRST_EXAM ? i : -1;
+        const k = i < 0 ? pickDeep(e.clientX, e.clientY) : -1;
+        pointed = i >= 0 && i < FIRST_EXAM ? i : k >= 0 ? DEEP_TIP + k : -1;
         pointedUntil = pointed >= 0 ? performance.now() + 4000 : 0;
       }
       busyUntil = performance.now() + 600;
