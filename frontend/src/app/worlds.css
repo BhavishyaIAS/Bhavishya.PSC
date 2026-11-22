@@ -2532,3 +2532,126 @@ ul.destinations {
     transition: none;
   }
 }
+
+/* ── the Moon, alive: a live badge, twinkling stars, a halo as bright as the Moon is lit, play and scrub ── */
+.moon-view {
+  isolation: isolate;
+  overflow: hidden;
+}
+.moon-view::before,
+.moon-view::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+/* the Moon's own glow in the window: brighter towards Full */
+.moon-view::before {
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgb(255 246 224 / calc(var(--glow, 0.5) * 0.3)) 0%, rgb(255 246 224 / calc(var(--glow, 0.5) * 0.1)) 46%, transparent 62%);
+  transition: background 0.6s;
+}
+/* a few stars that twinkle, each at its own pace */
+.moon-view::after {
+  background:
+    radial-gradient(1.2px 1.2px at 24% 12%, rgb(255 255 255 / 0.9), transparent),
+    radial-gradient(1px 1px at 90% 38%, rgb(210 225 255 / 0.9), transparent),
+    radial-gradient(1.3px 1.3px at 8% 58%, rgb(255 240 220 / 0.85), transparent),
+    radial-gradient(1px 1px at 70% 94%, rgb(255 255 255 / 0.8), transparent);
+  animation: moon-twinkle 3.8s ease-in-out infinite alternate;
+}
+@keyframes moon-twinkle {
+  0% { opacity: 0.25; }
+  40% { opacity: 1; }
+  70% { opacity: 0.5; }
+  100% { opacity: 0.95; }
+}
+.moon-view.is-playing {
+  box-shadow: 0 0 0 5px color-mix(in srgb, #b9b2e6 70%, transparent), 0 0 30px -4px color-mix(in srgb, #b9b2e6 60%, transparent), inset 0 0 24px rgb(0 0 0 / 0.6);
+}
+.moon-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.moon-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: #0f6b46;
+  background: rgb(22 163 106 / 0.12);
+}
+:root[data-theme="dark"] .moon-live {
+  color: #5ee3a8;
+  background: rgb(94 227 168 / 0.12);
+}
+.moon-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: moon-pulse 1.6s ease-out infinite;
+}
+@keyframes moon-pulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, currentColor 60%, transparent); }
+  100% { box-shadow: 0 0 0 7px transparent; }
+}
+.moon-tick {
+  font-variant-numeric: tabular-nums;
+}
+.moon-play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+}
+.moon-scrub {
+  display: flex;
+  flex: 1 1 220px;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.moon-scrub input {
+  flex: 1;
+  height: 6px;
+  accent-color: #7c72c4;
+  cursor: pointer;
+}
+.moon-scrub input:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+.moon-strip li {
+  transition: background 0.35s, box-shadow 0.35s;
+}
+@media (max-width: 639px) {
+  .moon-play {
+    grid-column: 1 / -1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .moon-view::after,
+  .moon-live::before {
+    animation: none;
+  }
+  .moon-view::before,
+  .moon-strip li {
+    transition: none;
+  }
+}
+:root[data-motion="off"] .moon-view::after,
+:root[data-motion="off"] .moon-live::before {
+  animation: none;
+}
