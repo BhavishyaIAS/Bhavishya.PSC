@@ -9,8 +9,8 @@ import { LogoutButton } from "./LogoutButton";
 import { ManageLink } from "./ManageLink";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Logo (highlighted) left · search centre · account actions right. Phones navigate with the bottom bar. */
-export function Header({ user }: { user: User | null }) {
+/** Logo left · the examinations · search · account actions right. Phones navigate with the bottom bar. */
+export function Header({ user, exams = [] }: { user: User | null; exams?: { slug: string; short_name: string }[] }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -25,6 +25,16 @@ export function Header({ user }: { user: User | null }) {
             <div className="brand-sub">{brand.tagline}</div>
           </div>
         </Link>
+
+        {exams.length > 0 && (
+          <nav className="topbar-exams" aria-label="Examinations">
+            {exams.map((e) => (
+              <Link key={e.slug} href={`/exams/${e.slug}`}>
+                {e.short_name}
+              </Link>
+            ))}
+          </nav>
+        )}
 
         <div className="topbar-center">{user && <HeaderSearch />}</div>
 

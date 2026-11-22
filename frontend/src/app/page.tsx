@@ -1,18 +1,18 @@
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { brand } from "@/brand.config";
 import { GroupCards } from "@/components/GroupCards";
 import { DESTINATIONS } from "@/components/space/destinations";
-import { Gateway, SolarSpot } from "@/components/space/Gateway";
+import { Portal } from "@/components/space/Portal";
 import { Globe } from "@/components/space/Globe";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
 
 /**
- * The arrival: the Solar System (drawn by the renderer, see space/solar.ts), the name above it, and
- * beyond Pluto the examinations, each a sphere on its own track, with their plates beneath.
+ * The arrival: the name, a distant Solar System behind the page (drawn by the renderer, see space/solar.ts,
+ * the examinations fixed on their own tracks beyond Pluto), and in front the three examination portals.
  * Everything the old home page did is still here: the greeting, the admin's own
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
@@ -26,31 +26,21 @@ export default async function LandingPage() {
   const eyebrow = site.hero_eyebrow || (focus ? focus.name : firstName ? `Welcome back, ${firstName}` : "Civil services preparation");
 
   return (
-    <div className="landing">
-      <section className="arrival arrival-solar" aria-labelledby="arrival-h">
-        <div className="arrival-head" data-solar-top>
-          <p className="arrival-eyebrow">{eyebrow}</p>
-          <h1 id="arrival-h" className="arrival-title">
+    <div className="landing landing-refined">
+      <section className="hero" aria-labelledby="arrival-h">
+        <div className="hero-head">
+          <p className="hero-eyebrow">
+            <span>{eyebrow}</span>
+          </p>
+          <h1 id="arrival-h" className="hero-title">
             {brand.name} <span>{brand.suffix}</span>
           </h1>
-          <p className="arrival-tagline">{brand.tagline}</p>
-          <p className="arrival-lead">
-            {site.hero_lead || "Syllabus, notes, previous-year questions and your progress. Choose your examination and begin."}
-          </p>
+          <p className="hero-tagline">{brand.tagline}</p>
+          <p className="hero-lead">{site.hero_lead || "Syllabus, notes, previous-year questions and your progress, for every examination."}</p>
         </div>
 
-        {/* the Solar System is drawn here; beyond Pluto, on tracks of their own, the examinations */}
-        <div className="solar-stage" aria-hidden />
-        <div className="solar-front" data-solar-front>
-          {shown.map((c, i) => (
-            <SolarSpot key={c.slug} commission={c} index={i} />
-          ))}
-        </div>
-        <div className="solar-tip" data-solar-tip aria-hidden>
-          <span className="solar-tip-kind" />
-          <b className="solar-tip-name" />
-          <span className="solar-tip-text" />
-        </div>
+        {/* the distant Solar System lies in this band; beyond Pluto, the examinations on their own tracks */}
+        <div className="solar-band" data-solar-band aria-hidden />
 
         {shown.length === 0 ? (
           <div className="arrival-empty">
@@ -68,28 +58,28 @@ export default async function LandingPage() {
             )}
           </div>
         ) : (
-          <nav className={`gateways gateways-${Math.min(shown.length, 4)}`} aria-label="Choose your examination">
+          <nav className={`portals portals-${Math.min(shown.length, 3)}`} aria-label="Choose your examination">
             {shown.map((c, i) => (
-              <Gateway key={c.slug} commission={c} index={i} />
+              <Portal key={c.slug} commission={c} index={i} />
             ))}
           </nav>
         )}
 
         {!user && (
-          <div className="arrival-cta">
-            <Link href="/signup" className="btn btn-primary btn-lg">
-              Start preparing <ArrowRight size={18} aria-hidden />
+          <p className="hero-cta">
+            <Link href="/signup" className="btn btn-primary">
+              Start preparing <ArrowRight size={16} aria-hidden />
             </Link>
-            <Link href="/login" className="btn btn-secondary btn-lg">
-              Log in
+            <Link href="/login" className="hero-cta-link">
+              I have an account
             </Link>
-          </div>
+          </p>
         )}
-        {shown.length > 0 && (
-          <a href="#worlds" className="arrival-more">
-            Five worlds inside every exam <ChevronDown size={15} aria-hidden />
-          </a>
-        )}
+        <div className="solar-tip" data-solar-tip aria-hidden>
+          <span className="solar-tip-kind" />
+          <b className="solar-tip-name" />
+          <span className="solar-tip-text" />
+        </div>
       </section>
 
       {focus && (

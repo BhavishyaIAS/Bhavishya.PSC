@@ -123,7 +123,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <SpaceLayer live={site.backdrops} />
         <Interactions />
         <ToastProvider>
-          <Header user={user} />
+          <Header user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             <span>
