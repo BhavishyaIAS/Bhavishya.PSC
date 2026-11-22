@@ -1147,12 +1147,12 @@ vec3 examSphere(vec3 n, int k, float hov, vec3 Ls) {
   vec2 dv = vec2((mod(lon - lonc + PI, 2. * PI) - PI) * cos(lat), lat - latc);
   float rho = length(dv) / (h * .47);
   // the printed emblem (stamped across the dimples, so they are shallower under the ink)
-  float side = rz >= 0. ? 1. : -1., K = .62;
+  float side = rz >= 0. ? 1. : -1., K = .7;
   vec2 uv = vec2(.5 + side * rx / (2. * K), .5 - ly / (2. * K));
   vec4 em = emblemTex(slot, clamp(uv, 0., 1.));
   if (slot < -.5) em.a = 0.;
   em.a *= smoothstep(.3, .55, abs(rz)) * smoothstep(1., .98, length(uv - .5) * 2.);
-  float depth = rho < 1. ? (1. - em.a * .55) : 0.;
+  float depth = rho < 1. ? (1. - em.a * .85) : 0.;
   // the dimpled normal: inside a cup the surface leans back towards its centre
   vec3 P = vec3(cos(lat) * sin(lon), sin(lat), cos(lat) * cos(lon));
   vec3 east = vec3(cos(lon), 0., -sin(lon)), north = vec3(-sin(lat) * sin(lon), cos(lat), -sin(lat) * cos(lon));
@@ -1166,10 +1166,12 @@ vec3 examSphere(vec3 n, int k, float hov, vec3 Ls) {
   float ao = rho < 1. ? mix(.72, 1., smoothstep(.15, 1., rho)) * mix(1., .9, depth) : 1.;   // cups hold a little shadow
   float diff = max(dot(nd, Lk), 0.) * .95 + max(dot(nd, Lf), 0.) * .22 + .1;
   vec3 ball = vec3(.86, .86, .84);
-  vec3 col = mix(ball, em.rgb, em.a) * diff * ao;
+  vec3 ink = pow(em.rgb, vec3(1.12)) * .86;                                               // printed ink: true colour, not lifted to white
+  float lit = mix(diff, .78 + .3 * max(dot(nd, Lk), 0.), em.a);                         // the print stays even and readable
+  vec3 col = mix(ball, ink, em.a) * lit * mix(ao, 1., em.a);
   vec3 hv = normalize(Lk + vec3(0, 0, 1));
-  col += vec3(1.) * pow(max(dot(nd, hv), 0.), 70.) * .55 * (1. - em.a * .4);             // the clear coat glints on the dimples' rims
-  col += vec3(1.) * pow(max(dot(n, hv), 0.), 18.) * .16;                                  // and a broad sheen over the whole ball
+  col += vec3(1.) * pow(max(dot(nd, hv), 0.), 70.) * .55 * (1. - em.a * .8);             // the clear coat glints on the dimples' rims
+  col += vec3(1.) * pow(max(dot(n, hv), 0.), 18.) * .16 * (1. - em.a * .7);                // and a broad sheen over the whole ball
   col += vec3(1., .82, .6) * pow(1. - n.z, 2.6) * smoothstep(-.2, .6, dot(n, Ls)) * .7;
   col += mix(toLinear(uET[k]), vec3(.8, .88, 1.), .5) * pow(1. - n.z, 3.) * .3;           // a breath of the commission's colour on the edge
   col *= mix(.5, 1., smoothstep(-.7, .45, dot(n, Lk)));
