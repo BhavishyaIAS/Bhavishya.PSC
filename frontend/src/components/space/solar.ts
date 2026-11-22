@@ -388,21 +388,21 @@ export function layoutBand(opts: {
 
 /** The deep-sky objects for the refined home page: small, faint, at the edges of the band and above it. */
 export function deepPlacesBand(band: { x: number; y: number; w: number; h: number }, phone: boolean): DeepPlace[] {
-  const { x, y, w, h } = band;
+  const { x, y, w, h } = band; // the whole arrival; everything here small, faint and at the edges
   if (phone) {
     return [
-      { x: x + w * 0.86, y: y - h * 0.15, s: Math.min(w * 0.15, 70), a: 0.42 },
+      { x: x + w * 0.12, y: y + 30, s: Math.min(w * 0.12, 50), a: 0.42 },
       { x: 0, y: 0, s: 0, a: 0 },
       { x: 0, y: 0, s: 0, a: 0 },
-      { x: x + w * 0.08, y: y + h * 0.05, s: 7, a: 0.5 },
+      { x: 0, y: 0, s: 0, a: 0 },
       { x: 0, y: 0, s: 0, a: 0 },
     ];
   }
   return [
-    { x: x + w * 0.9, y: y - h * 0.55, s: Math.min(w * 0.085, 135), a: 0.42 }, // Andromeda, high on the right
-    { x: x + w * 0.02, y: y + h * 0.2, s: w * 0.09, a: 0 }, // a faint nursery at the far left
-    { x: x + w * 0.955, y: y + h * 0.62, s: 8, a: -0.18 }, // a small black hole at the far right
-    { x: x + w * 0.06, y: y - h * 0.62, s: 9, a: 0.5 }, // a ring nebula high on the left
-    { x: x + w * 0.18, y: y - h * 0.95, s: 14, a: 0 }, // a pulsar, far off
+    { x: x + w * 0.11, y: y + h * 0.15, s: Math.min(w * 0.06, 90), a: 0.42 }, // Andromeda, high on the left
+    { x: x + w * 0.03, y: y + h * 0.7, s: w * 0.07, a: 0 }, // a faint nursery low on the far left
+    { x: x + w * 0.96, y: y + h * 0.82, s: 6, a: -0.18 }, // a small black hole, low on the far right
+    { x: x + w * 0.05, y: y + h * 0.42, s: 7, a: 0.5 }, // a ring nebula on the left
+    { x: x + w * 0.95, y: y + h * 0.5, s: 11, a: 0 }, // a pulsar, far off on the right
   ];
 }
