@@ -7,7 +7,8 @@
  * Scale: distances and sizes are compressed so that all nine bodies are visible together (the real
  * Solar System would put Neptune 30 times further out than the Earth and make Mercury a speck);
  * their ORDER, eccentricities, inclinations, axial tilts and relative speeds follow the real ones.
- *   • orbits     J2000 elements (e, i, Ω, ϖ, L0); planets start where they really are today
+ *   • orbits     J2000 elements (e, i, Ω, ϖ, L0); planets start where they really are today. Each
+ *                eccentricity is drawn a little larger than it is (+0.03) so the ellipses read as ellipses
  *   • periods    real ratios, compressed (∝ P^0.5): Mercury laps the Sun in ~40 s, Pluto in ~20 min
  *   • spin       real sense and tilt: Venus and Uranus turn backwards, Uranus rolls on its side
  *
@@ -56,10 +57,10 @@ export const BODIES: Body[] = [
     orbit: { a: 10.5, e: 0.0539, i: 2.49, node: 113.66, peri: 92.43, L0: 49.94, P: 29.457 },
     blurb: "The ringed planet: its rings are ice and rock. Less dense than water; Titan is its largest moon." },
   { key: "uranus", name: "Uranus", kind: "planet", r: 0.42, tilt: 97.77, tiltDir: 150, spin: 0.48,
-    orbit: { a: 12.2, e: 0.0473, i: 0.77, node: 74.0, peri: 170.95, L0: 313.23, P: 84.011 },
+    orbit: { a: 12.4, e: 0.0473, i: 0.77, node: 74.0, peri: 170.95, L0: 313.23, P: 84.011 },
     blurb: "An ice giant that rolls round the Sun on its side, its axis tilted 98°. It also spins from east to west." },
   { key: "neptune", name: "Neptune", kind: "planet", r: 0.41, tilt: 28.32, tiltDir: 220, spin: 0.5,
-    orbit: { a: 13.7, e: 0.0086, i: 1.77, node: 131.78, peri: 44.97, L0: 304.88, P: 164.79 },
+    orbit: { a: 14.0, e: 0.0086, i: 1.77, node: 131.78, peri: 44.97, L0: 304.88, P: 164.79 },
     blurb: "The farthest planet, a deep-blue ice giant with the fastest winds in the Solar System." },
   { key: "pluto", name: "Pluto", kind: "dwarf", r: 0.12, tilt: 122.5, tiltDir: 180, spin: 0.09,
     orbit: { a: 15.4, e: 0.2, i: 17.16, node: 110.3, peri: 224.07, L0: 238.93, P: 247.94 },
@@ -96,6 +97,8 @@ function orbitFrame(o: NonNullable<Body["orbit"]>) {
   const N = toWorld(sO * si, -cO * si, ci);
   return { U, V, N };
 }
+/** The eccentricity we draw: the real one, opened a little so each orbit reads as an ellipse. */
+const ecc = (o: NonNullable<Body["orbit"]>) => Math.min(0.26, o.e + 0.03);
 const frames = BODIES.map((b) => (b.orbit ? orbitFrame(b.orbit) : null));
 
 /** A planet's axis: tilted from the ecliptic pole, leaning towards tiltDir. */
@@ -140,11 +143,12 @@ export function bodiesAt(t: number, big = 1): Omit<Scene, "orbits"> & { orbits: 
     const o = b.orbit, f = frames[i]!;
     const n0 = 360 / (o.P * 365.25); // degrees a day
     const M = ((o.L0 + n0 * DAYS - o.peri) * DEG) + (2 * Math.PI * t) / period(o.P);
-    const Ei = kepler(M % (2 * Math.PI), o.e);
-    const x = o.a * (Math.cos(Ei) - o.e), y = o.a * Math.sqrt(1 - o.e * o.e) * Math.sin(Ei);
+    const e = ecc(o);
+    const Ei = kepler(M % (2 * Math.PI), e);
+    const x = o.a * (Math.cos(Ei) - e), y = o.a * Math.sqrt(1 - e * e) * Math.sin(Ei);
     pos.push(add(mul(f.U, x), mul(f.V, y)));
     E.push(Ei);
-    orbits.push({ c: mul(f.U, -o.a * o.e), U: f.U, V: f.V, N: f.N, a: o.a, b: o.a * Math.sqrt(1 - o.e * o.e), E: Ei, body: i });
+    orbits.push({ c: mul(f.U, -o.a * e), U: f.U, V: f.V, N: f.N, a: o.a, b: o.a * Math.sqrt(1 - e * e), E: Ei, body: i });
   });
   // the Moon goes round the Earth (tidally locked: it turns once per orbit)
   const th = (2 * Math.PI * t) / period(27.32 / 365.25) + 1.2;
@@ -205,9 +209,9 @@ export function layout(opts: {
   lean: [number, number]; // pointer parallax, -1..1
 }): Layout {
   const { phone, targets } = opts;
-  const big = phone ? 1.75 : 1.2;
+  const big = phone ? 1.75 : 1.4;
   const base = bodiesAt(opts.t, big);
-  const cam0 = makeCamera((phone ? 0.6 : 0.34) + opts.lean[1] * 0.012, -0.32 + opts.lean[0] * 0.02, 70);
+  const cam0 = makeCamera((phone ? 0.52 : 0.27) + opts.lean[1] * 0.012, -0.32 + opts.lean[0] * 0.02, 70);
   // the bounding box of every orbit, seen from here
   let xmin = 0, xmax = 0, ytop = -1e9;
   base.orbits.forEach((o) => {
@@ -276,3 +280,46 @@ export function pick(l: Layout, x: number, y: number, slack = 6): number {
   });
   return best;
 }
+
+/**
+ * Beyond the Solar System: the other things in the home page's sky, drawn in screen space by the
+ * shader (SOLAR) at the places Universe.tsx gives them, with the same labels when pointed at.
+ * Index = the shader's uDeep[] slot.
+ */
+export const DEEP = [
+  { key: "andromeda", name: "Andromeda Galaxy (M31)", kind: "Spiral galaxy",
+    blurb: "Our nearest large galactic neighbour, about 2.5 million light-years away, with its two small companions M32 and M110. It is the most distant thing the naked eye can see." },
+  { key: "nebula", name: "A stellar nursery", kind: "Emission nebula",
+    blurb: "A cloud of hydrogen glowing red where new stars are being born, like the Orion Nebula (M42); dark lanes of dust cut through it." },
+  { key: "blackhole", name: "A black hole", kind: "Astronomical phenomenon",
+    blurb: "Gravity so strong that not even light escapes. Its glowing disc of gas bends round it, and the stars behind are lensed. The first image of one (M87*) came in 2019." },
+  { key: "ring", name: "A ring nebula", kind: "Planetary nebula",
+    blurb: "The shell of gas a dying Sun-like star throws off, lit by the white dwarf left at its centre, like the Ring Nebula (M57) in Lyra." },
+  { key: "pulsar", name: "A pulsar", kind: "Neutron star",
+    blurb: "The spinning core of an exploded star, sweeping beams of radiation round like a lighthouse. The first was found by Jocelyn Bell Burnell in 1967." },
+] as const;
+export interface DeepPlace { x: number; y: number; s: number; a: number } // CSS px; size; angle
+
+/** Where the deep-sky objects go: the right of the stage beside the Solar System, or, on narrow screens, a few in the corners. */
+export function deepPlaces(front: DOMRect, head: DOMRect, split: boolean): DeepPlace[] {
+  const top = head.bottom, H = Math.max(200, front.bottom - top);
+  if (split) {
+    const x0 = front.left + front.width * 0.6, W = front.width * 0.4;
+    return [
+      { x: x0 + W * 0.5, y: top + H * 0.3, s: Math.min(W * 0.46, 270), a: 0.42 },
+      { x: x0 + W * 0.6, y: top + H * 0.9, s: W * 0.34, a: 0 },
+      { x: x0 + W * 0.8, y: top + H * 0.7, s: 20, a: -0.18 },
+      { x: x0 + W * 0.1, y: top + H * 0.56, s: 16, a: 0.5 },
+      { x: x0 + W * 0.9, y: top + H * 0.04, s: 26, a: 0 },
+    ];
+  }
+  return [
+    { x: front.left + front.width * 0.86, y: head.top + 4, s: Math.min(front.width * 0.17, 150), a: 0.42 },
+    { x: 0, y: 0, s: 0, a: 0 },
+    { x: 0, y: 0, s: 0, a: 0 },
+    { x: front.left + front.width * 0.08, y: head.top + 14, s: 11, a: 0.5 },
+    { x: 0, y: 0, s: 0, a: 0 },
+  ];
+}
+/** The reach of each deep-sky object for pointing, as a multiple of its size. */
+export const DEEP_REACH = [0.62, 0.55, 3.2, 1.4, 1.2];
