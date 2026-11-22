@@ -162,6 +162,21 @@ readers. `solar.ts` fits the system between the lead and the spheres' row, and p
 its track straight above its plate. Without WebGL (or with backdrops off) the system is not drawn and
 the plates show the emblems instead.
 
+**The Moon's phase on Prelims** (`components/MoonPhase.tsx`, `lib/lunar.ts`). The lunar facility's
+window shows the Moon as it really is on the reader's own calendar date (or any date picked, 1900–2100):
+the phase name, illuminated percentage, lunar age, the next Full and New Moons, and the distance. It is
+computed, not looked up: Meeus's *Astronomical Algorithms* (the Moon's principal ELP-2000/82 terms, the
+Sun's apparent position, ΔT, the phase angle and bright limb, libration and the axis's tilt), and the
+principal phases are solved for as the instants when the Moon's elongation is 0°, 90°, 180° or 270°, so
+each lunation has its own length. Checked against astronomy-engine over 1905–2095: illuminated fraction
+within 0.02%, New/Full Moon times within ~3 minutes, libration and axis within 0.2°. A day is named after
+a principal phase when its exact instant falls within that local calendar day (as almanacs do); "today"
+is computed for the present moment and any other day for its local noon. The Moon is drawn pixel by pixel
+from the same geometry (Lommel–Seeliger scattering, relief, earthshine on crescents) over a lunar map
+built from real selenography (`frontend/scripts/moon-map.py`: the maria and named craters at their IAU
+positions, the ray systems of Tycho and Copernicus), north up as seen by eye from the northern hemisphere.
+It is drawn once per date change and follows the calendar at local midnight.
+
 **Day and Night** switch the interface only. Night: deep navy and graphite surfaces, light ink.
 Day: ivory, white and pale-lavender surfaces, deep navy ink, antique gold; the home page stays deep
 space, and the planetary pages lay a pale atmosphere over their planet so the content stands on light.
