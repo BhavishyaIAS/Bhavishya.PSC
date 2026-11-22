@@ -133,7 +133,7 @@
 
 /* ───────────────────────────── Paper ───────────────────────────── */
 
-:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip, .moon-card, .portal) {
+:root :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip, .moon-card) {
   color-scheme: light;
   --bg: var(--w-paper);
   --surface: var(--w-paper);
@@ -163,7 +163,7 @@
   box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.7);
 }
 /* the reader's dark theme: the same sheets, in the world's own darkness */
-:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip, .moon-card, .portal) {
+:root[data-theme="dark"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .topbar, .bottom-nav, .gateway-text, .station-card, .destination, .arrival-empty, .solar-tip, .moon-card) {
   color-scheme: dark;
   --w-sheet: color-mix(in srgb, var(--w-lite) 3%, var(--w-glass));
   --bg: var(--w-sheet);
@@ -2491,6 +2491,21 @@ ul.destinations {
 @media (max-width: 1040px) {
   .topbar-exams {
     display: none;
+  }
+}
+.topbar-inner {
+  padding-block: 8px;
+}
+.topbar-inner:has(.topbar-exams) {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+.topbar-inner:has(.topbar-exams) .topbar-center .topbar-search {
+  max-width: 340px;
+  margin-left: auto;
+}
+@media (max-width: 1040px) {
+  .topbar-inner:has(.topbar-exams) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
   }
 }
 

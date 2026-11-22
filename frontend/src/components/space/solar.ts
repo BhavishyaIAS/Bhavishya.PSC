@@ -399,7 +399,7 @@ export function deepPlacesBand(band: { x: number; y: number; w: number; h: numbe
   }
   return [
     { x: x + w * 0.9, y: y - h * 0.55, s: Math.min(w * 0.085, 135), a: 0.42 }, // Andromeda, high on the right
-    { x: x + w * 0.07, y: y + h * 0.35, s: w * 0.13, a: 0 }, // a faint nursery low on the left
+    { x: x + w * 0.02, y: y + h * 0.2, s: w * 0.09, a: 0 }, // a faint nursery at the far left
     { x: x + w * 0.955, y: y + h * 0.62, s: 8, a: -0.18 }, // a small black hole at the far right
     { x: x + w * 0.06, y: y - h * 0.62, s: 9, a: 0.5 }, // a ring nebula high on the left
     { x: x + w * 0.18, y: y - h * 0.95, s: 14, a: 0 }, // a pulsar, far off

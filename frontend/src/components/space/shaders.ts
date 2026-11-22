@@ -1196,7 +1196,7 @@ void main() {
   col *= 1. - .38 * smoothstep(.5, .78, dust) * band;
   if (uLite < .5) col += farGalaxies(sd) + clusters(sd);
   // ── beyond the Solar System ──
-  col += (nebulaCloud(fc) * .55 + andromeda(fc) * .7 + ringNebula(fc) * .7 + pulsar(fc) * .45);   // far, and quiet
+  col += (nebulaCloud(fc) * .28 + andromeda(fc) * .7 + ringNebula(fc) * .7 + pulsar(fc) * .45);   // far, and quiet
   vec4 bh = blackHole(fc);
   col = col * (1. - bh.a) + bh.rgb * .6;
   if (uEvents > .5) { col += meteors(fc); col += comet(fc); }
@@ -1261,6 +1261,7 @@ void main() {
       a = (.075 + .3 * trail + .5 * hl);
       if (kind > .5) a *= .45 + .55 * step(.42, fract(ang * 36. / (2. * PI)));   // Pluto's: dashed, a different kind of path
     }
+    a *= mix(.35, 1., smoothstep(-.7, .2, (ro + rd * t).z / uOC[k].w));   // the far side recedes
     col += lc * line * a * .5;
   }
 
