@@ -365,11 +365,11 @@ export function layoutBand(opts: {
     }
   }
   // a margin below, so the examinations on the near side of their tracks sit clear of what follows
-  const zoom = Math.min((band.w * 0.98) / (xmax - xmin), (band.h * 0.84) / (ymax - ymin));
+  const zoom = Math.min((band.w * 0.9) / (xmax - xmin), (band.h * 0.7) / (ymax - ymin));
   const cam: Camera = {
     ...cam0, zoom,
     cx: band.x + band.w / 2 - (zoom * (xmax + xmin)) / 2,
-    cy: band.y + band.h * 0.46 + (zoom * (ymax + ymin)) / 2,
+    cy: band.y + band.h * 0.6 + (zoom * (ymax + ymin)) / 2,
   };
   const pos = base.pos.slice(), rad = base.rad.slice(), axis = base.axis.slice(), spin = base.spin.slice();
   const orbits = base.orbits.slice();

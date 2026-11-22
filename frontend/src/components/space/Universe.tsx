@@ -203,7 +203,6 @@ export default function Universe() {
     let solar: Layout | null = null, pointed = -1, pointedUntil = 0, tipShown = -1;
     let mx = 0, my = 0, mouseIn = false; // the mouse, when it is over open space (not over text or a control)
     let spots: HTMLElement[] = []; // the portals, in order
-    const uPortal = new Float32Array(MAX_EXAMS * 4), portalHover = new Float32Array(MAX_EXAMS);
     // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (solar.ts DEEP)
     let deep: DeepPlace[] = [];
     const uDeep = new Float32Array(DEEP.length * 4), deepHover = new Float32Array(DEEP.length);
@@ -288,16 +287,10 @@ export default function Universe() {
         uES[k] = url ? emblemSlot(isPhone ? url.replace(/\.webp$/, "-s.webp") : url) : -1;
         const tint = (el.dataset.tint ?? "0.2,0.3,0.6").split(",").map(Number);
         uET.set(tint.slice(0, 3), k * 3);
-        const orbEl = el.querySelector<HTMLElement>("[data-portal-orb]");
-        const r = orbEl?.getBoundingClientRect();
-        portalHover[k] += (examOver[k] - portalHover[k]) * Math.min(1, dt * 7);
-        if (r) uPortal.set([(r.left + r.width / 2) * sc, H - (r.top + r.height / 2) * sc, (r.width / 2) * sc, portalHover[k]], k * 4);
       });
       for (let k = 0; k < 3; k++) emblemOn[k] = Math.min(1, emblemOn[k] + (emblemReady[k] ? dt * 2.5 : 0));
       showTip(over, portals);
       document.body.style.cursor = mouseIn && hit >= FIRST_EXAM ? "pointer" : ""; // a distant examination is a way in too
-      gl.uniform1i(U("uPortalN"), portals.length);
-      gl.uniform4fv(U("uPortal"), uPortal);
 
       const c = l.cam;
       gl.uniform3f(U("uCamPos"), ...c.pos);

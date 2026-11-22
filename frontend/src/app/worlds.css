@@ -2585,96 +2585,104 @@ ul.destinations {
   line-height: 1.55;
   color: rgb(226 228 240 / 0.86);
 }
-/* the distant system's band: room for the panorama between the name and the portals */
+/* the distant Solar System: the whole page behind the hero, faint and far (Universe.tsx lays it out here) */
 .solar-band {
-  width: min(1240px, 100%);
-  height: clamp(150px, 27vh, 280px);
-  margin-top: 6px;
+  position: absolute;
+  inset: 0;
+  z-index: -1;
   pointer-events: none;
 }
+.hero {
+  min-height: calc(100svh - var(--topbar-h));
+  justify-content: center;
+  gap: clamp(22px, 4vh, 44px);
+}
+.hero-head {
+  position: relative;
+  z-index: 1;
+}
 
-/* the portals */
+/* the portals: the centre of the page, three equal seals in a row */
 .portals {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(14px, 1.7vw, 24px);
-  width: min(1180px, 100%);
+  gap: clamp(16px, 2.2vw, 30px);
+  width: min(1040px, 100%);
 }
 .portals-2 {
-  grid-template-columns: repeat(2, minmax(0, 390px));
+  grid-template-columns: repeat(2, minmax(0, 340px));
   justify-content: center;
 }
 .portals-1 {
-  grid-template-columns: minmax(0, 420px);
+  grid-template-columns: minmax(0, 360px);
   justify-content: center;
 }
 .portal {
-  --well: clamp(76px, 6.4vw, 94px);
-  --pad: 18px;
-  --portal-bg: rgb(252 250 246 / 0.95);
+  --portal-bg: rgb(252 250 246 / 0.97);
   --portal-ink: #141838;
   --portal-text: #3a3e60;
   --portal-accent: #5a4bb5;
-  --portal-line: rgb(110 98 190 / 0.24);
+  --portal-line: rgb(110 98 190 / 0.22);
   position: relative;
-  display: grid;
-  grid-template-columns: var(--well) minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 18px;
-  padding: var(--pad) 22px var(--pad) var(--pad);
+  gap: 4px;
+  padding: clamp(22px, 2.6vw, 34px) clamp(18px, 2vw, 28px) 22px;
   border: 1px solid var(--portal-line);
-  border-radius: 16px;
-  text-align: left;
+  border-radius: 20px;
+  text-align: center;
   color: var(--portal-ink);
-  /* one round window at the left, through which the sphere is seen */
-  background: radial-gradient(circle at calc(var(--pad) + var(--well) / 2) 50%, transparent calc(var(--well) / 2 - 0.5px), var(--portal-bg) calc(var(--well) / 2 + 0.5px));
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.55), 0 22px 44px -30px rgb(6 8 24 / 0.85);
+  background: var(--portal-bg);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.6), 0 26px 50px -34px rgb(6 8 24 / 0.9);
   transition: transform 0.5s var(--ease), border-color 0.4s, box-shadow 0.5s;
 }
 :root[data-theme="dark"] .portal {
-  --portal-bg: rgb(15 18 40 / 0.93);
+  --portal-bg: rgb(15 18 40 / 0.95);
   --portal-ink: #f4f1ea;
   --portal-text: #c9cbe0;
   --portal-accent: #c4b8ff;
-  --portal-line: rgb(185 178 230 / 0.22);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 22px 44px -30px rgb(0 0 0 / 0.9);
+  --portal-line: rgb(185 178 230 / 0.2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05), 0 26px 50px -34px rgb(0 0 0 / 0.95);
 }
 .portal:hover,
 .portal:focus-visible {
-  transform: translateY(-3px) scale(1.012);
-  border-color: color-mix(in srgb, #c9a86a 55%, var(--portal-line));
-  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.22), inset 0 1px 0 rgb(255 255 255 / 0.5), 0 30px 54px -30px rgb(6 8 24 / 0.9);
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, #c9a86a 60%, var(--portal-line));
+  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.24), inset 0 1px 0 rgb(255 255 255 / 0.5), 0 34px 60px -34px rgb(6 8 24 / 0.95);
 }
 .portal:focus-visible {
   outline: 2px solid var(--portal-accent);
   outline-offset: 3px;
 }
-.portal-window {
-  position: relative;
-  width: var(--well);
+/* the official emblem, undistorted, as a seal: the artwork on its white enamel disc, with a fine gold ring */
+.portal-seal {
+  display: block;
+  width: clamp(124px, 11vw, 158px);
   aspect-ratio: 1;
+  margin-bottom: 10px;
   border-radius: 50%;
-  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.8), 0 0 0 5px rgb(201 168 106 / 0.1);
-  transition: box-shadow 0.5s;
+  background: var(--emblem) center / 100% 100% no-repeat;
+  box-shadow: 0 0 0 1px rgb(201 168 106 / 0.85), 0 0 0 6px rgb(201 168 106 / 0.1), 0 14px 26px -14px rgb(6 8 24 / 0.5);
+  transition: box-shadow 0.5s, transform 0.5s var(--ease);
 }
-.portal:hover .portal-window {
-  box-shadow: 0 0 0 1px rgb(222 192 128 / 1), 0 0 0 6px rgb(201 168 106 / 0.16), 0 0 26px -2px rgb(201 168 106 / 0.35);
-}
-.portal-orb {
-  position: absolute;
-  inset: 5px;
-  border-radius: 50%;
+.portal:hover .portal-seal {
+  transform: scale(1.03);
+  box-shadow: 0 0 0 1px rgb(222 192 128 / 1), 0 0 0 7px rgb(201 168 106 / 0.18), 0 18px 32px -14px rgb(6 8 24 / 0.6);
 }
 .portal-body {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 4px;
   min-width: 0;
 }
 .portal-hidden {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  margin-bottom: 4px;
   font-family: var(--font-mono);
   font-size: 9.5px;
   letter-spacing: 0.16em;
@@ -2683,34 +2691,34 @@ ul.destinations {
 }
 .portal-name {
   font-family: var(--font-wide), var(--font-body);
-  font-size: clamp(17px, 1.45vw, 21px);
+  font-size: clamp(18px, 1.6vw, 23px);
   font-weight: 700;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.22em;
+  margin-right: -0.22em;
   line-height: 1.1;
 }
 .portal-full {
-  margin-top: 4px;
-  font-size: 12.5px;
+  font-size: 13px;
   line-height: 1.35;
   color: var(--portal-text);
 }
 .portal-exams {
-  margin-top: 7px;
-  font-size: 12.5px;
+  margin-top: 8px;
+  font-size: 13px;
   font-weight: 650;
   color: var(--portal-accent);
 }
 .portal-line {
-  margin-top: 3px;
+  max-width: 260px;
   font-size: 12.5px;
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--portal-text);
 }
 .portal-go {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 10px;
+  margin-top: 12px;
   font-family: var(--font-wide), var(--font-body);
   font-size: 9.5px;
   font-weight: 700;
@@ -2718,20 +2726,11 @@ ul.destinations {
   text-transform: uppercase;
   color: var(--portal-accent);
 }
-.portal-go svg {
-  transition: transform 0.4s var(--ease);
-}
 .portal:hover .portal-go svg {
   transform: translateX(4px);
 }
-/* without a live renderer the sphere's window shows the emblem itself */
-:root:is([data-space="still"], [data-backdrops="off"]) .portal-orb,
-:root:not([data-space]) .portal-orb {
-  background: var(--emblem, none) center / 90% no-repeat, #fbfaf7;
-  box-shadow: inset 0 -6px 12px rgb(0 0 0 / 0.12);
-}
-:root:is([data-space="still"], [data-backdrops="off"]) .solar-band {
-  height: 40px;
+.portal-go svg {
+  transition: transform 0.4s var(--ease);
 }
 .hero-cta {
   display: flex;
@@ -2739,7 +2738,7 @@ ul.destinations {
   align-items: center;
   justify-content: center;
   gap: 10px 22px;
-  margin: 26px 0 0;
+  margin: 0;
 }
 .hero-cta-link {
   font-size: 14px;
@@ -2751,55 +2750,47 @@ ul.destinations {
 .hero-cta-link:hover {
   color: #fff;
 }
-:root[data-arriving] .hero > * {
-  animation: rise 1.2s var(--ease) both;
-}
-:root[data-arriving] .hero > :nth-child(2) { animation-delay: 0.4s; }
-:root[data-arriving] .hero > :nth-child(3) { animation-delay: 0.65s; }
-:root[data-arriving] .hero > :nth-child(n + 4) { animation-delay: 0.85s; }
 @media (max-width: 980px) {
   .portals,
   .portals-2 {
-    grid-template-columns: minmax(0, 520px);
+    grid-template-columns: minmax(0, 360px);
     justify-content: center;
-    gap: 12px;
   }
   .portal {
-    --well: 74px;
-    --pad: 16px;
+    flex-direction: row;
+    text-align: left;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    width: min(100%, 520px);
+    margin-inline: auto;
   }
-  .solar-band {
-    height: clamp(130px, 32vw, 220px);
+  .portal-body {
+    align-items: flex-start;
+  }
+  .portal-seal {
+    width: 96px;
+    margin: 0;
+  }
+  .portal-line {
+    display: none;
+  }
+  .portal-go {
+    margin-top: 6px;
   }
 }
 @media (max-width: 560px) {
   .hero {
+    min-height: 0;
     padding: 20px 16px 48px;
   }
-  .hero::before {
-    height: 260px;
-  }
-  .hero-eyebrow {
-    font-size: 9px;
-    letter-spacing: 0.3em;
-  }
-  .hero-title {
-    font-size: clamp(25px, 8vw, 36px);
-    letter-spacing: 0.1em;
-    margin-right: -0.1em;
-  }
-  .hero-lead {
-    font-size: 13.5px;
-  }
-  .portal {
-    --well: 66px;
-    gap: 14px;
-    padding-right: 16px;
+  .portal-seal {
+    width: 84px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .portal,
-  .portal-window,
+  .portal-seal,
   .portal-go svg {
     transition: none;
   }

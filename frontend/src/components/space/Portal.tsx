@@ -14,10 +14,9 @@ const LINES: Record<string, string> = {
 };
 
 /**
- * An examination's portal on the home page: a slender, horizontal panel with the commission's sphere in a
- * window at its left (the renderer draws the official emblem's golf ball there, turning; without WebGL the
- * emblem shows flat), its name, what it covers, and the way in. The same examination also sits, small and
- * fixed, on its own track beyond Pluto in the distant system behind the page.
+ * An examination's portal on the home page: a centred panel with the official emblem as a seal at its top
+ * (the artwork itself, undistorted, on its enamel disc), its name, what it covers, and the way in. The same
+ * examination also sits, small and fixed, on its own track beyond Pluto in the distant system behind.
  */
 export function Portal({ commission, index }: { commission: Commission; index: number }) {
   const emblem = emblemFor(commission.slug);
@@ -35,11 +34,9 @@ export function Portal({ commission, index }: { commission: Commission; index: n
       data-kind={commission.status === "draft" ? "Examination · hidden from students" : "Examination"}
       data-name={`${commission.short_name} · ${commission.name}`}
       data-text={`${exams}. Select to enter.`}
-      style={{ ["--tint" as string]: css, ...(emblem ? { ["--emblem" as string]: `url(${emblem.src.replace(/\.webp$/, "-s.webp")})` } : {}) }}
+      style={{ ["--tint" as string]: css, ...(emblem ? { ["--emblem" as string]: `url(${emblem.src})` } : {}) }}
     >
-      <span className="portal-window" aria-hidden>
-        <span className="portal-orb" data-portal-orb />
-      </span>
+      <span className="portal-seal" aria-hidden />
       <span className="portal-body">
         {commission.status === "draft" && (
           <span className="portal-hidden">

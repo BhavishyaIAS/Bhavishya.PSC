@@ -39,7 +39,7 @@ export default async function LandingPage() {
           <p className="hero-lead">{site.hero_lead || "Syllabus, notes, previous-year questions and your progress, for every examination."}</p>
         </div>
 
-        {/* the distant Solar System lies in this band; beyond Pluto, the examinations on their own tracks */}
+        {/* the distant Solar System fills the page behind this (Universe.tsx lays it out here) */}
         <div className="solar-band" data-solar-band aria-hidden />
 
         {shown.length === 0 ? (

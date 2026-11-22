@@ -920,8 +920,6 @@ uniform float uES[3];          // the examinations' emblem slots
 uniform vec3 uET[3];           // and their colours
 uniform vec4 uDeep[5];         // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (px, y up; size px; angle)
 uniform float uDeepH[5];       // pointed at
-uniform int uPortalN;
-uniform vec4 uPortal[3];       // the examinations' spheres in their portals: centre (px, y up), radius px, hover
 
 /* The Andromeda Galaxy, seen as it is from here: a great spiral tipped 77° from face-on, a yellow core,
    blue arms with pink star-forming knots, dark dust lanes on the near side, and its companions M32 and M110. */
@@ -1126,59 +1124,26 @@ vec3 surface(int i, vec3 n, out vec3 air, out float airK) {
   return a;
 }
 
-/* An examination's sphere: a white golf ball, densely dimpled (rows of dimples packed hexagonally, each a
-   shallow cup that catches light on its far wall), with the commission's official emblem printed on both
-   faces. It turns on its own axis; the turn slows as a face comes round, so the emblem is held to be read.
+/* An examination's emblem, shown flat: the official artwork on its white enamel disc, facing you, with
+   the commission's colour as a fine rim. It turns only a little (a slow sway), so it is always legible.
    n and the lights are in view space: z towards you. */
 vec3 examSphere(vec3 n, int k, float hov, vec3 Ls, float hero) {
   float slot = uES[k];
-  // a portal's sphere (hero = 1) turns slower and rests longer face-on, so its emblem is there to be read
-  float tt = uTime * mix(.05, .03, hero) + float(k) * .31;
-  float f = fract(tt), spin = PI * (floor(tt) + f - sin(2. * PI * f) * mix(.135, .156, hero)) + hov * .3;
-  vec3 ax = normalize(vec3(.05, 1., .16));
-  vec3 e1 = normalize(cross(ax, vec3(0, 0, 1))), e2 = cross(e1, ax);
-  float lx = dot(n, e1), ly = dot(n, ax), lz = dot(n, e2);
-  float c = cos(spin), s = sin(spin);
-  float rx = c * lx - s * lz, rz = s * lx + c * lz;                  // the ball's own frame, turning
-  // the dimples: rows of latitude, each holding as many as fit round it, alternate rows offset half a step
-  float lat = asin(clamp(ly, -1., 1.)), lon = atan(rx, rz);
-  float h = PI / 26.;
-  float j = floor((lat + PI * .5) / h), latc = -PI * .5 + (j + .5) * h;
-  float cnt = max(1., floor(2. * PI * cos(latc) / h + .5));
-  float off = mod(j, 2.) * .5;
-  float cell = floor(lon / (2. * PI) * cnt + off), lonc = (cell + .5 - off) * 2. * PI / cnt;
-  vec2 dv = vec2((mod(lon - lonc + PI, 2. * PI) - PI) * cos(lat), lat - latc);
-  float rho = length(dv) / (h * .47);
-  // the printed emblem (stamped across the dimples, so they are shallower under the ink)
-  float side = rz >= 0. ? 1. : -1., K = .7;
-  vec2 uv = vec2(.5 + side * rx / (2. * K), .5 - ly / (2. * K));
+  float sway = sin(uTime * .09 + float(k) * 1.7) * .22 + hov * .16;
+  vec3 m = n;
+  m.xz *= rot(sway);
+  vec2 uv = vec2(.5 + m.x / (2. * .62), .5 - m.y / (2. * .62));
   vec4 em = emblemTex(slot, clamp(uv, 0., 1.));
   if (slot < -.5) em.a = 0.;
-  em.a *= smoothstep(.3, .55, abs(rz)) * smoothstep(1., .98, length(uv - .5) * 2.);
-  float depth = rho < 1. ? (1. - em.a * .85) : 0.;
-  // the dimpled normal: inside a cup the surface leans back towards its centre
-  vec3 P = vec3(cos(lat) * sin(lon), sin(lat), cos(lat) * cos(lon));
-  vec3 east = vec3(cos(lon), 0., -sin(lon)), north = vec3(-sin(lat) * sin(lon), cos(lat), -sin(lat) * cos(lon));
-  vec2 dir = length(dv) > 1e-5 ? dv / length(dv) : vec2(0);
-  float tilt = rho < 1. ? rho * .62 * depth : 0.;
-  vec3 nl = normalize(P - (east * dir.x + north * dir.y) * tilt);
-  float bx = c * nl.x + s * nl.z, bz = -s * nl.x + c * nl.z;           // back to view space
-  vec3 nd = normalize(e1 * bx + ax * nl.y + e2 * bz);
-  // light: a key from the upper left, a soft fill, the Sun as a warm rim from behind
-  vec3 Lk = normalize(vec3(-.5, .55, .68)), Lf = normalize(vec3(.6, -.2, .75));
-  float ao = rho < 1. ? mix(.72, 1., smoothstep(.15, 1., rho)) * mix(1., .9, depth) : 1.;   // cups hold a little shadow
-  float diff = max(dot(nd, Lk), 0.) * .95 + max(dot(nd, Lf), 0.) * .22 + .1;
-  vec3 ball = vec3(.86, .86, .84);
-  vec3 ink = pow(em.rgb, vec3(1.12)) * .86;                                               // printed ink: true colour, not lifted to white
-  float lit = mix(diff, .78 + .3 * max(dot(nd, Lk), 0.), em.a);                         // the print stays even and readable
-  vec3 col = mix(ball, ink, em.a) * lit * mix(ao, 1., em.a);
-  vec3 hv = normalize(Lk + vec3(0, 0, 1));
-  col += vec3(1.) * pow(max(dot(nd, hv), 0.), 70.) * .55 * (1. - em.a * .8);             // the clear coat glints on the dimples' rims
-  col += vec3(1.) * pow(max(dot(n, hv), 0.), 18.) * .16 * (1. - em.a * .7);                // and a broad sheen over the whole ball
-  col += vec3(1., .82, .6) * pow(1. - n.z, 2.6) * smoothstep(-.2, .6, dot(n, Ls)) * .7;
-  col += mix(toLinear(uET[k]), vec3(.8, .88, 1.), .5) * pow(1. - n.z, 3.) * .3;           // a breath of the commission's colour on the edge
-  col *= mix(.5, 1., smoothstep(-.7, .45, dot(n, Lk)));
-  return col * (1. + hov * .15);
+  em.a *= smoothstep(1., .985, length(uv - .5) * 2.);
+  vec3 Lk = normalize(vec3(-.5, .55, .68));
+  float diff = max(dot(n, Lk), 0.) * .6 + .4;
+  vec3 disc = vec3(.94, .93, .9) * diff;
+  vec3 col = mix(disc, em.rgb * (.9 + .25 * diff), em.a);
+  float rim = smoothstep(.97, .995, length(vec2(n.x, n.y)));
+  col = mix(col, toLinear(uET[k]) * (.5 + .5 * diff), rim * .9);
+  col += vec3(1.) * pow(max(dot(n, normalize(Lk + vec3(0, 0, 1))), 0.), 60.) * .12 * (1. - em.a);
+  return col * (1. + hov * .12);
 }
 
 void main() {
@@ -1337,19 +1302,6 @@ void main() {
     float bb = dot(rp, L), sh = (bb < 0. && dot(rp, rp) - bb * bb < s.w * s.w) ? .06 : 1.;   // the planet's shadow across the ring
     vec3 rc = (j == 0 ? ringColor(rho) : vec3(.6, .66, .7)) * sh * (1.2 + uHov[i] * .3);
     col = mix(col, rc, clamp(tau, 0., 1.) * (j == 0 ? 1. : .8));
-  }
-
-  // ── the examinations' spheres in their portals: the same golf balls, close up, in the portals' windows ──
-  for (int k = 0; k < 3; k++) {
-    if (k >= uPortalN) break;
-    vec4 o = uPortal[k];
-    vec2 q = (fc - o.xy) / o.z;
-    float d2 = dot(q, q);
-    if (d2 < 1.) {
-      vec3 n = vec3(q, sqrt(1. - d2));
-      vec3 c = examSphere(n, k, o.w, normalize(vec3(.55, .35, -.75)), 1.);
-      col = mix(col, c, smoothstep(1., 1. - 2.5 / o.z, d2));
-    }
   }
 
   float iris = smoothstep(0., 1., uReveal * 1.9 - length(p) * .85);
