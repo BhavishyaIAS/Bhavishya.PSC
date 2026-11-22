@@ -250,7 +250,10 @@ export default function Universe() {
       const band = { x: br.left, y: br.top, w: br.width, h: br.height };
       const isPhone = phone();
       const t = frozen ? 30 : (now - t0) / 1000;
-      const l = layoutBand({ t, phone: isPhone, band, exams: portals.length, lean: frozen ? [0, 0] : [px, py] });
+      // the system itself: a small, far panorama high on the right, clear of the name and the portals
+      const fw = isPhone ? band.w * 0.44 : Math.min(300, band.w * 0.2);
+      const far = { x: band.x + band.w * (isPhone ? 0.76 : 0.895) - fw / 2, y: band.y + (isPhone ? 6 : band.h * 0.05), w: fw, h: fw * 0.5 };
+      const l = layoutBand({ t, phone: false, band: far, exams: portals.length, lean: frozen ? [0, 0] : [px, py] });
       solar = l;
       spots = portals;
       // what is pointed at: a planet (or a distant examination) by picking, an examination by its portal
@@ -315,6 +318,7 @@ export default function Universe() {
       gl.uniform1i(U("uE1"), 3);
       gl.uniform1i(U("uE2"), 4);
       gl.uniform3fv(U("uEmblemOn"), emblemOn);
+      gl.uniform1f(U("uSys"), 0.34);
       gl.uniform4fv(U("uDeep"), uDeep);
       gl.uniform1fv(U("uDeepH"), deepHover);
       gl.uniform1f(U("uGalaxy"), 0.55);

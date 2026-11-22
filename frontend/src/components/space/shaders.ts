@@ -920,6 +920,7 @@ uniform float uES[3];          // the examinations' emblem slots
 uniform vec3 uET[3];           // and their colours
 uniform vec4 uDeep[5];         // beyond the system: Andromeda, a nebula, a black hole, a ring nebula, a pulsar (px, y up; size px; angle)
 uniform float uDeepH[5];       // pointed at
+uniform float uSys;            // how strongly the system shows over the sky (the home page keeps it faint and far)
 
 /* The Andromeda Galaxy, seen as it is from here: a great spiral tipped 77° from face-on, a yellow core,
    blue arms with pink star-forming knots, dark dust lanes on the near side, and its companions M32 and M110. */
@@ -1162,12 +1163,13 @@ void main() {
   col *= 1. - .38 * smoothstep(.5, .78, dust) * band;
   if (uLite < .5) col += farGalaxies(sd) + clusters(sd);
   // ── beyond the Solar System ──
-  col += (nebulaCloud(fc) * .28 + andromeda(fc) * .7 + ringNebula(fc) * .7 + pulsar(fc) * .45);   // far, and quiet
+  col += (nebulaCloud(fc) * .28 + andromeda(fc) * .5 + ringNebula(fc) * .6 + pulsar(fc) * .4);   // far, and quiet
   vec4 bh = blackHole(fc);
   col = col * (1. - bh.a) + bh.rgb * .6;
   if (uEvents > .5) { col += meteors(fc) * .7; col += comet(fc) * .45; }   // now and then, and quietly
 
   // ── the system ──
+  vec3 skyCol = col;
   vec3 ro = uCamPos;
   vec3 rd = normalize(uCamR * (fc.x - uCenter.x) / zt + uCamU * (fc.y - uCenter.y) / zt + uCamF * uFocal);
   float tNear = 1e9;
@@ -1303,6 +1305,8 @@ void main() {
     vec3 rc = (j == 0 ? ringColor(rho) : vec3(.6, .66, .7)) * sh * (1.2 + uHov[i] * .3);
     col = mix(col, rc, clamp(tau, 0., 1.) * (j == 0 ? 1. : .8));
   }
+
+  col = mix(skyCol, col, uSys);                                     // far away: a faint presence, never the subject
 
   float iris = smoothstep(0., 1., uReveal * 1.9 - length(p) * .85);
   col *= mix(iris, 1., smoothstep(.75, 1., uReveal)) * smoothstep(0., .35, uReveal);
