@@ -9,7 +9,7 @@ import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { useToast } from "@/components/ui/Toast";
 import { clientApi, ClientApiError } from "@/lib/client-api";
-import { formatBytes, formatDate } from "@/lib/format";
+import { formatBytes, formatDate, paperLabel } from "@/lib/format";
 import { NOTE_KINDS, type Commission, type Material, type NoteKind, type PaperNode, type Paginated, type SyllabusTree } from "@/lib/types";
 
 import { findTrack, TrackPicker } from "./TrackPicker";
@@ -42,7 +42,7 @@ export function MaterialManager({
     if (category) qs.set("category", category);
     const [list, tree] = await Promise.all([
       clientApi<Paginated<Material>>(`/manage/materials/?${qs}`),
-      clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/`),
+      clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/?notes=all`),
     ]);
     setItems(list.results);
     setPapers(tree.papers);
@@ -406,7 +406,7 @@ function MaterialForm({
           <legend className="label" style={{ padding: "0 6px" }}>
             Map to the syllabus (optional — the most specific level wins)
           </legend>
-          {sel("paper", "Paper", papers, { subject: "", topic: "", micro: "" })}
+          {sel("paper", "Paper", papers.map((p) => ({ ...p, title: paperLabel(p) })), { subject: "", topic: "", micro: "" })}
           {sel("subject", "Subject", paper?.subjects ?? [], { topic: "", micro: "" })}
           {sel("topic", "Topic", subject?.topics ?? [], { micro: "" })}
           {sel("micro", "Micro-theme", topic?.micro_themes ?? [], {})}

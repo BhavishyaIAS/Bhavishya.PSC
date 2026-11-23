@@ -188,7 +188,7 @@ class MicroThemeViewSet(SyllabusViewSet):
             "micro_theme": MicroThemeSerializer(mt).data,
             "track": track_ref(mt.track),
             "breadcrumb": {
-                "paper": {"id": paper.id, "title": paper.title, "stage": paper.stage},
+                "paper": {"id": paper.id, "title": paper.title, "stage": paper.stage, "notes_kind": paper.notes_kind},
                 "subject": {"id": subject.id, "title": subject.title},
                 "topic": {"id": topic.id, "title": topic.title},
             },
@@ -202,6 +202,10 @@ class MicroThemeViewSet(SyllabusViewSet):
         mt = self.get_object()
         if kind not in NoteKind.values:
             return Response({"detail": "Unknown note kind."}, status=404)
+        own = mt.topic.subject.paper.notes_kind
+        if own and kind != own and request.method != "DELETE":
+            # a section of a Notes module's own syllabus holds that module's notes only
+            return Response({"detail": f"This section belongs to the {NoteKind(own).label} syllabus: only {NoteKind(own).label} can be written here."}, status=400)
         if request.method == "DELETE":
             Note.objects.filter(micro_theme=mt, kind=kind).delete()
             return Response(status=204)
@@ -413,7 +417,8 @@ def import_docx(request):
                 subject_title=subject_title,
                 prefix=prefix,
                 status=str(request.data.get("status") or Status.PUBLISHED),
-                kind=str(request.data.get("kind") or NoteKind.COMPREHENSIVE),
+                # a Notes module's own syllabus takes that module's notes, whatever was chosen
+                kind=paper.notes_kind or str(request.data.get("kind") or NoteKind.COMPREHENSIVE),
                 user=request.user,
             )
         except DocxImportError as exc:

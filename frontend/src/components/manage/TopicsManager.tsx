@@ -9,6 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { clientApi } from "@/lib/client-api";
 import { TopicGlyph } from "@/components/TopicGlyph";
+import { paperLabel } from "@/lib/format";
 import { topicTone } from "@/lib/topics";
 import { LOOKS, type Commission, type PaperNode, type SubjectNode } from "@/lib/types";
 
@@ -126,7 +127,7 @@ export function TopicsManager({ commissions, trackKey, papers }: { commissions: 
             <section key={paper.id} className="panel">
               {papers.filter((p) => p.subjects.length > 0).length > 1 && (
                 <div className="panel-head">
-                  <h2>{paper.title}</h2>
+                  <h2>{paperLabel(paper)}</h2>
                   <span className="muted small">Topics are grouped by paper; drag within a paper.</span>
                 </div>
               )}

@@ -15,7 +15,7 @@ import { NOTE_KINDS, type Note, type NoteKind, type RichDoc, type Status, type T
 type Content = {
   micro_theme: { id: number; code: string; title: string; status: Status; priority: string; estimated_minutes: number | null };
   track: TrackRef;
-  breadcrumb: { paper: { title: string; stage: "prelims" | "mains" }; subject: { title: string }; topic: { title: string } };
+  breadcrumb: { paper: { title: string; stage: "prelims" | "mains"; notes_kind?: NoteKind | "" }; subject: { title: string }; topic: { title: string } };
   notes: Partial<Record<NoteKind, Note>>;
   videos: { id: number; title: string; url: string; order: number }[];
   glossary: { id: number; term: string; definition: string; order: number }[];
@@ -38,6 +38,8 @@ export function ContentEditor({ id, initialKind }: { id: number; initialKind: No
     try {
       const d = await clientApi<Content>(`/manage/micro-themes/${id}/content/`);
       setData(d);
+      const own = d.breadcrumb.paper.notes_kind;
+      if (own) setKind(own); // a section of a Notes module's own syllabus holds that module's notes only
       setDrafts((prev) => {
         const next: Partial<Record<NoteKind, Draft>> = {};
         for (const k of NOTE_KINDS) {
@@ -94,6 +96,7 @@ export function ContentEditor({ id, initialKind }: { id: number; initialKind: No
         </Link>
         <nav className="crumbs" style={{ marginTop: 10 }} aria-label="Syllabus position">
           <span className="badge badge-neutral">{stageLabel(data.breadcrumb.paper.stage)}</span>
+          {data.breadcrumb.paper.notes_kind && <span className="badge badge-accent">{NOTE_KINDS.find((k) => k.key === data.breadcrumb.paper.notes_kind)?.label} syllabus</span>}
           {data.breadcrumb.paper.title} › {data.breadcrumb.subject.title} › {data.breadcrumb.topic.title}
         </nav>
         <div className="row">
@@ -116,7 +119,7 @@ export function ContentEditor({ id, initialKind }: { id: number; initialKind: No
         <div className="panel-head">
           <h2 id="notes-h">Notes</h2>
           <div className="segmented" role="group" aria-label="Note type">
-            {NOTE_KINDS.map((k) => {
+            {NOTE_KINDS.filter((k) => !data.breadcrumb.paper.notes_kind || k.key === data.breadcrumb.paper.notes_kind).map((k) => {
               const d = drafts[k.key];
               return (
                 <button key={k.key} type="button" aria-pressed={kind === k.key} onClick={() => setKind(k.key)}>

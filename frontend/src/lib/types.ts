@@ -66,11 +66,17 @@ export interface SubjectNode extends NodeBase {
 }
 export interface PaperNode extends NodeBase {
   stage: StageKey;
+  /** "" = the track's general syllabus; otherwise the Notes module whose own syllabus this paper is part of */
+  notes_kind: NoteKind | "";
   description: string;
   subjects: SubjectNode[];
 }
 export interface SyllabusTree {
   track: TrackRef;
+  /** which syllabus this is: "" (general) or the Notes module asked for with ?notes= */
+  notes_kind: NoteKind | "";
+  /** the Notes modules of this track that have a syllabus of their own */
+  notes_syllabi: NoteKind[];
   papers: PaperNode[];
 }
 
@@ -197,7 +203,7 @@ export interface MicroThemeDetail {
     is_dual_stage: boolean;
   };
   breadcrumb: {
-    paper: { id: number; title: string; stage: StageKey; code: string };
+    paper: { id: number; title: string; stage: StageKey; code: string; notes_kind?: NoteKind | "" };
     subject: { id: number; title: string; look?: string };
     topic: { id: number; title: string };
   };

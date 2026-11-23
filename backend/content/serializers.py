@@ -68,7 +68,7 @@ class CommissionSerializer(serializers.ModelSerializer):
 class PaperSerializer(serializers.ModelSerializer):
     class Meta:
         model = Paper
-        fields = ["id", "track", "stage", "code", "title", "description", "order", "status"]
+        fields = ["id", "track", "stage", "notes_kind", "code", "title", "description", "order", "status"]
 
 
 class SubjectSerializer(serializers.ModelSerializer):

@@ -8,7 +8,7 @@ import { ConfirmDialog, Modal } from "@/components/ui/Modal";
 import { EmptyState, PriorityBadge, StatusBadge } from "@/components/ui/bits";
 import { useToast } from "@/components/ui/Toast";
 import { clientApi, ClientApiError } from "@/lib/client-api";
-import { stageLabel } from "@/lib/format";
+import { paperLabel, stageLabel } from "@/lib/format";
 import type { Commission, MicroThemeNode, PaperNode, Status, SubjectNode, SyllabusTree, TopicNode } from "@/lib/types";
 
 import { SortableList } from "./SortableList";
@@ -34,7 +34,7 @@ export function SyllabusManager({ commissions, trackKey }: { commissions: Commis
 
   const reload = useCallback(async () => {
     try {
-      const data = await clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/`);
+      const data = await clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/?notes=all`); // the general syllabus and the Notes modules' own
       setTree(data.papers);
       setError("");
     } catch (err) {
@@ -167,7 +167,7 @@ export function SyllabusManager({ commissions, trackKey }: { commissions: Commis
                   {toggle(`p${paper.id}`, paper.title, paper.subjects.length)}
                   <span className={`badge ${paper.stage === "mains" ? "badge-primary" : ""}`}>{stageLabel(paper.stage)}</span>
                   {paper.code && <span className="code-chip">{paper.code}</span>}
-                  <span className="t-title">{paper.title}</span>
+                  <span className="t-title">{paperLabel(paper)}</span>
                   <StatusBadge status={paper.status} />
                   {actions("paper", paper)}
                 </div>

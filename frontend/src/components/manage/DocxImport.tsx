@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useToast } from "@/components/ui/Toast";
 import { clientApi, ClientApiError } from "@/lib/client-api";
-import { stageLabel } from "@/lib/format";
+import { paperLabel, stageLabel } from "@/lib/format";
 import { NOTE_KINDS, type Commission, type NoteKind, type PaperNode, type Status, type SyllabusTree } from "@/lib/types";
 
 import { TrackPicker } from "./TrackPicker";
@@ -54,7 +54,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
 
   useEffect(() => {
     let live = true;
-    clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/`)
+    clientApi<SyllabusTree>(`/tracks/${trackKey}/syllabus/?notes=all`)
       .then((t) => {
         if (!live) return;
         setPapers(t.papers);
@@ -144,14 +144,15 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
               {!papers.length && <option value="">No papers in this exam yet — add one in the Syllabus manager</option>}
               {papers.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {stageLabel(p.stage)} · {p.title}
+                  {p.notes_kind ? paperLabel(p) : `${stageLabel(p.stage)} · ${p.title}`}
                 </option>
               ))}
             </select>
           </label>
           <label className="field">
             <span className="label">Notes go in as</span>
-            <select className="select" value={kind} onChange={(e) => setKind(e.target.value as NoteKind)}>
+            {/* a Notes module's own syllabus takes that module's notes (the server holds to it too) */}
+            <select className="select" value={paper?.notes_kind || kind} onChange={(e) => setKind(e.target.value as NoteKind)} disabled={!!paper?.notes_kind}>
               {NOTE_KINDS.map((k) => (
                 <option key={k.key} value={k.key}>
                   {k.label}
@@ -219,7 +220,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
             <div className="alert alert-success" role="status" style={{ marginBottom: 14 }}>
               <b>{done.notes_written}</b> sections imported into <b>{subject}</b> ({done.topics_created} new chapters,{" "}
               {done.micro_themes_created} new sections, {done.micro_themes_updated} updated).{" "}
-              <Link className="link" href={`/exams/${done.track.commission}/${done.track.group}/materials/${done.subject_id}?kind=${kind}`}>
+              <Link className="link" href={`/exams/${done.track.commission}/${done.track.group}/materials/${done.subject_id}?kind=${paper?.notes_kind || kind}`}>
                 Read them in Material / Notes →
               </Link>{" "}
               ·{" "}

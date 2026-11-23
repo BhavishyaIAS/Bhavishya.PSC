@@ -101,15 +101,31 @@ def track_detail(request, commission, group):
 
 @api_view(["GET"])
 def syllabus_tree(request, commission, group):
-    """Paper → Subject → Topic → MicroTheme, with per-micro-theme content flags."""
+    """
+    Paper → Subject → Topic → MicroTheme, with per-micro-theme content flags.
+
+    Which syllabus: by default the track's general one (PYQs, the Syllabus and Progress pages).
+    `?notes=<kind>` asks for that Notes module's own syllabus, and falls back to the general one where the
+    module has none (the response's `notes_kind` says which was given); `?notes=all` returns every syllabus
+    of the track (the admin's tools). `notes_syllabi` lists the modules that have their own.
+    """
     track = get_track(commission, group, request.user)
     user = request.user
     stage = request.query_params.get("stage")
+    notes = request.query_params.get("notes", "")
 
-    papers = Paper.objects.visible_to(user).filter(track=track)
+    visible = Paper.objects.visible_to(user).filter(track=track)
+    own = sorted(set(visible.exclude(notes_kind="").values_list("notes_kind", flat=True)), key=NoteKind.values.index)
+    given = notes if notes in own else ""
+    papers = visible if notes == "all" else visible.filter(notes_kind=given)
     if stage in Stage.values:
         papers = papers.filter(stage=stage)
-    papers = list(papers.order_by(Case(When(stage=Stage.PRELIMS, then=0), default=1), "order", "id"))
+    # the general syllabus prelims-first; each Notes module's own syllabus in its own order, after it
+    papers = list(papers.order_by(
+        Case(*(When(notes_kind=k, then=i + 1) for i, k in enumerate(NoteKind.values)), default=0),
+        Case(When(notes_kind="", stage=Stage.PRELIMS, then=0), default=1),
+        "order", "id",
+    ))
     paper_ids = [p.id for p in papers]
     subjects = list(Subject.objects.visible_to(user).filter(paper_id__in=paper_ids))
     topics = list(Topic.objects.visible_to(user).filter(subject__paper_id__in=paper_ids))
@@ -142,10 +158,10 @@ def syllabus_tree(request, commission, group):
     for s in subjects:
         subject_by_paper.setdefault(s.paper_id, []).append(node(s, look=s.look, topics=topic_by_subject.get(s.id, [])))
     tree = [
-        node(p, stage=p.stage, description=p.description, subjects=subject_by_paper.get(p.id, []))
+        node(p, stage=p.stage, notes_kind=p.notes_kind, description=p.description, subjects=subject_by_paper.get(p.id, []))
         for p in papers
     ]
-    return Response({"track": track_ref(track), "papers": tree})
+    return Response({"track": track_ref(track), "notes_kind": given, "notes_syllabi": own, "papers": tree})
 
 
 @api_view(["GET"])
@@ -166,9 +182,10 @@ def micro_theme_detail(request, commission, group, code):
     )
     q_data = QuestionReadSerializer(questions, many=True, context={"visible_mt_ids": {mt.id}}).data
 
+    own_kind = mt.topic.subject.paper.notes_kind
     ordered = list(
         MicroTheme.objects.visible_to(user)
-        .filter(track=track)
+        .filter(track=track, topic__subject__paper__notes_kind=own_kind)  # previous / next within its own syllabus
         .annotate(stage_rank=STAGE_RANK)
         .order_by(
             "stage_rank", "topic__subject__paper__order", "topic__subject__paper_id",
@@ -191,7 +208,7 @@ def micro_theme_detail(request, commission, group, code):
             "estimated_minutes": mt.estimated_minutes, "is_dual_stage": mt.is_dual_stage,
         },
         "breadcrumb": {
-            "paper": {"id": paper.id, "title": paper.title, "stage": paper.stage, "code": paper.code},
+            "paper": {"id": paper.id, "title": paper.title, "stage": paper.stage, "code": paper.code, "notes_kind": paper.notes_kind},
             "subject": {"id": subject.id, "title": subject.title, "look": subject.look},
             "topic": {"id": topic.id, "title": topic.title},
         },

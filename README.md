@@ -187,6 +187,32 @@ Reading comfort: text size, a serif option and a focus mode (`ReaderTools.tsx`).
 All motion stops for `prefers-reduced-motion` and for the **Animations: off**
 switch in the footer.
 
+## The Notes modules' own syllabi
+
+A track has one general syllabus (Paper → Subject → Topic → Micro-theme): PYQs are filed under it and the
+Syllabus and Progress pages show it. Each Notes module (Comprehensive, Prelims, Mains) can also have a
+syllabus of its own (`Paper.notes_kind`); where it does, the Notes flow asks for the type of notes first
+and then shows that module's topics, and a section in it holds only that module's notes. Modules without
+their own syllabus keep using the general one.
+
+APPSC Group I has all three, built from the commission's Word syllabi (migration 0012):
+
+| Module | Source | Papers | Sections |
+|---|---|---|---|
+| Prelims Notes | APPSC Group I Prelims syllabus (2018) | 2 | 216 |
+| Mains Notes | APPSC Group I Mains syllabus (2018) | 7 | 466 |
+| Comprehensive Notes | The integrated Prelims + Mains syllabus | 8 | 537 |
+
+```bash
+python manage.py notes_syllabus build PRELIMS.docx MAINS.docx COMPREHENSIVE.docx   # → content/data/appsc-g1-notes-syllabi.json.gz
+python manage.py notes_syllabus load [--dry-run]                                    # what migration 0012 does
+```
+
+`content/notes_syllabus.py` describes the build: headings become papers, subjects and chapters, bullets
+become sections, with the documents' wording kept; the comprehensive syllabus is checked against the
+document's own topic counts. In Manage, the syllabus, topics, Word-import and files tools show every
+syllabus, each Notes module's papers labelled as such.
+
 ## Loading previous-year questions in bulk
 
 Small batches go in through **Manage → Bulk upload PYQs**. A whole collection (the
