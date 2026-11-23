@@ -213,6 +213,22 @@ become sections, with the documents' wording kept; the comprehensive syllabus is
 document's own topic counts. In Manage, the syllabus, topics, Word-import and files tools show every
 syllabus, each Notes module's papers labelled as such.
 
+### Whole books placed into a Notes syllabus
+
+The Ancient, Medieval and Modern Indian History books fill APPSC Group I's Comprehensive Notes →
+Paper II → History and Culture of India, section by section (migration 0013; notes created published,
+and a section whose note already has text is left alone):
+
+```bash
+python manage.py book_notes build ANCIENT.docx MEDIEVAL.docx MODERN.docx   # → content/data/appsc-g1-history-notes.json.gz
+python manage.py book_notes load [--dry-run]                                # what migration 0013 does
+```
+
+`content/book_notes.py` cuts each book into its chapters and numbered parts, keeps the text and tables as
+written, and holds the placement (`APPSC_HISTORY`); the build fails if any part is left out or placed twice.
+A chapter whose notes run past ~90,000 characters is read one section at a time, with its contents and
+previous / next section.
+
 ## Loading previous-year questions in bulk
 
 Small batches go in through **Manage → Bulk upload PYQs**. A whole collection (the

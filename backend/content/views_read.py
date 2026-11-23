@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchHeadline, SearchQuery, SearchRank, SearchVector
 from django.core import signing
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
+from django.db.models.functions import Length
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -240,6 +241,8 @@ def track_notes(request, commission, group):
     """
     Notes of one kind for a subject (or topic), in syllabus order — the
     "topic-wise condensed notes" reader. `?kind=prelims&subject=<id>` or `&topic=<id>`.
+    `&micro_theme=<id>` narrows it to one section; `&fields=outline` leaves the bodies out and gives each
+    note's length instead (the reader pages through a chapter section by section when it is a whole book).
     """
     track = get_track(commission, group, request.user)
     user = request.user
@@ -254,9 +257,24 @@ def track_notes(request, commission, group):
         notes = notes.filter(micro_theme__topic__subject_id=int(subject))
     else:
         return Response({"detail": "Pass subject or topic."}, status=400)
+    if (mt := request.query_params.get("micro_theme", "")).isdigit():
+        notes = notes.filter(micro_theme_id=int(mt))
     notes = notes.select_related("micro_theme__topic").order_by(
         "micro_theme__topic__order", "micro_theme__topic_id", "micro_theme__order", "micro_theme_id"
     )
+    if request.query_params.get("fields") == "outline":
+        notes = notes.defer("body", "body_text", "search_vector").annotate(size=Length("body_text"))
+        return Response({
+            "kind": kind,
+            "results": [
+                {
+                    "micro_theme": {"id": n.micro_theme.id, "code": n.micro_theme.code, "title": n.micro_theme.title},
+                    "topic": {"id": n.micro_theme.topic.id, "title": n.micro_theme.topic.title},
+                    "note": {"id": n.id, "kind": n.kind, "status": n.status, "updated_at": n.updated_at, "size": n.size},
+                }
+                for n in notes
+            ],
+        })
     return Response({
         "kind": kind,
         "results": [

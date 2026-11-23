@@ -1171,6 +1171,13 @@ label:has(> .select) {
   color: var(--brand-primary);
   text-decoration: none;
 }
+.chapter-contents a[aria-current] {
+  color: var(--brand-primary);
+  font-weight: 600;
+}
+.section-nav + .chapter-nav {
+  margin-top: 10px;
+}
 .note-block {
   padding: 10px 0 34px;
 }
@@ -1393,7 +1400,7 @@ label:has(> .select) {
 }
 
 /* Focus mode: only the notes, centred. */
-:root[data-focus] :is(.topbar, .tabs, .ws-head, .flow-head, .note-types, .side-list, .site-footer, .bottom-nav, .mt-aside, .panel[aria-labelledby="files"], .worlds-nav, .crumbs, .prevnext:not(.chapter-nav)) {
+:root[data-focus] :is(.topbar, .tabs, .ws-head, .flow-head, .note-types, .side-list, .site-footer, .bottom-nav, .mt-aside, .panel[aria-labelledby="files"], .worlds-nav, .crumbs, .prevnext:not(.chapter-nav, .section-nav)) {
   display: none !important;
 }
 :root[data-focus] :is(.subject-tree, .mt-layout) {
