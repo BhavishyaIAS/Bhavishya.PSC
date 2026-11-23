@@ -34,6 +34,13 @@ type NotesResponse = {
   kind: NoteKind;
   results: { micro_theme: { id: number; code: string; title: string }; topic: { id: number; title: string }; note: Note }[];
 };
+type OutlineResponse = {
+  kind: NoteKind;
+  results: { micro_theme: { id: number; code: string; title: string }; note: { id: number; status: Note["status"]; size: number } }[];
+};
+
+/** A chapter longer than this (characters of text) is read one section at a time — a whole book is too much for one page. */
+const ONE_PAGE_LIMIT = 90_000;
 
 /** Step 2 of the notes flow: one syllabus topic → choose the type of notes → read it chapter by chapter. */
 export default async function TopicNotes(props: PageProps<"/exams/[commission]/[group]/materials/[subject]">) {
@@ -74,14 +81,24 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : undefined;
   const chapterHref = (id: number) => `${here}?kind=${kind}&topic=${id}`;
 
-  const [notes, materials] = await Promise.all([
-    kind && chapter
-      ? load<NotesResponse>(`${base}/notes/?kind=${kind}&topic=${chapter.id}`)
-      : Promise.resolve<NotesResponse>({ kind: "comprehensive", results: [] }),
+  const chapterNotes = kind && chapter ? `${base}/notes/?kind=${kind}&topic=${chapter.id}` : undefined;
+  const [outline, materials] = await Promise.all([
+    chapterNotes ? load<OutlineResponse>(`${chapterNotes}&fields=outline`) : Promise.resolve<OutlineResponse>({ kind: "comprehensive", results: [] }),
     kind
       ? load<{ results: Material[] }>(`${base}/materials/?category=${kind}&subject=${subject.id}`)
       : Promise.resolve({ results: [] as Material[] }),
   ]);
+  // A long chapter is paged: its contents, then one section with previous / next.
+  const sections = outline.results;
+  const paged = sections.length > 1 && sections.reduce((n, r) => n + r.note.size, 0) > ONE_PAGE_LIMIT;
+  const sectionIndex = paged ? Math.max(0, sections.findIndex((r) => String(r.micro_theme.id) === sp.section)) : -1;
+  const section = paged ? sections[sectionIndex] : undefined;
+  const prevSection = paged && sectionIndex > 0 ? sections[sectionIndex - 1] : undefined;
+  const nextSection = paged && sectionIndex < sections.length - 1 ? sections[sectionIndex + 1] : undefined;
+  const sectionHref = (id: number) => `${chapterHref(chapter!.id)}&section=${id}`;
+  const notes: NotesResponse = chapterNotes
+    ? await load<NotesResponse>(section ? `${chapterNotes}&micro_theme=${section.micro_theme.id}` : chapterNotes)
+    : { kind: "comprehensive", results: [] };
 
   return (
     <div className={topicTone(subject.title, subject.look)}>
@@ -162,9 +179,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
               <div className="group-label">Chapters</div>
               {chapters.map((c, i) => (
                 <Link key={c.id} href={chapterHref(c.id)} aria-current={c.id === chapter?.id ? "true" : undefined}>
-                  <span>
-                    {i + 1}. {c.label}
-                  </span>
+                  <span>{numbered(c.label, i)}</span>
                   <span className="count">{c.count}</span>
                 </Link>
               ))}
@@ -205,12 +220,28 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                         value={chapterHref(chapter!.id)}
                         options={chapters.map((c, i) => ({
                           href: chapterHref(c.id),
-                          label: `${i + 1}. ${c.label} ${c.count ? `(${c.count})` : "(no notes yet)"}`,
+                          label: `${numbered(c.label, i)} ${c.count ? `(${c.count})` : "(no notes yet)"}`,
                         }))}
                       />
                     )}
                   </div>
-                  {site.show_contents && notes.results.length > 2 && (
+                  {paged ? (
+                    <details className="chapter-contents" open={!sp.section}>
+                      <summary>
+                        <ListOrdered size={16} aria-hidden /> Contents · section {sectionIndex + 1} of {sections.length}
+                      </summary>
+                      <ol>
+                        {sections.map(({ micro_theme: mt, note }) => (
+                          <li key={mt.id}>
+                            <Link href={sectionHref(mt.id)} aria-current={mt.id === section?.micro_theme.id ? "true" : undefined}>
+                              {mt.title}
+                            </Link>
+                            <span className="muted small"> · {readTime(note.size)}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </details>
+                  ) : site.show_contents && notes.results.length > 2 && (
                     <details className="chapter-contents" open>
                       <summary>
                         <ListOrdered size={16} aria-hidden /> Contents · {notes.results.length} sections
@@ -253,6 +284,26 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
                         </article>
                       ))}
                     </div>
+                  )}
+                  {paged && (
+                    <nav className="prevnext section-nav" aria-label="Previous and next section">
+                      {prevSection && (
+                        <Link href={sectionHref(prevSection.micro_theme.id)}>
+                          <small>
+                            <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Previous section
+                          </small>
+                          <b>{prevSection.micro_theme.title}</b>
+                        </Link>
+                      )}
+                      {nextSection && (
+                        <Link href={sectionHref(nextSection.micro_theme.id)} className="next">
+                          <small>
+                            Next section · {sectionIndex + 2} of {sections.length} <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
+                          </small>
+                          <b>{nextSection.micro_theme.title}</b>
+                        </Link>
+                      )}
+                    </nav>
                   )}
                   {chapters.length > 1 && (
                     <nav className="prevnext chapter-nav" aria-label="Previous and next chapter">
@@ -304,6 +355,17 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
       )}
     </div>
   );
+}
+
+/** "3. Title", unless the syllabus title is numbered already. */
+function numbered(label: string, i: number) {
+  return /^\d+[.)]\s/.test(label) ? label : `${i + 1}. ${label}`;
+}
+
+/** About how long a note takes to read: ~6 characters a word, ~200 words a minute. */
+function readTime(chars: number) {
+  const min = Math.max(1, Math.round(chars / 6 / 200));
+  return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${min % 60} min`;
 }
 
 /** Before a note type is chosen: what the topic contains. */
