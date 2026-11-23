@@ -27,7 +27,7 @@ def track_coverage(track: Track, user, include_papers=True):
     admin = is_admin(user)
     mts = (
         MicroTheme.objects.visible_to(user)
-        .filter(track=track)
+        .filter(track=track, topic__subject__paper__notes_kind="")  # the general syllabus (Notes modules' own ones aside)
         .annotate(
             has_content=Exists(Note.objects.filter(micro_theme=OuterRef("pk"), status=Status.PUBLISHED)),
             studied=Exists(StudyProgress.objects.filter(micro_theme=OuterRef("pk"), user_id=user.id)),
@@ -71,7 +71,7 @@ def track_coverage(track: Track, user, include_papers=True):
 
     if include_papers:
         rows = []
-        for paper in Paper.objects.visible_to(user).filter(track=track).order_by(Case(When(stage=Stage.PRELIMS, then=0), default=1), "order", "id"):
+        for paper in Paper.objects.visible_to(user).filter(track=track, notes_kind="").order_by(Case(When(stage=Stage.PRELIMS, then=0), default=1), "order", "id"):
             b = per_paper.get(paper.id, {"micro_themes": 0, "covered": 0, "studied": 0, "published": 0})
             q = q_by_paper.get(paper.id, {Stage.PRELIMS: 0, Stage.MAINS: 0})
             rows.append({

@@ -41,7 +41,14 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   const base = `/tracks/${commission}/${group}`;
   const home = trackPath(commission, group, "materials");
   const here = `${home}/${subjectId}`;
-  const [user, tree, site] = await Promise.all([requireUser(here), load<SyllabusTree>(`${base}/syllabus/`), getSite()]);
+  // asked for a type of notes: that Notes module's own syllabus, where it has one (else the general syllabus)
+  const asked = ["comprehensive", "prelims", "mains"].includes(sp.kind as string) ? (sp.kind as NoteKind) : undefined;
+  const [user, tree, site] = await Promise.all([
+    requireUser(here),
+    load<SyllabusTree>(`${base}/syllabus/${asked ? `?notes=${asked}` : ""}`),
+    getSite(),
+  ]);
+  const own = tree.notes_kind || undefined; // this topic is part of a Notes module's own syllabus: its type is fixed
   const isAdmin = user.role === "admin";
   const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled); // the types of notes this site offers, in its own words
 
@@ -50,7 +57,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
   if (!current) notFound();
   const { subject, byKind } = current;
   // With a single type of notes there is nothing to choose: go straight to reading.
-  const kind = NOTE_KINDS.some((k) => k.key === sp.kind) ? (sp.kind as NoteKind) : NOTE_KINDS.length === 1 ? NOTE_KINDS[0].key : undefined;
+  const kind = own ?? (NOTE_KINDS.some((k) => k.key === sp.kind) ? (sp.kind as NoteKind) : NOTE_KINDS.length === 1 ? NOTE_KINDS[0].key : undefined);
   const kindInfo = NOTE_KINDS.find((k) => k.key === kind);
 
   // Chapters (= the subject's topics); one chapter is shown at a time.
@@ -80,16 +87,22 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
     <div className={topicTone(subject.title, subject.look)}>
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
-          <NotesSteps current={2} />
-          <nav className="crumbs" aria-label="You are here" style={{ marginTop: 10 }}>
-            <Link href={home}>Material / Notes</Link>›
-            {kind ? <Link href={here}>{subject.title}</Link> : <span>{subject.title}</span>}
-            {kindInfo && (
-              <>
-                ›<span>{kindInfo.label}</span>
-              </>
-            )}
-          </nav>
+          <NotesSteps current={2} kindFirst={!!own} />
+          {own ? (
+            <nav className="crumbs" aria-label="You are here" style={{ marginTop: 10 }}>
+              <Link href={home}>Material / Notes</Link>›<Link href={`${home}?kind=${own}`}>{kindInfo?.label ?? "Notes"}</Link>›<span>{subject.title}</span>
+            </nav>
+          ) : (
+            <nav className="crumbs" aria-label="You are here" style={{ marginTop: 10 }}>
+              <Link href={home}>Material / Notes</Link>›
+              {kind ? <Link href={here}>{subject.title}</Link> : <span>{subject.title}</span>}
+              {kindInfo && (
+                <>
+                  ›<span>{kindInfo.label}</span>
+                </>
+              )}
+            </nav>
+          )}
           <h2 className="flow-title">
             {subject.title} {isAdmin && subject.status !== "published" && <StatusBadge status={subject.status} />}
           </h2>
@@ -100,7 +113,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
           )}
         </div>
         <div className="row" style={{ gap: 10, alignItems: "flex-end" }}>
-          <Link href={home} className="btn btn-ghost btn-sm">
+          <Link href={own ? `${home}?kind=${own}` : home} className="btn btn-ghost btn-sm">
             <ArrowLeft size={15} aria-hidden /> All topics
           </Link>
           <JumpSelect
@@ -115,7 +128,7 @@ export default async function TopicNotes(props: PageProps<"/exams/[commission]/[
         </div>
       </div>
 
-      <div className={`note-types ${kind ? "" : "note-types-big"}`} role="list" aria-label="Type of notes" hidden={NOTE_KINDS.length < 2}>
+      <div className={`note-types ${kind ? "" : "note-types-big"}`} role="list" aria-label="Type of notes" hidden={NOTE_KINDS.length < 2 || !!own}>
         {NOTE_KINDS.map((k) => {
           const Icon = ICONS[k.key];
           const n = byKind[k.key];

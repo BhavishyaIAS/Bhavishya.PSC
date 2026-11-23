@@ -28,7 +28,9 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
     getSite(),
   ]);
   const isAdmin = user.role === "admin";
-  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled); // the types of notes this site offers, in its own words
+  // the types of notes this site offers, in its own words; a section of a Notes module's own syllabus has only that module's
+  const own = d.breadcrumb.paper.notes_kind || undefined;
+  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled && (!own || k.key === own));
   const available = NOTE_KINDS.filter((k) => d.notes[k.key]);
   const requested = NOTE_KINDS.find((k) => k.key === sp.note)?.key as NoteKind | undefined;
   const kind: NoteKind | undefined = requested && d.notes[requested] ? requested : available[0]?.key;

@@ -6,6 +6,9 @@ Domain model.
     ExamGroup ──┘
         Track → Paper (stage: prelims/mains) → Subject → Topic → MicroTheme
         MicroTheme → Note (×3 kinds) / Video / GlossaryTerm
+    A track's general syllabus (Paper.notes_kind = "") is what PYQs are filed under and what the Syllabus
+    and Progress pages show. A Notes module (comprehensive / prelims / mains) may have a syllabus of its
+    own (Paper.notes_kind = that kind; see notes_syllabus.py); otherwise it uses the general one.
         Track → Question (prelims MCQ or mains descriptive) → MicroTheme
         Track → StudyMaterial (file) → optional Paper/Subject/Topic/MicroTheme
 
@@ -230,6 +233,8 @@ class Paper(SyllabusNode):
     track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="papers")
     stage = models.CharField(max_length=10, choices=Stage.choices, db_index=True)
     description = models.TextField(blank=True)
+    # "" = the track's general syllabus; a note kind = this paper belongs to that Notes module's own syllabus
+    notes_kind = models.CharField(max_length=16, choices=NoteKind.choices, blank=True, default="", db_index=True)
 
     objects = PaperQuerySet.as_manager()
 
