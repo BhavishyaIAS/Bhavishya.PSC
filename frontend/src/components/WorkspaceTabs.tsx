@@ -10,9 +10,10 @@ import { trackPath } from "@/lib/format";
 /** The five worlds of an exam, as its navigation: each tab is a place, named for what you do there. */
 export function WorkspaceTabs({ commission, group }: { commission: string; group: string }) {
   const pathname = usePathname();
+  if (pathname === trackPath(commission, group)) return null; // the exam's own home shows them as blocks
   return (
     <nav className="worlds-nav" aria-label="Workspace sections">
-      {DESTINATIONS.map((d) => {
+      {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => {
         const href = trackPath(commission, group, d.tab);
         const active = pathname === href || pathname.startsWith(href + "/") || (d.tab === "materials" && pathname.includes("/micro/"));
         return (

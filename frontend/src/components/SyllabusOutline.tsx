@@ -19,7 +19,7 @@ export function SyllabusOutline({
   papers: PaperNode[];
   commission: string;
   group: string;
-  mode: "student" | "admin";
+  mode: "student" | "admin" | "checklist"; // checklist: the light rows of the Progress Tracker
 }) {
   const admin = mode === "admin";
   return (
@@ -53,9 +53,13 @@ export function SyllabusOutline({
                       {topic.title} {admin && topic.status === "draft" && <StatusBadge status="draft" />}
                     </h4>
                     {topic.micro_themes.length === 0 && <p className="muted small">No micro-themes yet.</p>}
-                    {topic.micro_themes.map((mt) => (
-                      <MicroRow key={mt.id} mt={mt} commission={commission} group={group} admin={admin} />
-                    ))}
+                    {topic.micro_themes.map((mt) =>
+                      mode === "checklist" ? (
+                        <CheckRow key={mt.id} mt={mt} commission={commission} group={group} />
+                      ) : (
+                        <MicroRow key={mt.id} mt={mt} commission={commission} group={group} admin={admin} />
+                      ),
+                    )}
                   </div>
                 ))}
               </details>
@@ -74,6 +78,22 @@ function SubjectCount({ subject }: { subject: SubjectNode }) {
     <span className={`outline-count ${mts.length > 0 && done === mts.length ? "is-done" : ""}`}>
       {done}/{mts.length}
     </span>
+  );
+}
+
+/** A checklist row: the tick, the section and what it has, in plain text (a few hundred rows stay light). */
+function CheckRow({ mt, commission, group }: { mt: MicroThemeNode; commission: string; group: string }) {
+  return (
+    <div className="mt-row">
+      <StudiedToggle commission={commission} group={group} code={mt.code} studied={mt.studied} title={mt.title} />
+      <Link className="mt-title" href={trackPath(commission, group, `micro/${encodeURIComponent(mt.code)}`)} prefetch={false}>
+        {mt.title}
+      </Link>
+      <span className="mt-meta muted small">
+        {mt.note_kinds.length ? `Notes: ${mt.note_kinds.map((k) => KIND_SHORT[k]).join(" · ")}` : "No notes yet"}
+        {mt.question_count ? ` · ${mt.question_count} PYQ${mt.question_count === 1 ? "" : "s"}` : ""}
+      </span>
+    </div>
   );
 }
 

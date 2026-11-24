@@ -22,6 +22,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
 import { Header } from "@/components/Header";
+import { PortalMotion } from "@/components/sky/PortalMotion";
 import { SkyBackdrop } from "@/components/sky/SkyBackdrop";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
 import { worldForPath } from "@/components/space/worlds";
@@ -131,6 +132,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           Skip to content
         </a>
         {sky ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
+        <PortalMotion />
         <Interactions />
         <ToastProvider>
           <Header sky={sky} user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />

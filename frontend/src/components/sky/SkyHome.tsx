@@ -1,10 +1,9 @@
 import Link from "next/link";
 
 import { brand } from "@/brand.config";
-import { DESTINATIONS } from "@/components/space/destinations";
 import type { Commission, User } from "@/lib/types";
 
-import { examPortal, MODULE_PORTALS } from "./portals";
+import { examPortal, MODULES } from "./portals";
 import { SkyPortal } from "./SkyPortal";
 
 /** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
@@ -64,7 +63,7 @@ export function SkyHome({
       ) : (
         <nav className="sky-gates" aria-label="Choose your examination">
           {commissions.map((c, i) => (
-            <Link key={c.slug} href={`/exams/${c.slug}`} className="sky-gate" data-warp>
+            <Link key={c.slug} href={c.tracks[0] ? `/exams/${c.slug}/${c.tracks[0].group}` : `/exams/${c.slug}`} className="sky-gate" data-warp>
               <SkyPortal kind={examPortal(c.slug, i)} size={168} />
               <div>
                 <div className="sky-eyebrow">{region(c.name)}</div>
@@ -91,19 +90,16 @@ export function SkyHome({
 
       {commissions.length > 0 && (
         <section className="sky-modules" aria-labelledby="sky-modules-h">
-          <h2 id="sky-modules-h">Five portals inside every exam</h2>
+          <h2 id="sky-modules-h">Four portals inside every exam</h2>
           <ul className="sky-tiles">
-            {DESTINATIONS.map((d) => {
-              const p = MODULE_PORTALS[d.tab];
-              return (
-                <li key={d.tab} className="sky-tile">
-                  <SkyPortal kind={p?.kind ?? "galaxy"} size={124} />
-                  <span className="sky-kind">{p?.name}</span>
-                  <h3>{d.long}</h3>
-                  <p>{d.blurb.replace(/^[^.]*\.\s*/, "")}</p>
-                </li>
-              );
-            })}
+            {MODULES.map((m) => (
+              <li key={m.tab} className="sky-tile">
+                <SkyPortal kind={m.kind} size={124} />
+                <span className="sky-kind">{m.portal}</span>
+                <h3>{m.name}</h3>
+                <p>{m.blurb}</p>
+              </li>
+            ))}
           </ul>
         </section>
       )}

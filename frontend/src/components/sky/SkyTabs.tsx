@@ -3,24 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { DESTINATIONS } from "@/components/space/destinations";
 import { trackPath } from "@/lib/format";
 
-import { MODULE_PORTALS } from "./portals";
+import { MODULES } from "./portals";
 import { SkyPortal } from "./SkyPortal";
 
-/** The five modules of an exam as pills, each with its own small portal (the Sky style's tabs). */
+/**
+ * The four modules of an exam as pills, each with its own small portal, on every page inside the exam
+ * (not on the exam's own home, where they are the big blocks).
+ */
 export function SkyTabs({ commission, group }: { commission: string; group: string }) {
   const pathname = usePathname();
+  if (pathname === trackPath(commission, group)) return null;
   return (
-    <nav className="sky-tabs" aria-label="Workspace sections">
-      {DESTINATIONS.map((d) => {
-        const href = trackPath(commission, group, d.tab);
-        const active = pathname === href || pathname.startsWith(href + "/") || (d.tab === "materials" && pathname.includes("/micro/"));
+    <nav className="sky-tabs" aria-label="Exam modules">
+      {MODULES.map((m) => {
+        const href = trackPath(commission, group, m.tab);
+        const active = pathname === href || pathname.startsWith(href + "/") || (m.tab === "materials" && pathname.includes("/micro/"));
         return (
-          <Link key={d.tab} href={href} aria-current={active ? "page" : undefined}>
-            <SkyPortal kind={MODULE_PORTALS[d.tab]?.kind ?? "galaxy"} size={34} />
-            {d.long}
+          <Link key={m.tab} href={href} aria-current={active ? "page" : undefined} data-warp>
+            <SkyPortal kind={m.kind} size={34} />
+            {m.name}
           </Link>
         );
       })}

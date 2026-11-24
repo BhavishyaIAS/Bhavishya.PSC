@@ -56,9 +56,9 @@ export default async function ProgressTab(props: PageProps<"/exams/[commission]/
         <section className="panel" aria-labelledby="per-subject">
           <div className="panel-head">
             <h2 id="per-subject">Subject by subject</h2>
-            <span className="muted small">Sections you have marked as studied, the furthest along first. Choose a subject to open it in the syllabus.</span>
+            <span className="muted small">Sections you have marked as studied, the furthest along first. Choose a subject to jump to it in the checklist below.</span>
           </div>
-          <SubjectBars stats={stats} href={`/exams/${commission}/${group}/syllabus`} />
+          <SubjectBars stats={stats} href={`/exams/${commission}/${group}/progress`} />
         </section>
       )}
 
@@ -130,7 +130,7 @@ export default async function ProgressTab(props: PageProps<"/exams/[commission]/
           </h2>
           <span className="muted small">Tick a micro-theme once you&apos;ve studied it; open it for notes, videos and PYQs.</span>
         </div>
-        <SyllabusOutline papers={tree.papers} commission={commission} group={group} mode="student" />
+        <SyllabusOutline papers={tree.papers} commission={commission} group={group} mode="checklist" />
       </section>
     </div>
   );

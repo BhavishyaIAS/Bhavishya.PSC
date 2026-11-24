@@ -1,7 +1,7 @@
 import { ArrowLeft, EyeOff } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { GroupCards } from "@/components/GroupCards";
 import { orbAttr } from "@/components/space/destinations";
@@ -27,6 +27,7 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
   const commission = commissions[index];
   if (!commission) notFound();
   const isAdmin = user?.role === "admin";
+  if (commission.tracks.length > 0) redirect(`/exams/${commission.slug}/${commission.tracks[0].group}`);
   const planet = planetFor(commission.slug, commission.theme, index);
   const emblem = emblemFor(commission.slug); // the official emblem, as a sphere
 

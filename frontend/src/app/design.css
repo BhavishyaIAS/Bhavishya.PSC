@@ -2057,3 +2057,188 @@ button.option:hover:not(:disabled) .key {
   transform: none !important;
 }
 
+
+/* ─────────────── An exam's home: its four modules as big portal blocks ─────────────── */
+.exam-blocks {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 8px;
+}
+.exam-block {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 24px;
+  padding: 28px;
+  min-height: 190px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl, 20px);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  text-decoration: none;
+  transition: transform 0.25s, border-color 0.25s;
+}
+.exam-block:hover {
+  transform: translateY(-4px);
+  border-color: var(--brand-primary);
+  text-decoration: none;
+}
+.exam-block:hover .sky-portal {
+  transform: scale(1.08);
+}
+.exam-block-text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.exam-block-text b {
+  font-family: var(--font-heading, var(--font-display));
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-strong);
+}
+.exam-block-text > span:not(.sky-kind):not(.sky-enter) {
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.exam-block .sky-kind {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--gold, var(--brand-primary));
+}
+.exam-block .sky-enter {
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+.exam-block .sky-enter::after {
+  content: " →";
+}
+@media (max-width: 760px) {
+  .exam-blocks {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .exam-block {
+    padding: 18px;
+    gap: 16px;
+    min-height: 0;
+  }
+  .exam-block .sky-portal {
+    width: 84px !important;
+    height: 84px !important;
+  }
+}
+
+/* ─────────────── A subject's topics, chapter by chapter ─────────────── */
+.topic-index {
+  display: grid;
+  gap: 18px;
+  margin-top: 6px;
+}
+.topic-chapter-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 16px;
+  padding-bottom: 12px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.topic-chapter-head h3 {
+  margin: 0;
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  line-height: 1.25;
+  color: var(--text-strong);
+}
+.topic-chapter-head .np-index {
+  font-size: 30px;
+}
+.topic-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.topic-line {
+  display: grid;
+  grid-template-columns: 3.2em 1fr auto;
+  align-items: baseline;
+  gap: 12px;
+  padding: 11px 10px;
+  border-radius: 10px;
+  color: var(--text);
+  text-decoration: none;
+}
+a.topic-line:hover {
+  background: color-mix(in srgb, var(--brand-primary) 7%, transparent);
+  text-decoration: none;
+}
+a.topic-line:hover .tl-title {
+  color: var(--brand-primary);
+}
+.topic-lines li + li .topic-line {
+  border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 0;
+}
+.tl-num {
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  color: var(--faint);
+  font-variant-numeric: tabular-nums;
+}
+.tl-title {
+  font-weight: 500;
+  color: var(--text-strong);
+  line-height: 1.4;
+}
+.tl-meta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brand-primary);
+  white-space: nowrap;
+}
+.tl-meta.tl-soon {
+  font-weight: 400;
+  font-style: italic;
+  color: var(--faint);
+}
+.topic-line.is-soon .tl-title {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+/* ─────────────── One topic's notes ─────────────── */
+.topic-read {
+  margin-top: 10px;
+}
+.topic-read-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-bottom: 16px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.topic-read-title {
+  margin: 8px 0 0;
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1.2;
+  color: var(--text-strong);
+}
+.topic-read-title .h-num {
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  font-weight: 500;
+  color: var(--faint);
+  margin-right: 0.4em;
+  vertical-align: 0.15em;
+}
+.topic-read .section-nav {
+  margin-top: 28px;
+}

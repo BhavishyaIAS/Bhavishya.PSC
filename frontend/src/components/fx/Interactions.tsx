@@ -25,7 +25,7 @@ export function Interactions() {
     const root = document.documentElement;
     let fallback = 0;
     const onClick = (e: MouseEvent) => {
-      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || root.dataset.motion === "off") return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || root.dataset.motion === "off" || root.dataset.skin === "sky") return;
       const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[href]");
       if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
       const url = new URL(a.href, location.href);
@@ -67,7 +67,7 @@ export function Interactions() {
       active = null;
     };
     const onMove = (e: PointerEvent) => {
-      if (!fine.matches || root.dataset.motion === "off") return;
+      if (!fine.matches || root.dataset.motion === "off" || root.dataset.skin === "sky") return;
       const el = (e.target as Element | null)?.closest?.<HTMLElement>(TILT) ?? null;
       if (el !== active) release();
       if (!el) return;
