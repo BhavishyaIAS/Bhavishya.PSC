@@ -356,7 +356,7 @@ export default function Universe() {
         } else {
           const b = BODIES[i];
           kind.textContent = i === SUN ? "The centre" : KIND[b.kind];
-          name.textContent = b.name;
+          name.textContent = i === SUN ? b.name : ""; // no planet names on the site
           text.textContent = b.blurb;
         }
         tip.dataset.open = "";

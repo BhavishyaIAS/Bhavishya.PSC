@@ -157,8 +157,8 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
               star field, round animated portals, Day / Night switch
             </label>
             <label className="checkbox full">
-              <input type="radio" name="skin" checked={skin === "classic"} onChange={() => setSkin("classic")} /> <b>Classic</b>: the worlds (Mars, the
-              Moon, Saturn, Jupiter, Earth) and the 3D solar system
+              <input type="radio" name="skin" checked={skin === "classic"} onChange={() => setSkin("classic")} /> <b>Classic</b>: the four worlds as planets
+              and the 3D solar system
             </label>
           </div>
         </section>

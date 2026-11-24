@@ -1175,6 +1175,7 @@ void main() {
   float tNear = 1e9;
   for (int i = 0; i < NB; i++) {                                   // what is solidly in front, pixel by pixel
     if (i >= uNB) break;
+    if (uB[i].w <= 0.) continue;
     vec2 h = hitSphere(ro, rd, uB[i]);
     float px = h.x / uFocal;
     if (h.x > 0. && h.y < uB[i].w - px * .5) tNear = min(tNear, h.x - sqrt(max(uB[i].w * uB[i].w - h.y * h.y, 0.)));
@@ -1237,6 +1238,7 @@ void main() {
   for (int i = 0; i < NB; i++) {
     if (i >= uNB) break;
     vec4 s = uB[i];
+    if (s.w <= 0.) continue;
     vec2 h = hitSphere(ro, rd, s);
     float px = h.x / uFocal;
     float cov = clamp((s.w - h.y) / px + .5, 0., 1.);
@@ -1292,6 +1294,7 @@ void main() {
   for (int j = 0; j < 2; j++) {
     int i = j == 0 ? 7 : 8;
     vec4 s = uB[i]; vec3 ax = uAx[i].xyz;
+    if (s.w <= 0.) continue;
     float tr = dot(s.xyz - ro, ax) / dot(rd, ax);
     if (tr <= 0. || tr >= tNear) continue;
     vec3 rp = ro + rd * tr - s.xyz;
