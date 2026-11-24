@@ -364,3 +364,178 @@
 :root[data-skin="living"][data-scene="ocean"]:not([data-theme="dark"]) .sky-hero .sky-eyebrow {
   color: #17505a;
 }
+
+/* ═══════════════ Clarity, in the Living and Sky looks ═══════════════
+ * Nothing is read straight off a scene: whatever text stands on the world sits on a plate of paper, the type is
+ * larger, and boxes and buttons have a firm edge, so they stay distinct from any background, by day or night. */
+:root:is([data-skin="living"], [data-skin="sky"]) {
+  --plate: var(--paper, var(--glass));
+  --edge: color-mix(in srgb, var(--w-ink, var(--text-strong)) 20%, transparent);
+}
+:root[data-skin="living"] {
+  --paper: rgba(251, 253, 253, 0.97);
+}
+:root[data-skin="living"][data-scene] :is(.panel, .card, .q-card, .topic-card, .note-type, .stat, .side-list, .exam-block, .kind-tab, .topic-side, .sky-gate, .sky-panel, .station-card) {
+  background-color: color-mix(in srgb, var(--paper) 100%, transparent);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.panel, .card, .q-card, .modal, .topic-card, .note-type, .stat, .side-list, .exam-block, .kind-tab, .topic-side, .sky-gate, .sky-panel, .station-card, .sky-tile) {
+  border: 1.5px solid var(--edge);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent) inset, 0 22px 50px -26px rgba(0, 0, 0, 0.55);
+}
+:root[data-skin="sky"] {
+  --glass: rgba(255, 255, 255, 0.95);
+}
+:root[data-skin="sky"][data-theme="dark"] {
+  --glass: rgba(20, 14, 50, 0.95);
+}
+/* the plates: titles, crumbs, paper headings and the home page's words */
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.ws-title, .flow-head, .np-head, .sky-hero, .sky-features, .system-copy, .vault-head, .page-head) {
+  background: var(--plate);
+  border: 1.5px solid var(--edge);
+  border-radius: 24px;
+  padding: 20px 24px;
+  box-shadow: 0 18px 44px -26px rgba(0, 0, 0, 0.5);
+  text-shadow: none;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-head {
+  margin-top: 18px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-title {
+  width: 100%;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .flow-head {
+  margin-bottom: 20px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .flow-head .crumbs {
+  background: none;
+  border: 0;
+  padding: 0;
+  box-shadow: none;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .crumbs {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--plate);
+  border: 1px solid var(--edge);
+  font-size: 0.95rem;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-features {
+  border-top: 1.5px solid var(--edge);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-first .sky-hero {
+  max-width: 760px;
+}
+/* buttons: always a solid face and a firm edge */
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.btn-ghost, .segmented, .sky-tabs a, .look-switch, .ambient-toggle, .sky-theme, .mini-btn) {
+  background: var(--plate);
+  border: 1.5px solid var(--edge);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.btn-primary, .btn-dark) {
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+/* larger, easier type */
+:root:is([data-skin="living"], [data-skin="sky"]) body {
+  font-size: 17px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.muted, .small, .tc-meta, .np-meta, .tl-meta, .kind-tab-text span, .exam-block-text > span) {
+  font-size: max(0.95em, 14.5px);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.tc-title, .tl-title) {
+  font-size: 1.12rem;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .topic-side {
+  font-size: 0.96rem;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .reading .prose {
+  font-size: calc(18.5px * var(--reader-scale));
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.sky-tabs a, .btn, .segmented > *) {
+  font-size: 0.98rem;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .exam-block-text b {
+  font-size: clamp(1.5rem, 2.4vw, 1.9rem);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.np-kicker, .eyebrow, .sky-eyebrow, .sky-kind) {
+  font-size: 0.8rem;
+}
+/* emblems: a solid disc behind the line, so the icon reads on any page */
+.living-emblem-halo {
+  fill: color-mix(in srgb, var(--accent) 14%, var(--paper, #fff));
+}
+.living-emblem {
+  stroke-width: 2.4;
+}
+
+/* ───────────── the new worlds' palettes ───────────── */
+:root[data-skin="living"][data-scene="lake"] {
+  --w-deep: #cfe6e4; --w-lite: #0f2b30; --w-ink: #0f2b30; --accent: #17707a; --accent-ink: #17707a; --gold: #2f6f6a;
+  --paper: rgba(248, 253, 252, 0.97); --glass-solid: #f8fdfc; --line: rgba(15, 43, 48, 0.14);
+}
+:root[data-skin="living"][data-scene="wetland"] {
+  --w-deep: #e6e8d8; --w-lite: #223018; --w-ink: #223018; --accent: #4d7a2c; --accent-ink: #4d7a2c; --gold: #7a6a24;
+  --paper: rgba(252, 252, 246, 0.97); --glass-solid: #fcfcf6; --line: rgba(34, 48, 24, 0.14);
+}
+:root[data-skin="living"][data-scene="desert"] {
+  --w-deep: #f1dfc2; --w-lite: #3a2414; --w-ink: #3a2414; --accent: #a8541c; --accent-ink: #a8541c; --gold: #9a6418;
+  --paper: rgba(255, 250, 242, 0.97); --glass-solid: #fffaf2; --line: rgba(58, 36, 20, 0.14);
+}
+:root[data-skin="living"][data-scene="polar"] {
+  --w-deep: #e4eef4; --w-lite: #10243a; --w-ink: #10243a; --accent: #1f5f9a; --accent-ink: #1f5f9a; --gold: #3c6a8a;
+  --paper: rgba(250, 253, 255, 0.97); --glass-solid: #fafdff; --line: rgba(16, 36, 58, 0.14);
+}
+:root[data-skin="living"][data-scene="amazon"] {
+  --w-deep: #d4e4cc; --w-lite: #102414; --w-ink: #102414; --accent: #1f6b34; --accent-ink: #1f6b34; --gold: #a8401e;
+  --paper: rgba(250, 252, 246, 0.97); --glass-solid: #fafcf6; --line: rgba(16, 36, 20, 0.14);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="lake"] {
+  --w-deep: #04141a; --w-glass: #08202a; --w-paper: #08202a; --w-lite: #def3f2; --w-ink: #def3f2; --accent: #7fdccf; --accent-ink: #7fdccf;
+  --on-accent: #04141a; --gold: #a9d6cc; --paper: rgba(6, 26, 34, 0.95); --glass-solid: #08202a; --line: rgba(200, 235, 235, 0.16);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="wetland"] {
+  --w-deep: #0a0e12; --w-glass: #121a16; --w-paper: #121a16; --w-lite: #e8ecdc; --w-ink: #e8ecdc; --accent: #b7d68e; --accent-ink: #b7d68e;
+  --on-accent: #0a0e12; --gold: #d8cc8a; --paper: rgba(16, 24, 20, 0.95); --glass-solid: #121a16; --line: rgba(230, 236, 210, 0.16);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="desert"] {
+  --w-deep: #0c0a18; --w-glass: #1a1424; --w-paper: #1a1424; --w-lite: #f4e6d2; --w-ink: #f4e6d2; --accent: #f2b878; --accent-ink: #f2b878;
+  --on-accent: #1a1424; --gold: #e8c48c; --paper: rgba(26, 20, 36, 0.95); --glass-solid: #1a1424; --line: rgba(244, 230, 210, 0.16);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="polar"] {
+  --w-deep: #030a16; --w-glass: #0a1628; --w-paper: #0a1628; --w-lite: #e8f2fa; --w-ink: #e8f2fa; --accent: #8fe0c8; --accent-ink: #8fe0c8;
+  --on-accent: #030a16; --gold: #b6cdea; --paper: rgba(8, 20, 38, 0.95); --glass-solid: #0a1628; --line: rgba(220, 235, 250, 0.16);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="amazon"] {
+  --w-deep: #040e08; --w-glass: #0a1a10; --w-paper: #0a1a10; --w-lite: #e2f0e2; --w-ink: #e2f0e2; --accent: #9ee0a0; --accent-ink: #9ee0a0;
+  --on-accent: #040e08; --gold: #f0a070; --paper: rgba(8, 24, 14, 0.95); --glass-solid: #0a1a10; --line: rgba(220, 240, 220, 0.16);
+}
+:root[data-skin="living"][data-theme="dark"] {
+  --paper: rgba(9, 18, 32, 0.95);
+}
+
+/* the World choice at the foot of the page */
+.world-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 0;
+  border: 1.5px solid var(--edge, var(--border));
+  border-radius: 999px;
+  background: var(--plate, var(--surface));
+}
+.world-picker select {
+  border: 0;
+  background: transparent;
+  color: var(--text-strong);
+  font: 600 0.85rem var(--font-body);
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+:root:is([data-skin="living"], [data-skin="sky"]) .vault-head {
+  margin-bottom: 16px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .vault-head h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}

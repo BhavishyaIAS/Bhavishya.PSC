@@ -10,31 +10,9 @@
  * the proportions hide the golden ratio (ripple rings, branch angles, the phyllotaxis of the leaves).
  */
 import type { Scene } from "./scenes";
+import { Amazon, Desert, Lake, type Living, Polar, Wetland } from "./worlds2";
 
-const TAU = Math.PI * 2;
-const PHI = 1.6180339887;
-const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5));
-type RGB = [number, number, number];
-
-// ─────────────────────────── small tools ───────────────────────────
-const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const mix = (a: RGB, b: RGB, t: number): RGB => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
-const rgba = (c: RGB, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
-const hash = (n: number) => {
-  const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
-  return s - Math.floor(s);
-};
-/** smooth 1-D value noise in [0, 1] */
-function noise(x: number) {
-  const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f);
-  return lerp(hash(i), hash(i + 1), u);
-}
-function seeded(seed: number) {
-  let s = seed % 2147483647 || 1;
-  return () => (s = (s * 16807) % 2147483647) / 2147483647;
-}
-const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+import { clamp, easeInOut, GOLDEN_ANGLE, lerp, mix, noise, PHI, type RGB, rgba, rnd, seeded, TAU } from "./kit";
 
 interface Ripple { x: number; y: number; r: number; max: number; water: boolean; speed: number }
 interface Mote { x: number; y: number; s: number; p: number; v: number }
@@ -63,6 +41,7 @@ export class World {
   private ocean = new Ocean(this);
   private forest = new Forest(this);
   private autumn = new Autumn(this);
+  private more: Partial<Record<Scene, Living>> = { lake: new Lake(this), wetland: new Wetland(this), desert: new Desert(this), polar: new Polar(this), amazon: new Amazon(this) };
 
   constructor(private cvs: HTMLCanvasElement, scene: Scene) {
     this.c = cvs.getContext("2d")!;
@@ -108,6 +87,7 @@ export class World {
     this.ocean.layout();
     this.forest.layout();
     this.autumn.layout();
+    for (const m of Object.values(this.more)) m?.layout();
   }
 
   /** the visitor's own time of day: morning gradually becomes evening, evening becomes starlight */
@@ -133,6 +113,7 @@ export class World {
   // ── what the visitor does touches nature ──
   touch(x: number, y: number) {
     this.idle = 0;
+    if (this.more[this.scene]?.touch?.(x, y)) return;
     const water = this.scene === "ocean" && y > this.ocean.surface(x) - 8;
     this.ripple(x, water ? this.ocean.surface(x) + 6 : y, water, water ? 90 : 46);
     if (this.scene === "forest") this.forest.startle(x, y);
@@ -178,6 +159,7 @@ export class World {
     if (scenes.includes("ocean")) this.ocean.step(dt);
     if (scenes.includes("forest")) this.forest.step(dt);
     if (scenes.includes("autumn")) this.autumn.step(dt);
+    for (const s of scenes) this.more[s]?.step(dt);
   }
 
   draw() {
@@ -206,7 +188,8 @@ export class World {
   private drawScene(s: Scene) {
     if (s === "ocean") this.ocean.draw();
     else if (s === "forest") this.forest.draw();
-    else this.autumn.draw();
+    else if (s === "autumn") this.autumn.draw();
+    else this.more[s]?.draw();
   }
 
   drawStars(alpha: number) {
@@ -278,7 +261,6 @@ export class World {
   }
 }
 
-const easeInOut = (t: number) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
 
 // ═══════════════════════════ Theme 1 — Ocean of Consciousness ═══════════════════════════
 interface Drop { x: number; y: number; r: number; vy: number; id: number; trail: number }
@@ -1051,7 +1033,7 @@ class Autumn {
     const t = at ?? this.tips[Math.floor(Math.random() * this.tips.length)];
     if (!t) return;
     this.leaves.push({
-      x: t.x, y: t.y, vx: 0, vy: rnd(8, 16), rot: Math.random() * TAU, vr: rnd(-1.2, 1.2), flip: Math.random() * TAU, vf: rnd(1.4, 3.2),
+      x: t.x, y: t.y, vx: 0, vy: rnd(3, 7), rot: Math.random() * TAU, vr: rnd(-0.6, 0.6), flip: Math.random() * TAU, vf: rnd(0.7, 1.6),
       s: rnd(4.5, 7.5), c: AUTUMN[Math.floor(Math.random() * AUTUMN.length)], landed: 0, ph: Math.random() * TAU,
     });
   }
@@ -1059,7 +1041,7 @@ class Autumn {
   step(dt: number) {
     const w = this.w, { W, H } = w, rich = Math.min(1, w.idleNow / 40);
     // leaves never stop
-    const rate = (this.w.mobile ? 0.5 : 0.9) + w.windNow * 2.5 + rich * 0.6;
+    const rate = (this.w.mobile ? 0.35 : 0.6) + w.windNow * 1.6 + rich * 0.4;
     if (Math.random() < rate * dt) this.spawnLeaf();
     while (this.released > 0) {
       this.spawnLeaf();
@@ -1072,9 +1054,10 @@ class Autumn {
       }
       l.flip += l.vf * dt;
       l.rot += l.vr * dt;
-      const flutter = Math.sin(w.t * 1.7 + l.ph) * 22 + (noise(w.t * 0.4 + l.ph) - 0.5) * 30;
-      l.vx = lerp(l.vx, flutter - 8 - w.windNow * 70, dt * 1.2);
-      l.vy = lerp(l.vy, 18 + 14 * Math.abs(Math.cos(l.flip)), dt);
+      // slowly: a leaf takes its time to reach the ground
+      const flutter = Math.sin(w.t * 1.1 + l.ph) * 14 + (noise(w.t * 0.3 + l.ph) - 0.5) * 18;
+      l.vx = lerp(l.vx, flutter - 5 - w.windNow * 40, dt * 0.9);
+      l.vy = lerp(l.vy, 7 + 6 * Math.abs(Math.cos(l.flip)), dt * 0.8);
       l.x += l.vx * dt;
       l.y += l.vy * dt;
       const ground = H - 6 - (l.ph % 1) * 26;

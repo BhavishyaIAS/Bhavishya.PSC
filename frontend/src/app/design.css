@@ -2520,3 +2520,34 @@ details.topic-chapter[open] .topic-chapter-chev {
   color: var(--brand-primary);
   border-color: var(--brand-primary);
 }
+
+/* the Notes landing: three large blocks, nothing else */
+.kind-tabs-big {
+  margin-top: 10px;
+}
+.kind-tabs-big .kind-tab {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 18px;
+  padding: 30px 28px;
+  min-height: 230px;
+}
+.kind-tabs-big .kind-tab-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  color: #fff;
+  background: var(--kind);
+}
+.kind-tabs-big .kind-tab-text b {
+  font-size: 1.45rem;
+  color: var(--kind);
+}
+.kind-tabs-big .kind-tab-text span {
+  font-size: 0.98rem;
+}
+.kind-tabs-big .kind-tab-text .kind-tab-go {
+  margin-top: 10px;
+  font-weight: 700;
+  color: var(--kind);
+}

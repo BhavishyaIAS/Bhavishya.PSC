@@ -13,6 +13,11 @@ const LEVELS: Record<Scene, { ocean: number; wind: number }> = {
   ocean: { ocean: 0.55, wind: 0.06 },
   forest: { ocean: 0.04, wind: 0.2 },
   autumn: { ocean: 0, wind: 0.26 },
+  lake: { ocean: 0.3, wind: 0 }, // muffled, beneath the surface
+  wetland: { ocean: 0.12, wind: 0.14 },
+  desert: { ocean: 0, wind: 0.34 },
+  polar: { ocean: 0.22, wind: 0.3 },
+  amazon: { ocean: 0.08, wind: 0.2 },
 };
 
 function brownNoise(c: AudioContext, seconds = 6) {
@@ -45,7 +50,7 @@ function bell() {
 }
 
 function bird() {
-  if (!ctx || scene !== "forest") return;
+  if (!ctx || !["forest", "amazon", "wetland"].includes(scene)) return;
   const now = ctx.currentTime;
   for (let k = 0; k < 2 + Math.floor(Math.random() * 3); k++) {
     const t = now + k * 0.16, o = ctx.createOscillator(), g = ctx.createGain();

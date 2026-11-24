@@ -65,7 +65,7 @@ export async function PyqVault({
 
   return (
     <div>
-      <div className="panel-head">
+      <div className="panel-head vault-head">
         <div>
           <h2>{label} previous-year questions</h2>
           <p className="muted small" style={{ margin: "4px 0 0" }}>
