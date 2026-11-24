@@ -2371,3 +2371,105 @@ details.topic-chapter[open] .topic-chapter-chev {
     order: 2; /* on a phone: below the notes */
   }
 }
+
+/* ─────────────── The three types of notes, each in its own colour ─────────────── */
+.kind-comprehensive {
+  --kind: #6a3fd9;
+}
+.kind-prelims {
+  --kind: #0f8a8a;
+}
+.kind-mains {
+  --kind: #c2620a;
+}
+:root[data-theme="dark"] .kind-comprehensive {
+  --kind: #b49cff;
+}
+:root[data-theme="dark"] .kind-prelims {
+  --kind: #5fd3cf;
+}
+:root[data-theme="dark"] .kind-mains {
+  --kind: #ffb46b;
+}
+.kind-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 6px 0 30px;
+}
+.kind-tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-lg, 16px);
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.kind-tab:hover {
+  border-color: var(--kind);
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+.kind-tab-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  color: var(--kind);
+  background: color-mix(in srgb, var(--kind) 12%, transparent);
+}
+.kind-tab-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.kind-tab-text b {
+  font-size: 1.02rem;
+  color: var(--text-strong);
+}
+.kind-tab-text span {
+  font-size: 0.82rem;
+  color: var(--muted);
+  line-height: 1.35;
+}
+.kind-tab[aria-current="page"] {
+  border-color: var(--kind);
+  background: color-mix(in srgb, var(--kind) 9%, var(--surface));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--kind) 18%, transparent), var(--shadow);
+}
+.kind-tab[aria-current="page"] .kind-tab-icon {
+  color: #fff;
+  background: var(--kind);
+}
+.kind-tab[aria-current="page"] .kind-tab-text b {
+  color: var(--kind);
+}
+.kind-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  margin-right: 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kind);
+  background: color-mix(in srgb, var(--kind) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--kind) 30%, transparent);
+  vertical-align: 1px;
+}
+@media (max-width: 760px) {
+  .kind-tabs {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .kind-tab {
+    padding: 12px 14px;
+  }
+}

@@ -153,7 +153,10 @@ export default async function SubjectNotes(
           <section className="panel topic-read">
             <header className="topic-read-head">
               <div style={{ minWidth: 0 }}>
-                <div className="eyebrow">
+                <span className={`kind-chip kind-${kind}`}>
+                  {kindInfo.label}
+                </span>
+                <div className="eyebrow" style={{ marginTop: 8 }}>
                   Chapter {cur.ci + 1} ·{" "}
                   {cur.chapter.title.replace(/^\d+[.)]\s+/, "")}
                 </div>
@@ -268,8 +271,9 @@ export default async function SubjectNotes(
               <StatusBadge status={subject.status} />
             )}
           </h2>
-          <p className="muted" style={{ margin: "4px 0 0" }}>
-            {kindInfo.label} · {subject.topics.length} chapter
+          <p className="muted" style={{ margin: "6px 0 0" }}>
+            <span className={`kind-chip kind-${kind}`}>{kindInfo.label}</span>{" "}
+            {subject.topics.length} chapter
             {subject.topics.length === 1 ? "" : "s"} · {done} of {total} topics
             written
           </p>
