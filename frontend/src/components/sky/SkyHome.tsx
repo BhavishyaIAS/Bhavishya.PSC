@@ -29,14 +29,12 @@ export function SkyHome({
   commissions,
   user,
   eyebrow,
-  lead,
   isAdmin,
 }: {
   skin: Skin;
   commissions: Commission[];
   user: User | null;
   eyebrow: string;
-  lead: string;
   isAdmin: boolean;
 }) {
   return (
@@ -47,7 +45,6 @@ export function SkyHome({
           <h1 id="sky-h">
             {brand.name} <span>{brand.suffix}</span>
           </h1>
-          <p>{lead}</p>
         </section>
 
         {commissions.length === 0 ? (

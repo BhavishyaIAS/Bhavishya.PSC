@@ -37,7 +37,6 @@ export default async function LandingPage() {
         user={user}
         isAdmin={isAdmin}
         eyebrow={site.hero_eyebrow || welcome || shown.map((c) => c.short_name).join(" · ") || "Civil services preparation"}
-        lead={site.hero_lead || "Step through a gateway to find its syllabus, your notes, past papers and a record of how far you have come."}
       />
     );
   }
