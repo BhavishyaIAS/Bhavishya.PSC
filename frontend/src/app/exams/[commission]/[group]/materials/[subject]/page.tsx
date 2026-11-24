@@ -11,6 +11,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { MaterialList } from "@/components/MaterialList";
+import { QuestionCard } from "@/components/pyq/QuestionCard";
+import { TopicStatus } from "@/components/TopicStatus";
 import { ReaderTools } from "@/components/ReaderTools";
 import { RichText } from "@/components/rich/RichText";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
@@ -21,13 +23,25 @@ import { topicTone } from "@/lib/topics";
 import type {
   Material,
   MicroThemeNode,
+  Mine,
   Note,
   NoteKind,
+  Question,
+  TopicState,
   SyllabusTree,
   TopicNode,
 } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
+
+type Related = {
+  how: "mapped" | "matched";
+  results: Question[];
+  mine: Record<string, Mine>;
+};
+type Detail = {
+  progress: { status: TopicState; next_due: string | null; revisions: number };
+};
 
 type NotesResponse = {
   kind: NoteKind;
@@ -80,6 +94,7 @@ export default async function SubjectNotes(
       : undefined,
   ]);
   const isAdmin = user.role === "admin";
+  const today = new Date().toISOString().slice(0, 10);
   const subject = tree.papers
     .flatMap((p) => p.subjects)
     .find((s) => String(s.id) === subjectId);
@@ -107,6 +122,14 @@ export default async function SubjectNotes(
     const at = entries.findIndex((e) => String(e.mt.id) === sectionId);
     if (at < 0) notFound();
     const cur = entries[at];
+    const [related, detail] = await Promise.all([
+      load<Related>(
+        `${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/related-questions/`,
+      ),
+      load<Detail>(`${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/`),
+    ]);
+    const relPrelims = related.results.filter((q) => q.stage === "prelims");
+    const relMains = related.results.filter((q) => q.stage === "mains");
     const note = one?.results[0]?.note;
     const readable = entries.filter((e) => written(e) || e === cur);
     const ri = readable.indexOf(cur);
@@ -176,6 +199,11 @@ export default async function SubjectNotes(
                 )}
                 <ReaderTools />
               </div>
+              <TopicStatus
+                base={base}
+                code={cur.mt.code}
+                initial={detail.progress}
+              />
             </header>
             {note ? (
               <div className="reading">
@@ -189,6 +217,26 @@ export default async function SubjectNotes(
                   ? "Write them with Edit above."
                   : "They're being written — check back soon."}
               </EmptyState>
+            )}
+            {related.results.length > 0 && (
+              <section className="topic-pyqs" aria-labelledby="topic-pyqs-h">
+                <h3 id="topic-pyqs-h">Previous-year questions on this topic</h3>
+                {related.how === "matched" && (
+                  <p className="muted small">
+                    Found by the words in this topic&apos;s title, not by an
+                    exact mapping: check that each one fits.
+                  </p>
+                )}
+                {[...relPrelims, ...relMains].map((q) => (
+                  <QuestionCard
+                    key={q.id}
+                    q={{ ...q, mine: related.mine[String(q.id)] ?? null }}
+                    commission={commission}
+                    group={group}
+                    isAdmin={isAdmin}
+                  />
+                ))}
+              </section>
             )}
             <nav
               className="prevnext section-nav"
@@ -325,7 +373,24 @@ export default async function SubjectNotes(
                       const inner = (
                         <>
                           <span className="tl-num">{label(e)}</span>
-                          <span className="tl-title">{e.mt.title}</span>
+                          <span className="tl-title">
+                            {e.mt.title}
+                            {e.mt.state && (
+                              <span
+                                className={`tl-state tl-${e.mt.due && e.mt.state !== "studying" && e.mt.due <= today ? "due" : e.mt.state}`}
+                              >
+                                {e.mt.due &&
+                                e.mt.state !== "studying" &&
+                                e.mt.due <= today
+                                  ? "Revision due"
+                                  : e.mt.state === "completed"
+                                    ? "Completed"
+                                    : e.mt.state === "studying"
+                                      ? "Studying"
+                                      : "Needs attention"}
+                              </span>
+                            )}
+                          </span>
                           <span
                             className={`tl-meta ${written(e) ? "" : "tl-soon"}`}
                           >

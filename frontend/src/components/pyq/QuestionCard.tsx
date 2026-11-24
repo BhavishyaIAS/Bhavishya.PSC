@@ -6,6 +6,8 @@ import { StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import type { Question } from "@/lib/types";
 
+import { AnswerPad } from "./AnswerPad";
+import { BookmarkButton } from "./BookmarkButton";
 import { PrelimsOptions } from "./PrelimsCard";
 
 export function QuestionCard({
@@ -27,39 +29,82 @@ export function QuestionCard({
         <span className="badge badge-neutral">{q.year}</span>
         <span>{q.paper_label}</span>
         <span>· Q{q.question_no}</span>
-        {q.stage === "mains" && q.directive && <span className="badge badge-primary">{q.directive}</span>}
-        {q.stage === "mains" && q.marks && <span className="badge">{q.marks} marks</span>}
+        {q.stage === "mains" && q.directive && (
+          <span className="badge badge-primary">{q.directive}</span>
+        )}
+        {q.stage === "mains" && q.marks && (
+          <span className="badge">{q.marks} marks</span>
+        )}
         {q.tags.map((t) => (
           <span key={t} className="tag">
             #{t}
           </span>
         ))}
         <span className="spacer" />
+        {q.mine !== undefined && (
+          <BookmarkButton
+            base={`/tracks/${commission}/${group}`}
+            id={q.id}
+            initial={!!q.mine?.bookmarked}
+          />
+        )}
         {isAdmin && <StatusBadge status={q.status} />}
         {isAdmin && (
-          <Link href={`/manage/questions/${q.id}`} className="mini-btn" aria-label={`Edit question ${q.question_no} (${q.year})`}>
+          <Link
+            href={`/manage/questions/${q.id}`}
+            className="mini-btn"
+            aria-label={`Edit question ${q.question_no} (${q.year})`}
+          >
             <Pencil size={14} aria-hidden /> Edit
           </Link>
         )}
       </div>
       <p className="q-text">{q.text}</p>
       {q.stage === "prelims" ? (
-        <PrelimsOptions q={q} />
-      ) : isEmptyDoc(q.model_answer) ? (
-        <p className="muted small">Model answer coming soon.</p>
+        <PrelimsOptions
+          q={q}
+          base={
+            q.mine !== undefined ? `/tracks/${commission}/${group}` : undefined
+          }
+        />
       ) : (
-        <details className="answer-box">
-          <summary className="answer-summary">
-            <ChevronRight className="chev-rot" size={16} aria-hidden /> Model answer
-          </summary>
-          <RichText doc={q.model_answer} />
-        </details>
+        <>
+          {q.mine !== undefined && (
+            <div className="q-foot">
+              <AnswerPad
+                base={`/tracks/${commission}/${group}`}
+                id={q.id}
+                marks={q.marks}
+                initialWords={q.mine?.draft_words ?? 0}
+              />
+            </div>
+          )}
+          {isEmptyDoc(q.model_answer) ? (
+            <p className="muted small">Model answer coming soon.</p>
+          ) : (
+            <details className="answer-box">
+              <summary className="answer-summary">
+                <ChevronRight className="chev-rot" size={16} aria-hidden />{" "}
+                Model answer
+              </summary>
+              <RichText doc={q.model_answer} />
+            </details>
+          )}
+        </>
       )}
       {showMicro && q.micro_theme && (
         <div className="q-foot">
-          <Link className="mt-link" href={trackPath(commission, group, `micro/${encodeURIComponent(q.micro_theme.code)}`)}>
+          <Link
+            className="mt-link"
+            href={trackPath(
+              commission,
+              group,
+              `micro/${encodeURIComponent(q.micro_theme.code)}`,
+            )}
+          >
             <span className="code-chip">{q.micro_theme.code}</span>
-            {q.micro_theme.subject.title} › {q.micro_theme.topic.title} › {q.micro_theme.title}
+            {q.micro_theme.subject.title} › {q.micro_theme.topic.title} ›{" "}
+            {q.micro_theme.title}
           </Link>
         </div>
       )}

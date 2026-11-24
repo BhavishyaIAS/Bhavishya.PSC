@@ -4,6 +4,7 @@ from django.views.static import serve
 from rest_framework.routers import DefaultRouter
 
 from accounts import api as auth_api
+from content import views_learn as learn
 from content import views_manage as manage
 from content import views_read as read
 from content import views_site as site
@@ -40,6 +41,12 @@ urlpatterns = [
     path(TRACK + "notes/", read.track_notes),
     path(TRACK + "micro-themes/<str:code>/", read.micro_theme_detail),
     path(TRACK + "micro-themes/<str:code>/progress/", read.micro_theme_progress),
+    path(TRACK + "micro-themes/<str:code>/status/", learn.topic_status),
+    path(TRACK + "micro-themes/<str:code>/related-questions/", learn.related_questions),
+    path(TRACK + "questions/<int:pk>/attempt/", learn.attempt),
+    path(TRACK + "questions/<int:pk>/bookmark/", learn.bookmark),
+    path(TRACK + "questions/<int:pk>/answer/", learn.answer),
+    path(TRACK + "dashboard/", learn.dashboard),
     path("coverage/", read.coverage_overview),
     path("search/", read.search),
     path("materials/<int:pk>/link/", read.material_link),

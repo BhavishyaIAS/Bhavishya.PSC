@@ -346,14 +346,82 @@ class GlossaryTerm(models.Model):
 
 
 class StudyProgress(models.Model):
-    """A student marking a micro-theme as studied (powers their personal progress)."""
+    """
+    A student's state on one section: studying it, completed (studied), or needing more attention; and when it
+    is next due for revision. Revisions follow an expanding schedule (REVISION_DAYS). Rows from before statuses
+    existed are "completed" with no revision scheduled.
+    """
+
+    class State(models.TextChoices):
+        STUDYING = "studying", "Studying"
+        COMPLETED = "completed", "Completed"
+        ATTENTION = "attention", "Needs attention"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="study_progress")
     micro_theme = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="progress")
     completed_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=12, choices=State.choices, default=State.COMPLETED)
+    revisions = models.PositiveSmallIntegerField(default=0)
+    next_due = models.DateField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True, null=True)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "micro_theme"], name="uniq_progress")]
+
+
+REVISION_DAYS = [1, 3, 7, 21, 45]  # after completing, then after each revision
+
+
+class Attempt(models.Model):
+    """One answer a student chose to a Prelims question."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="attempts")
+    question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name="attempts")
+    chosen = models.CharField(max_length=1)
+    correct = models.BooleanField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["user", "question"]), models.Index(fields=["user", "-created_at"])]
+
+
+class Bookmark(models.Model):
+    """A question a student kept to come back to."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="bookmarks")
+    question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name="bookmarks")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "question"], name="uniq_bookmark")]
+
+
+class AnswerDraft(models.Model):
+    """A student's own answer to a Mains question: kept as a draft, with their self-assessment (1–5)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="answer_drafts")
+    question = models.ForeignKey("Question", on_delete=models.CASCADE, related_name="answer_drafts")
+    text = models.TextField(blank=True)
+    words = models.PositiveIntegerField(default=0)
+    self_score = models.PositiveSmallIntegerField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "question"], name="uniq_answer_draft")]
+
+
+class Activity(models.Model):
+    """The last time a student opened a section's notes (for "Continue where you left off")."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="activity")
+    track = models.ForeignKey(Track, on_delete=models.CASCADE, related_name="+")
+    micro_theme = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="+")
+    note_kind = models.CharField(max_length=16, blank=True)
+    seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "micro_theme"], name="uniq_activity")]
+        indexes = [models.Index(fields=["user", "track", "-seen_at"])]
 
 
 # ─────────────────────────────── PYQs ────────────────────────────────

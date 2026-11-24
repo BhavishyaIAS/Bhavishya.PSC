@@ -9,7 +9,7 @@ import { Pager } from "./Pager";
 import { PyqFilters } from "./PyqFilters";
 import { QuestionCard } from "./QuestionCard";
 
-const PASS = ["id", "year", "paper_label", "paper", "subject", "topic", "micro", "tag", "status", "q", "page"];
+const PASS = ["id", "year", "paper_label", "paper", "subject", "topic", "micro", "tag", "status", "q", "page", "mine"];
 
 export async function PyqVault({
   commission,
@@ -84,6 +84,22 @@ export async function PyqVault({
           </div>
         )}
       </div>
+      <nav className="segmented vault-mine" aria-label="Which questions">
+        {(stage === "prelims"
+          ? [["", "All"], ["unattempted", "Not answered yet"], ["incorrect", "Answered wrong"], ["bookmarked", "Kept"]]
+          : [["", "All"], ["drafted", "Answered"], ["bookmarked", "Kept"]]
+        ).map(([key, label]) => {
+          const qs2 = new URLSearchParams();
+          for (const [k, v] of Object.entries(searchParams)) if (typeof v === "string" && v && k !== "page" && k !== "mine") qs2.set(k, v);
+          if (key) qs2.set("mine", key);
+          const on = (searchParams.mine ?? "") === key;
+          return (
+            <Link key={key} href={`?${qs2}`} aria-current={on ? "page" : undefined}>
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
       <PyqFilters
         facets={facets}
         papers={[...tree.papers]
