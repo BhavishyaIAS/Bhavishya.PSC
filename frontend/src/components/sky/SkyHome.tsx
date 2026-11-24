@@ -37,67 +37,82 @@ export function SkyHome({
 }) {
   return (
     <div className="page sky-home">
-      <section className="sky-hero" aria-labelledby="sky-h">
-        <div className="sky-eyebrow">{eyebrow}</div>
-        <h1 id="sky-h">
-          {brand.name} <span>{brand.suffix}</span>
-        </h1>
-        <p>{lead}</p>
-      </section>
+      <div className="sky-first">
+        <section className="sky-hero" aria-labelledby="sky-h">
+          <div className="sky-eyebrow">{eyebrow}</div>
+          <h1 id="sky-h">
+            {brand.name} <span>{brand.suffix}</span>
+          </h1>
+          <p>{lead}</p>
+        </section>
 
-      {commissions.length === 0 ? (
-        <div className="sky-panel">
-          <b>No examinations yet.</b>{" "}
-          {isAdmin ? (
-            <>
-              Add your first exam from{" "}
-              <Link className="link" href="/manage/exams">
-                Manage → Exams
+        {commissions.length === 0 ? (
+          <div className="sky-panel">
+            <b>No examinations yet.</b>{" "}
+            {isAdmin ? (
+              <>
+                Add your first exam from{" "}
+                <Link className="link" href="/manage/exams">
+                  Manage → Exams
+                </Link>
+                .
+              </>
+            ) : (
+              "Exams are being set up. Please check back soon."
+            )}
+          </div>
+        ) : (
+          <nav className="sky-gates" aria-label="Choose your examination">
+            {commissions.map((c, i) => (
+              <Link
+                key={c.slug}
+                href={
+                  c.tracks[0]
+                    ? `/exams/${c.slug}/${c.tracks[0].group}`
+                    : `/exams/${c.slug}`
+                }
+                className="sky-gate"
+                data-warp
+              >
+                <SkyPortal kind={examPortal(c.slug, i)} size={168} />
+                <div>
+                  <div className="sky-eyebrow">{region(c.name)}</div>
+                  <h2>{c.short_name}</h2>
+                  {groupsLine(c) && (
+                    <div className="sky-full">{groupsLine(c)}</div>
+                  )}
+                  <p>{c.description || c.name}</p>
+                  <span className="sky-enter">
+                    {c.slug === "upsc"
+                      ? "Enter the wormhole"
+                      : "Open the portal"}
+                  </span>
+                </div>
               </Link>
-              .
-            </>
-          ) : (
-            "Exams are being set up. Please check back soon."
-          )}
-        </div>
-      ) : (
-        <nav className="sky-gates" aria-label="Choose your examination">
-          {commissions.map((c, i) => (
-            <Link key={c.slug} href={c.tracks[0] ? `/exams/${c.slug}/${c.tracks[0].group}` : `/exams/${c.slug}`} className="sky-gate" data-warp>
-              <SkyPortal kind={examPortal(c.slug, i)} size={168} />
-              <div>
-                <div className="sky-eyebrow">{region(c.name)}</div>
-                <h2>{c.short_name}</h2>
-                {groupsLine(c) && <div className="sky-full">{groupsLine(c)}</div>}
-                <p>{c.description || c.name}</p>
-                <span className="sky-enter">{c.slug === "upsc" ? "Enter the wormhole" : "Open the portal"}</span>
-              </div>
-            </Link>
-          ))}
-        </nav>
-      )}
+            ))}
+          </nav>
+        )}
 
-      {!user && (
-        <p className="sky-cta">
-          <Link href="/signup" className="btn btn-primary">
-            Start preparing
-          </Link>
-          <Link href="/login" className="link">
-            I have an account
-          </Link>
-        </p>
-      )}
+        {!user && (
+          <p className="sky-cta">
+            <Link href="/signup" className="btn btn-primary">
+              Start preparing
+            </Link>
+            <Link href="/login" className="link">
+              I have an account
+            </Link>
+          </p>
+        )}
+      </div>
 
       {commissions.length > 0 && (
-        <section className="sky-modules" aria-labelledby="sky-modules-h">
-          <h2 id="sky-modules-h">Four portals inside every exam</h2>
-          <ul className="sky-tiles">
+        <section className="sky-features" aria-labelledby="sky-features-h">
+          <h2 id="sky-features-h">Inside every exam</h2>
+          <ul>
             {MODULES.map((m) => (
-              <li key={m.tab} className="sky-tile">
-                <SkyPortal kind={m.kind} size={124} />
-                <span className="sky-kind">{m.portal}</span>
-                <h3>{m.name}</h3>
-                <p>{m.blurb}</p>
+              <li key={m.tab}>
+                <b>{m.name}</b>
+                <span>{m.blurb}</span>
               </li>
             ))}
           </ul>
