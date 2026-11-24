@@ -557,10 +557,53 @@
   }
 }
 @media (max-width: 560px) {
-  .brand-name,
-  :root[data-skin="sky"] .brand-name {
+  .brand-name {
     font-size: 22px;
     max-width: none;
     white-space: nowrap;
+  }
+  /* the Sky look's wide capitals need less room beside the buttons */
+  :root[data-skin="sky"] .brand-name {
+    font-size: 17px;
+    letter-spacing: 0.02em;
+    max-width: none;
+    white-space: nowrap;
+  }
+}
+
+/* side columns (design.css .split): their controls and figures sized for the column, in every look */
+.split-side .segmented.vault-mine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  border-radius: 14px;
+  gap: 2px;
+}
+.split-side .segmented.vault-mine a {
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+.split-side .stat {
+  padding: 14px;
+  gap: 6px;
+  min-height: 0;
+}
+.split-side .stat-icon {
+  display: none;
+}
+.split-side .stat-value {
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+  line-height: 1.1;
+}
+.split-side .stat-label {
+  font-size: 0.8rem;
+}
+@media (max-width: 420px) {
+  .brand-name {
+    font-size: min(22px, 5vw);
+  }
+  :root[data-skin="sky"] .brand-name {
+    font-size: min(17px, 3.9vw);
   }
 }
