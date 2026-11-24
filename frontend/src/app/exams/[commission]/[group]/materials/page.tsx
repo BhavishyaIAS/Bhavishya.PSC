@@ -181,7 +181,9 @@ async function KindFirst({ commission, group, here, kind: asked, kinds, own, isA
   // step 2: that module's syllabus, paper by paper
   const tree = await load<SyllabusTree>(`${base}?notes=${kind.key}`);
   const papers = tree.papers.filter((p) => p.subjects.length > 0);
-  let n = 0;
+  // topics numbered straight through the papers
+  const paperTopics = papers.map((paper) => syllabusTopics({ ...tree, papers: [paper] }));
+  const firstNumber = paperTopics.map((_, i) => paperTopics.slice(0, i).reduce((a, t) => a + t.length, 1));
   return (
     <div>
       <div className="flow-head">
@@ -207,39 +209,71 @@ async function KindFirst({ commission, group, here, kind: asked, kinds, own, isA
           {isAdmin ? "Add its papers and topics in Manage → Syllabus." : "Notes for this exam are being prepared. Check back soon."}
         </EmptyState>
       ) : (
-        papers.map((paper) => (
-          <section key={paper.id} className="notes-paper" aria-labelledby={`np-${paper.id}`}>
-            {papers.length > 1 && (
-              <h3 id={`np-${paper.id}`} className="notes-paper-title">
-                {paper.title} {isAdmin && paper.status !== "published" && <StatusBadge status={paper.status} />}
-              </h3>
-            )}
-            <div className="topic-grid">
-              {syllabusTopics({ ...tree, papers: [paper] }).map(({ subject, chapters, sections, byKind }) => {
-                const Icon = topicIcon(subject.title, subject.look);
-                const written = byKind[kind.key];
-                n += 1;
-                return (
-                  <Link key={subject.id} href={`${here}/${subject.id}?kind=${kind.key}`} className={`topic-card ${topicTone(subject.title, subject.look)}`}>
-                    <span className="tc-icon" aria-hidden>
-                      <Icon size={22} />
+        <div className="notes-papers">
+          {papers.map((paper, pi) => {
+            const topics = paperTopics[pi];
+            const chapterCount = topics.reduce((a, t) => a + t.chapters, 0);
+            const sectionCount = topics.reduce((a, t) => a + t.sections, 0);
+            const [kicker, title] = paperParts(paper.title);
+            return (
+              <section key={paper.id} className="notes-paper" aria-labelledby={`np-${paper.id}`}>
+                {papers.length > 1 && (
+                  <header className="np-head">
+                    <span className="np-index" aria-hidden>
+                      {String(pi + 1).padStart(2, "0")}
                     </span>
-                    <span className="tc-body">
-                      <span className="tc-num">{String(n).padStart(2, "0")}</span>
-                      <b className="tc-title">{subject.title}</b>
-                      <span className="tc-meta">
-                        {chapters} chapter{chapters === 1 ? "" : "s"} · {written ? `${written} of ${sections} sections written` : "Notes coming soon"}
-                      </span>
-                      {isAdmin && subject.status !== "published" && <StatusBadge status={subject.status} />}
+                    <div className="np-titles">
+                      {kicker && <span className="np-kicker">{kicker}</span>}
+                      <h3 id={`np-${paper.id}`} className="np-title">
+                        {title} {isAdmin && paper.status !== "published" && <StatusBadge status={paper.status} />}
+                      </h3>
+                    </div>
+                    <span className="np-meta">
+                      {topics.length} topic{topics.length === 1 ? "" : "s"} · {chapterCount} chapter{chapterCount === 1 ? "" : "s"} · {sectionCount} sections
                     </span>
-                    <ChevronRight className="tc-go" size={18} aria-hidden />
-                  </Link>
-                );
-              })}
-            </div>
-          </section>
-        ))
+                  </header>
+                )}
+                <div className="topic-grid notes-topic-grid">
+                  {topics.map(({ subject, chapters, sections, byKind }, ti) => {
+                    const Icon = topicIcon(subject.title, subject.look);
+                    const written = byKind[kind.key];
+                    return (
+                      <Link key={subject.id} href={`${here}/${subject.id}?kind=${kind.key}`} className={`topic-card ${topicTone(subject.title, subject.look)}`}>
+                        <span className="tc-icon" aria-hidden>
+                          <Icon size={22} />
+                        </span>
+                        <span className="tc-body">
+                          <span className="tc-num">{String(firstNumber[pi] + ti).padStart(2, "0")}</span>
+                          <b className="tc-title">{subject.title}</b>
+                          <span className="tc-meta">
+                            {chapters} chapter{chapters === 1 ? "" : "s"} · {sections} section{sections === 1 ? "" : "s"}
+                          </span>
+                          <span className={`tc-status ${written ? "" : "tc-soon"}`}>
+                            {written ? (written === sections ? "All notes written" : `${written} of ${sections} written`) : "Notes coming soon"}
+                          </span>
+                          {written > 0 && (
+                            <span className="tc-bar" aria-hidden>
+                              <span style={{ width: `${Math.round((100 * written) / Math.max(sections, 1))}%` }} />
+                            </span>
+                          )}
+                          {isAdmin && subject.status !== "published" && <StatusBadge status={subject.status} />}
+                        </span>
+                        <ChevronRight className="tc-go" size={18} aria-hidden />
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       )}
     </div>
   );
+}
+
+/** "Paper II — History, Culture & Geography" → ["Paper II", "History, Culture & Geography"]. */
+function paperParts(title: string): [string | undefined, string] {
+  const m = /^(Paper\s+[IVXLC\d]+[A-Z]?)\s*[—–:-]\s*(.+)$/.exec(title);
+  return m ? [m[1], m[2]] : [undefined, title];
 }

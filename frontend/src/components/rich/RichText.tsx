@@ -83,6 +83,26 @@ function cellSpan(node: RichNode) {
   return { colSpan: colSpan && colSpan > 1 ? colSpan : undefined, rowSpan: rowSpan && rowSpan > 1 ? rowSpan : undefined };
 }
 
+const HEADING_LABEL = /^((?:Module|Part|Chapter|Unit|Section)\s+(?:\d+[A-Za-z]?|[IVXLC]+|[A-Z])(?:\([a-z]\))?)\s*[·.:—–-]\s+(?=\S)/;
+const HEADING_NUM = /^(\d+(?:\.\d+)+)\.?\s*(?=[^\s\d.])|^(\d+)\.\s+(?=\S)/;
+
+/**
+ * A book heading's own numbering, set apart from its words: "Part 2 · The Timeline" → a small "Part 2" label
+ * over "The Timeline"; "6.1 Who They Were" → a "6.1" figure beside "Who They Were".
+ */
+function headingParts(node: RichNode): { label?: string; num?: string; rest: RichNode[] } {
+  const content = node.content ?? [];
+  const first = content[0];
+  if (first?.type !== "text" || !first.text) return { rest: content };
+  const lm = HEADING_LABEL.exec(first.text);
+  const nm = lm ? null : HEADING_NUM.exec(first.text);
+  const m = lm ?? nm;
+  if (!m) return { rest: content };
+  const text = first.text.slice(m[0].length);
+  const rest = text ? [{ ...first, text }, ...content.slice(1)] : content.slice(1);
+  return lm ? { label: lm[1], rest } : { num: nm![1] ?? nm![2], rest };
+}
+
 function renderNode(node: RichNode, key: number): ReactNode {
   switch (node.type) {
     case "text":
@@ -92,7 +112,14 @@ function renderNode(node: RichNode, key: number): ReactNode {
     case "heading": {
       const level = Math.min(Math.max(Number(node.attrs?.level) || 2, 2), 4);
       const Tag = `h${level}` as "h2" | "h3" | "h4";
-      return <Tag key={key}>{children(node)}</Tag>;
+      const { label, num, rest } = headingParts(node);
+      return (
+        <Tag key={key}>
+          {label && <span className="h-label">{label}</span>}
+          {num && <span className="h-num">{num}</span>}
+          {label || num ? <span className="h-text">{rest.map((c, i) => renderNode(c, i))}</span> : rest.map((c, i) => renderNode(c, i))}
+        </Tag>
+      );
     }
     case "bulletList":
       return <ul key={key}>{children(node)}</ul>;

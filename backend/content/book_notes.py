@@ -50,6 +50,8 @@ class _Stream(_Parser):
             for node in el.iter():
                 if node.tag == qn("w:t"):
                     text += node.text or ""
+                elif node.tag == qn("w:tab"):  # "1.1<tab>Who They Were"
+                    text += " "
                 elif node.tag in (qn("w:br"), qn("w:cr")):
                     parts.append(text)
                     text = ""
@@ -92,8 +94,26 @@ def nice(text: str) -> str:
     """ALL-CAPS headings → title case; others as written."""
     letters = [c for c in text if c.isalpha()]
     if letters and sum(c.isupper() for c in letters) / len(letters) > 0.8:
-        return title_case(text.upper())
-    return text
+        text = title_case(text.upper())
+    return tidy_heading(text)
+
+
+def tidy_heading(text: str) -> str:
+    """'1.1Who They Were' → '1.1 Who They Were'; 'Part 2 · the Timeline' / '3. the Toolkit' → '… The …'."""
+    text = re.sub(r"^(\d+(?:\.\d+)+)(?=[^\s\d.])", r"\1 ", text)
+    return re.sub(r"(^\d+(?:\.\d+)*\.\s+|^\d+(?:\.\d+)+\s+|\s·\s)([a-z])", lambda m: m.group(1) + m.group(2).upper(), text)
+
+
+def tidy_doc(doc: dict) -> bool:
+    """Tidy the headings of a stored note in place; True if anything changed."""
+    changed = False
+    for block in doc.get("content", []):
+        if block.get("type") == "heading" and block.get("content") and block["content"][0].get("type") == "text":
+            first = block["content"][0]
+            new = tidy_heading(first["text"])
+            if new != first["text"]:
+                first["text"], changed = new, True
+    return changed
 
 
 class Chapter:
