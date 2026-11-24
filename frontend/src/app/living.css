@@ -691,3 +691,15 @@
     min-height: 0;
   }
 }
+
+/* an exam's name on one line on wider screens: the title takes more of the head, sized to fit */
+@media (min-width: 901px) {
+  .ws-head {
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  }
+  .ws-head h1,
+  :root[data-skin] .ws-head h1 {
+    white-space: nowrap;
+    font-size: clamp(28px, 3.5vw, 54px);
+  }
+}
