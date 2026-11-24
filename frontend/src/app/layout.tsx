@@ -151,7 +151,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <main id="main">{children}</main>
           <footer className="site-footer">
             <span>
-              {brand.name} {brand.suffix} · {brand.tagline}
+              {brand.name} {brand.suffix}
             </span>
             <span className="footer-controls">
               <LookSwitch current={skin} />

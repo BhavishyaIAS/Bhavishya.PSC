@@ -23,7 +23,6 @@ export function Header({ user, exams = [], sky = false }: { user: User | null; e
               {brand.name}
               <span className="suffix"> {brand.suffix}</span>
             </div>
-            <div className="brand-sub">{brand.tagline}</div>
           </div>
         </Link>
 
