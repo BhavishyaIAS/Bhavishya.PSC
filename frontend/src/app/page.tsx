@@ -52,8 +52,7 @@ export default async function LandingPage() {
           <h1 id="arrival-h" className="hero-title">
             {brand.name} <span>{brand.suffix}</span>
           </h1>
-          <p className="hero-tagline">Beyond the Horizon of Knowledge</p>
-          <p className="hero-lead">{site.hero_lead || "The Universe of Wisdom"}</p>
+          <p className="hero-tagline">Beyond the Horizon of Knowledge · {site.hero_lead || "The Universe of Wisdom"}</p>
         </div>
 
         {/* the distant Solar System fills the page behind this (Universe.tsx lays it out here) */}
