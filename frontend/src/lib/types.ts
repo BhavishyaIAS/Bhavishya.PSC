@@ -248,6 +248,9 @@ export interface NoteKindInfo {
 }
 
 /** Site-wide choices made in Manage → Site settings (GET /api/site/). */
+/** The looks of the site: the Living Universe, the night sky, or the classic worlds. */
+export type Skin = "living" | "sky" | "classic";
+
 export interface Site {
   focus: string | null; // slug of the one exam the platform is dedicated to, if any
   focus_name: string;
@@ -259,7 +262,7 @@ export interface Site {
   show_codes: boolean;
   show_contents: boolean;
   backdrops: boolean;
-  skin: "sky" | "classic"; // the look of the whole site (Manage → Site settings)
+  skin: Skin; // the look of the whole site (Manage → Site settings)
 }
 
 /** How a topic can be presented; "" lets the site guess from the topic's name. */

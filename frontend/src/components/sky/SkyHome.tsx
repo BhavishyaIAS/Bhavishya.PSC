@@ -3,8 +3,10 @@ import Link from "next/link";
 import { brand } from "@/brand.config";
 import type { Commission, User } from "@/lib/types";
 
-import { examPortal, MODULES } from "./portals";
-import { SkyPortal } from "./SkyPortal";
+import { ExamMark } from "@/components/living/Mark";
+import type { Skin } from "@/lib/types";
+
+import { MODULES } from "./portals";
 
 /** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
 function region(name: string) {
@@ -23,12 +25,14 @@ function groupsLine(c: Commission) {
  * of night space; below, the five portals every exam opens into.
  */
 export function SkyHome({
+  skin,
   commissions,
   user,
   eyebrow,
   lead,
   isAdmin,
 }: {
+  skin: Skin;
   commissions: Commission[];
   user: User | null;
   eyebrow: string;
@@ -74,7 +78,7 @@ export function SkyHome({
                 className="sky-gate"
                 data-warp
               >
-                <SkyPortal kind={examPortal(c.slug, i)} size={168} />
+                <ExamMark skin={skin} slug={c.slug} index={i} size={168} />
                 <div>
                   <div className="sky-eyebrow">{region(c.name)}</div>
                   <h2>{c.short_name}</h2>
@@ -83,9 +87,7 @@ export function SkyHome({
                   )}
                   <p>{c.description || c.name}</p>
                   <span className="sky-enter">
-                    {c.slug === "upsc"
-                      ? "Enter the wormhole"
-                      : "Open the portal"}
+                    {skin === "living" ? "Enter" : c.slug === "upsc" ? "Enter the wormhole" : "Open the portal"}
                   </span>
                 </div>
               </Link>

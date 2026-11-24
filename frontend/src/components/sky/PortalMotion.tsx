@@ -39,6 +39,7 @@ export function PortalMotion() {
     const onClick = (e: MouseEvent) => {
       const a = (e.target as Element | null)?.closest?.<HTMLAnchorElement>("a[data-warp]");
       const w = warp.current;
+      if (document.documentElement.dataset.skin !== "sky") return; // the warp belongs to the Sky look
       if (!a || !w || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || still()) return;
       const href = a.getAttribute("href");
       if (!href || !href.startsWith("/")) return;
