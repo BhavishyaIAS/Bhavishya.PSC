@@ -5,7 +5,7 @@ from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-from content.models import AnswerDraft, Attempt, Bookmark, MicroTheme, Question, StudyProgress
+from content.models import Activity, AnswerDraft, Attempt, Bookmark, MicroTheme, Question, StudyProgress, TopicBookmark
 
 XHR = {"HTTP_X_REQUESTED_WITH": "XMLHttpRequest"}
 
@@ -69,3 +69,28 @@ class LearningTests(TestCase):
         self.assertEqual(r["how"], "mapped")
         self.assertIn(self.q.id, [x["id"] for x in r["results"]])
         self.assertTrue(MicroTheme.objects.filter(code=self.q.micro_theme.code).exists())
+
+    def test_reading_position_and_kept_topics(self):
+        mt = self.q.micro_theme
+        url = f"{self.base}/micro-themes/{mt.code}"
+        self.assertEqual(self.c.put(f"{url}/position/", {"position": 0.42, "kind": "comprehensive"}, format="json", **XHR).json()["position"], 0.42)
+        self.assertEqual(self.c.put(f"{url}/position/", {"position": "far"}, format="json", **XHR).status_code, 400)
+        self.assertEqual(self.c.put(f"{url}/position/", {"position": 7}, format="json", **XHR).json()["position"], 1.0)
+        self.c.put(f"{url}/position/", {"position": 0.42}, format="json", **XHR)
+        self.assertEqual(Activity.objects.get(micro_theme=mt).position, 0.42)
+        self.c.post(f"{url}/keep/", **XHR)
+        self.c.post(f"{url}/keep/", **XHR)  # keeping twice is still once
+        self.assertEqual(TopicBookmark.objects.count(), 1)
+        p = self.c.get(f"{url}/").json()["progress"]
+        self.assertEqual((p["kept"], p["position"]), (True, 0.42))
+        d = self.c.get(f"{self.base}/dashboard/").json()
+        self.assertEqual([t["code"] for t in d["kept_topics"]], [mt.code])
+        self.assertEqual(d["continue"][0]["position"], 0.42)
+        # what was kept comes first in search
+        word = mt.title.split()[0]
+        groups = self.c.get(f"/api/search/?q={word}").json()["groups"]
+        self.assertEqual(groups[0]["type"], "kept")
+        self.assertIn(mt.code, [x.get("code") for x in groups[0]["items"]])
+        self.assertTrue(all("syllabus" in x for g in groups if g["type"] == "micro_theme" for x in g["items"]))
+        self.c.delete(f"{url}/keep/", **XHR)
+        self.assertFalse(TopicBookmark.objects.exists())

@@ -247,6 +247,11 @@ export interface SearchGroup {
     track_label: string;
     title: string;
     snippet: string;
+    /** which syllabus a topic belongs to: "General syllabus" or a Notes module's */
+    syllabus?: string;
+    notes_kind?: NoteKind;
+    subject_id?: number;
+    mt_id?: number;
   }[];
 }
 

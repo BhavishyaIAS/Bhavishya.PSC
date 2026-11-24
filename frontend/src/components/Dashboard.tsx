@@ -3,13 +3,24 @@ import Link from "next/link";
 
 import { trackPath } from "@/lib/format";
 
-type Ref = { code: string; id: number; title: string; subject: string; subject_id: number; notes_kind: string; note_kind?: string; next_due?: string };
+type Ref = {
+  code: string;
+  id: number;
+  title: string;
+  subject: string;
+  subject_id: number;
+  notes_kind: string;
+  note_kind?: string;
+  next_due?: string;
+  position?: number;
+};
 export type DashboardData = {
   streak: number;
   topics: { general: number; with_notes: number; completed: number; studying: number; attention: number; due: number };
   prelims: { available: number; answered: number; attempts: number; correct: number; accuracy: number | null; this_week: number };
   mains: { drafts: number };
   bookmarks: number;
+  kept_topics?: Ref[];
   continue: Ref[];
   due: Ref[];
   attention: Ref[];
@@ -19,9 +30,11 @@ export type DashboardData = {
 };
 
 /** Where a topic opens: its notes (a Notes module's section) or its topic page (the general syllabus). */
-function topicHref(c: string, g: string, r: Ref) {
+function topicHref(c: string, g: string, r: Ref, resume = false) {
   const kind = r.note_kind || r.notes_kind;
-  return kind ? trackPath(c, g, `materials/${r.subject_id}?kind=${kind}&section=${r.id}`) : trackPath(c, g, `micro/${encodeURIComponent(r.code)}`);
+  return kind
+    ? trackPath(c, g, `materials/${r.subject_id}?kind=${kind}&section=${r.id}${resume ? "&resume=1" : ""}`)
+    : trackPath(c, g, `micro/${encodeURIComponent(r.code)}`);
 }
 
 /**
@@ -30,7 +43,7 @@ function topicHref(c: string, g: string, r: Ref) {
  */
 export function Dashboard({ d, commission, group }: { d: DashboardData; commission: string; group: string }) {
   const nextHref = (n: DashboardData["next"][number]) =>
-    n.target ? topicHref(commission, group, n.target) : n.subject_id ? trackPath(commission, group, `prelims?subject=${n.subject_id}&mine=unattempted`) : trackPath(commission, group, "prelims?mine=unattempted");
+    n.target ? topicHref(commission, group, n.target, n.kind === "continue" && (n.target.position ?? 0) > 0.02) : n.subject_id ? trackPath(commission, group, `prelims?subject=${n.subject_id}&mine=unattempted`) : trackPath(commission, group, "prelims?mine=unattempted");
   const fresh = !d.continue.length && !d.prelims.attempts && !d.topics.completed && !d.topics.studying;
   return (
     <section className="dash" aria-labelledby="dash-h">
@@ -74,12 +87,18 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
             <h3>Continue where you left off</h3>
             {d.continue.length ? (
               <ul className="dash-list">
-                {d.continue.map((r) => (
-                  <li key={r.code}>
-                    <Link href={topicHref(commission, group, r)}>{r.title}</Link>
-                    <span className="muted small">{r.subject}</span>
-                  </li>
-                ))}
+                {d.continue.map((r) => {
+                  const read = Math.round((r.position ?? 0) * 100);
+                  return (
+                    <li key={r.code}>
+                      <Link href={topicHref(commission, group, r, read > 2)}>{r.title}</Link>
+                      <span className="muted small">
+                        {r.subject}
+                        {read > 2 && ` · ${read}% read`}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <p className="muted">Topics you open will be listed here.</p>
@@ -158,6 +177,22 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
               </p>
             )}
           </div>
+
+          {!!d.kept_topics?.length && (
+            <div className="dash-card">
+              <h3>
+                <Bookmark size={17} aria-hidden /> Kept topics
+              </h3>
+              <ul className="dash-list">
+                {d.kept_topics.map((r) => (
+                  <li key={r.code}>
+                    <Link href={topicHref(commission, group, r)}>{r.title}</Link>
+                    <span className="muted small">{r.subject}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="dash-card dash-small">
             <Link href={trackPath(commission, group, "mains?mine=drafted")}>

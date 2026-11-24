@@ -44,6 +44,8 @@ urlpatterns = [
     path(TRACK + "micro-themes/<str:code>/progress/", read.micro_theme_progress),
     path(TRACK + "micro-themes/<str:code>/status/", learn.topic_status),
     path(TRACK + "micro-themes/<str:code>/related-questions/", learn.related_questions),
+    path(TRACK + "micro-themes/<str:code>/position/", learn.reading_position),
+    path(TRACK + "micro-themes/<str:code>/keep/", learn.keep_topic),
     path(TRACK + "questions/<int:pk>/attempt/", learn.attempt),
     path(TRACK + "questions/<int:pk>/bookmark/", learn.bookmark),
     path(TRACK + "questions/<int:pk>/answer/", learn.answer),

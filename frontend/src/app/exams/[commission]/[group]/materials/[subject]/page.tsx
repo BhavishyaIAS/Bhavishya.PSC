@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 
 import { MaterialList } from "@/components/MaterialList";
 import { QuestionCard } from "@/components/pyq/QuestionCard";
+import { KeepTopic, ReadingPosition } from "@/components/ReadingPosition";
 import { TopicStatus } from "@/components/TopicStatus";
 import { ReaderTools } from "@/components/ReaderTools";
 import { RichText } from "@/components/rich/RichText";
@@ -40,7 +41,13 @@ type Related = {
   mine: Record<string, Mine>;
 };
 type Detail = {
-  progress: { status: TopicState; next_due: string | null; revisions: number };
+  progress: {
+    status: TopicState;
+    next_due: string | null;
+    revisions: number;
+    kept: boolean;
+    position: number;
+  };
 };
 
 type NotesResponse = {
@@ -201,6 +208,22 @@ export default async function SubjectNotes(
                   >
                     <Pencil size={14} aria-hidden /> Edit
                   </Link>
+                )}
+                {detail && (
+                  <KeepTopic
+                    base={base}
+                    code={cur.mt.code}
+                    initial={detail.progress.kept}
+                  />
+                )}
+                {detail && note && (
+                  <ReadingPosition
+                    base={base}
+                    code={cur.mt.code}
+                    kind={kind}
+                    initial={detail.progress.position}
+                    resume={sp.resume === "1"}
+                  />
                 )}
                 <ReaderTools />
               </div>
