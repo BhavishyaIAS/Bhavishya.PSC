@@ -22,6 +22,7 @@ from accounts.models import is_admin
 
 from .coverage import track_coverage
 from .models import (
+    SiteSettings,
     SEARCH_CONFIG,
     Commission,
     GlossaryTerm,
@@ -139,7 +140,8 @@ def syllabus_tree(request, commission, group):
     q_counts = dict(
         Question.objects.visible_to(user).filter(micro_theme__in=mts).values_list("micro_theme").annotate(n=Count("id"))
     )
-    studied = set(StudyProgress.objects.filter(user=user, micro_theme__in=mts).values_list("micro_theme_id", flat=True))
+    states = {m: (s, d) for m, s, d in StudyProgress.objects.filter(user=user, micro_theme__in=mts).values_list("micro_theme_id", "status", "next_due")}
+    studied = {m for m, (s, _) in states.items() if s != "studying"}
 
     def node(obj, **extra):
         return {"id": obj.id, "code": obj.code, "title": obj.title, "order": obj.order, "status": obj.status, **extra}
@@ -154,6 +156,8 @@ def syllabus_tree(request, commission, group):
             note_kinds=sorted(note_kinds.get(mt.id, [])),
             question_count=q_counts.get(mt.id, 0),
             studied=mt.id in studied,
+            state=states.get(mt.id, (None, None))[0],
+            due=states.get(mt.id, (None, None))[1],
         ))
     for t in topics:
         topic_by_subject.setdefault(t.subject_id, []).append(node(t, micro_themes=mt_by_topic.get(t.id, [])))
@@ -219,11 +223,19 @@ def micro_theme_detail(request, commission, group, code):
         "glossary": list(mt.glossary.values("id", "term", "definition")),
         "questions": q_data,
         "materials": MaterialSerializer(materials, many=True).data,
-        "studied": StudyProgress.objects.filter(user=user, micro_theme=mt).exists(),
+        "studied": StudyProgress.objects.filter(user=user, micro_theme=mt).exclude(status="studying").exists(),
+        "progress": _progress(user, mt, track),
         "prev": prev_mt,
         "next": next_mt,
         "position": {"index": idx + 1, "total": len(ordered)},
     })
+
+
+def _progress(user, mt, track):
+    from .views_learn import progress_out, record_reading
+
+    record_reading(user, track, mt)
+    return progress_out(StudyProgress.objects.filter(user=user, micro_theme=mt).first())
 
 
 @api_view(["POST", "DELETE"])
@@ -260,6 +272,12 @@ def track_notes(request, commission, group):
         return Response({"detail": "Pass subject or topic."}, status=400)
     if (mt := request.query_params.get("micro_theme", "")).isdigit():
         notes = notes.filter(micro_theme_id=int(mt))
+        if request.query_params.get("fields") != "outline":
+            from .views_learn import record_reading
+
+            one = MicroTheme.objects.filter(pk=int(mt), track=track).first()
+            if one:
+                record_reading(user, track, one, kind)
     notes = notes.select_related("micro_theme__topic").order_by(
         "micro_theme__topic__order", "micro_theme__topic_id", "micro_theme__order", "micro_theme_id"
     )
@@ -356,13 +374,24 @@ def track_questions(request, commission, group):
     if not is_admin(request.user):
         params.pop("status", None)
     qs = filter_questions(qs, params)
+    if (mine := params.get("mine")) and request.user.is_authenticated:
+        from .views_learn import filter_mine
+
+        qs = filter_mine(qs, request.user, mine)
     if not (params.get("q") or "").strip():
         # the qualifying language papers (English, Telugu) after the papers that count
         qs = qs.annotate(language_paper=LANGUAGE_PAPER).order_by("language_paper", "-year", "paper_label", "question_no")
     paginator = StandardPagination()
     page = paginator.paginate_queryset(qs, request)
     ctx = {"visible_mt_ids": visible_mt_ids(request.user, track)}
-    return paginator.get_paginated_response(QuestionReadSerializer(page, many=True, context=ctx).data)
+    data = QuestionReadSerializer(page, many=True, context=ctx).data
+    if request.user.is_authenticated and SiteSettings.load().study_tools:
+        from .views_learn import mine_for
+
+        mine = mine_for(request.user, [q["id"] for q in data])
+        for q in data:
+            q["mine"] = mine.get(q["id"])
+    return paginator.get_paginated_response(data)
 
 
 @api_view(["GET"])

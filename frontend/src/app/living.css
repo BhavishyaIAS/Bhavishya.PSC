@@ -389,7 +389,7 @@
   --glass: rgba(20, 14, 50, 0.95);
 }
 /* the plates: titles, crumbs, paper headings and the home page's words */
-:root:is([data-skin="living"], [data-skin="sky"]) :is(.ws-title, .flow-head, .np-head, .sky-hero, .sky-features, .system-copy, .vault-head, .page-head) {
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.ws-title, .flow-head, .np-head, .sky-hero, .sky-features, .system-copy, .vault-head, .page-head, .dash-head) {
   background: var(--plate);
   border: 1.5px solid var(--edge);
   border-radius: 24px;
@@ -538,4 +538,11 @@
 }
 :root:is([data-skin="living"], [data-skin="sky"]) .vault-head h2 {
   font-size: clamp(1.5rem, 3vw, 2rem);
+}
+
+/* chosen buttons keep their filled face over the plate rule above */
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.answer-pad-rate, .topic-status) .mini-btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
 }

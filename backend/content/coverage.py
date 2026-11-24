@@ -30,7 +30,7 @@ def track_coverage(track: Track, user, include_papers=True):
         .filter(track=track, topic__subject__paper__notes_kind="")  # the general syllabus (Notes modules' own ones aside)
         .annotate(
             has_content=Exists(Note.objects.filter(micro_theme=OuterRef("pk"), status=Status.PUBLISHED)),
-            studied=Exists(StudyProgress.objects.filter(micro_theme=OuterRef("pk"), user_id=user.id)),
+            studied=Exists(StudyProgress.objects.filter(micro_theme=OuterRef("pk"), user_id=user.id).exclude(status="studying")),
         )
         .values("id", "status", "has_content", "studied", "topic__subject__paper_id")
     )

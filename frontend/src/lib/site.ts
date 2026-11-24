@@ -17,6 +17,7 @@ const DEFAULTS: Site = {
   show_contents: true,
   backdrops: true,
   skin: "living",
+  study_tools: true,
 };
 
 /** Site settings, fetched once per request. Falls back to the defaults if the API can't be reached. */

@@ -56,6 +56,8 @@ export interface MicroThemeNode extends NodeBase {
   note_kinds: NoteKind[];
   question_count: number;
   studied: boolean;
+  state?: TopicState;
+  due?: string | null;
 }
 export interface TopicNode extends NodeBase {
   micro_themes: MicroThemeNode[];
@@ -146,7 +148,21 @@ export interface Question {
   tags: string[];
   micro_theme: MtRef | null;
   status: Status;
+  mine?: Mine | null; // the signed-in student's own record on this question
 }
+
+/** A student's own record on a question: their last answer, a bookmark, a Mains draft. */
+export interface Mine {
+  chosen: string | null;
+  correct: boolean | null;
+  attempts: number;
+  bookmarked: boolean;
+  draft_words: number;
+  self_score: number | null;
+}
+
+/** A student's state on a section (null: not started). Completed sections come due for revision. */
+export type TopicState = "studying" | "completed" | "attention" | null;
 
 export interface Paginated<T> {
   count: number;
@@ -263,6 +279,7 @@ export interface Site {
   show_contents: boolean;
   backdrops: boolean;
   skin: Skin; // the look of the whole site (Manage → Site settings)
+  study_tools: boolean; // dashboard, recorded answers, Keep, answer writing, topic status and its PYQs
 }
 
 /** How a topic can be presented; "" lets the site guess from the topic's name. */

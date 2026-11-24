@@ -2551,3 +2551,243 @@ details.topic-chapter[open] .topic-chapter-chev {
   font-weight: 700;
   color: var(--kind);
 }
+
+/* ─────────────── The exam dashboard ─────────────── */
+.dash {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 30px;
+}
+.dash-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dash-head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+.dash-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--brand-primary);
+  background: var(--plate, var(--surface));
+  border: 1.5px solid var(--edge, var(--border));
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 14px;
+}
+.dash-card {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: var(--plate, var(--surface));
+  border: 1.5px solid var(--edge, var(--border));
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+.dash-card h3 {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.1rem;
+}
+.dash-card p {
+  margin: 0;
+}
+.dash-next {
+  border-color: color-mix(in srgb, var(--brand-primary) 55%, var(--edge, var(--border)));
+}
+.dash-next ol {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 8px;
+}
+.dash-next a,
+.dash-list a,
+.dash-small a {
+  font-weight: 600;
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.dash-next a:hover,
+.dash-list a:hover,
+.dash-small a:hover {
+  color: var(--brand-primary);
+}
+.dash-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.dash-list li {
+  display: grid;
+  gap: 1px;
+}
+.dash-figure b {
+  font-size: 1.35rem;
+  color: var(--text-strong);
+}
+.dash-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.dash-bars li {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.92rem;
+}
+.dash-bar {
+  height: 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-strong) 10%, transparent);
+  overflow: hidden;
+}
+.dash-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--brand-primary);
+}
+.dash-small {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  align-content: center;
+}
+.dash-small a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dash-start a {
+  font-weight: 600;
+}
+
+/* ─────────────── A topic's state, and its PYQs below the notes ─────────────── */
+.topic-status {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+}
+.topic-status-now {
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-right: 6px;
+}
+.topic-status-now.is-due {
+  color: var(--brand-primary);
+}
+.topic-status .mini-btn[aria-pressed="true"] {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--on-accent, #fff);
+}
+.topic-pyqs {
+  display: grid;
+  gap: 14px;
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--border);
+}
+.topic-pyqs h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.tl-state {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  vertical-align: 2px;
+  border: 1px solid currentColor;
+}
+.tl-completed { color: var(--success, #2f7a4f); }
+.tl-studying { color: var(--brand-primary); }
+.tl-attention { color: var(--danger, #b3261e); }
+.tl-due { color: #b26a00; }
+
+/* ─────────────── Questions: keep, answer, write ─────────────── */
+.bookmark-btn.is-on {
+  color: var(--brand-primary);
+  border-color: var(--brand-primary);
+}
+.mine-ok { color: var(--success, #2f7a4f); font-weight: 600; }
+.mine-wrong { color: var(--danger, #b3261e); font-weight: 600; }
+.vault-mine {
+  margin-bottom: 12px;
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.answer-pad {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+.answer-pad-label {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+.answer-pad textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid var(--border-strong, var(--border));
+  background: var(--surface);
+  color: var(--text);
+  font: 400 1rem/1.7 var(--font-reading, var(--font-body));
+  resize: vertical;
+}
+.answer-pad-foot,
+.answer-pad-rate {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.answer-words {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.answer-words.over {
+  color: var(--danger, #b3261e);
+}
+.answer-pad-rate .mini-btn[aria-pressed="true"] {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: var(--on-accent, #fff);
+}
+@media (max-width: 640px) {
+  .dash-bars li {
+    grid-template-columns: 1fr auto;
+  }
+  .dash-bar {
+    grid-column: 1 / -1;
+  }
+}
