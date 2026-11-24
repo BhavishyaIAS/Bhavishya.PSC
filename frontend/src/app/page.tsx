@@ -18,16 +18,16 @@ import { getSkin } from "@/lib/skin";
  * Everything the old home page did is still here: the greeting, the admin's own
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
-/** The small line above the name on the home page (Site settings can set another). */
-const INVITATION = "Enter the New Dimension of Preparation";
-
 export default async function LandingPage() {
   const [commissions, user, site, skin] = await Promise.all([getCommissions(), currentUser(), getSite(), getSkin()]);
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
   const focus = site.focus ? commissions.find((c) => c.slug === site.focus) : undefined;
   const shown = focus ? [focus] : commissions;
   const isAdmin = user?.role === "admin";
-  const eyebrow = site.hero_eyebrow || (focus ? focus.name : INVITATION);
+  // the small line above the name: Site settings' own, else a welcome for the student by name
+  const firstName = user?.display_name?.split(" ")[0];
+  const welcome = firstName ? `Welcome back, ${firstName}` : undefined;
+  const eyebrow = site.hero_eyebrow || (focus ? focus.name : welcome ?? "Civil services preparation");
 
   if (skin !== "classic") {
     return (
@@ -36,7 +36,7 @@ export default async function LandingPage() {
         commissions={shown}
         user={user}
         isAdmin={isAdmin}
-        eyebrow={site.hero_eyebrow || INVITATION}
+        eyebrow={site.hero_eyebrow || welcome || shown.map((c) => c.short_name).join(" · ") || "Civil services preparation"}
         lead={site.hero_lead || "Step through a gateway to find its syllabus, your notes, past papers and a record of how far you have come."}
       />
     );
@@ -52,7 +52,6 @@ export default async function LandingPage() {
           <h1 id="arrival-h" className="hero-title">
             {brand.name} <span>{brand.suffix}</span>
           </h1>
-          <p className="hero-tagline">Beyond the Horizon of Knowledge · {site.hero_lead || "The Universe of Wisdom"}</p>
         </div>
 
         {/* the distant Solar System fills the page behind this (Universe.tsx lays it out here) */}
@@ -125,7 +124,7 @@ export default async function LandingPage() {
             {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => (
               <li key={d.tab} className={`destination destination-${d.world}`}>
                 <Globe world={d.world} size={96} />
-                <b>{d.long}</b>
+                <b>{d.tab === "materials" ? "Syllabus-Wise Notes" : d.long}</b>
               </li>
             ))}
           </ul>
