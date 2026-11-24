@@ -389,7 +389,7 @@
   --glass: rgba(20, 14, 50, 0.95);
 }
 /* the plates: titles, crumbs, paper headings and the home page's words */
-:root:is([data-skin="living"], [data-skin="sky"]) :is(.ws-title, .flow-head, .np-head, .sky-hero, .sky-features, .system-copy, .vault-head, .page-head, .dash-head) {
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.ws-title, .flow-head, .np-head, .sky-features, .system-copy, .vault-head, .page-head, .dash-head) {
   background: var(--plate);
   border: 1.5px solid var(--edge);
   border-radius: 24px;
@@ -702,4 +702,45 @@
     white-space: nowrap;
     font-size: clamp(28px, 3.5vw, 54px);
   }
+}
+
+/* ═══════════ The home page's name, as in the Classic look: no box, centred, the line above it between two
+ * fine gold rules. A soft glow of the page's own colour behind the words keeps them clear over any scene. ═══════════ */
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-first .sky-hero {
+  max-width: none;
+  margin: 0 auto;
+  padding: clamp(28px, 6vh, 64px) 0 clamp(18px, 4vh, 36px);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.72rem;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow::before,
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow::after {
+  content: "";
+  width: 40px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, currentColor);
+  opacity: 0.8;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow::after {
+  transform: scaleX(-1);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero h1 {
+  margin: 16px 0 0;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero :is(h1, .sky-eyebrow) {
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--w-deep, var(--bg)) 90%, transparent),
+    0 0 42px color-mix(in srgb, var(--w-deep, var(--bg)) 75%, transparent);
 }
