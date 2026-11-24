@@ -119,10 +119,10 @@ export default async function LandingPage() {
       {shown.length > 0 && (
         <section id="worlds" className="page landing-section" aria-labelledby="worlds-h">
           <h2 id="worlds-h" className="section-title">
-            Five worlds inside every exam
+            Four Worlds Inside Each Portal
           </h2>
           <ul className="destinations">
-            {DESTINATIONS.map((d) => (
+            {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => (
               <li key={d.tab} className={`destination destination-${d.world}`}>
                 <Globe world={d.world} size={96} />
                 <b>{d.long}</b>

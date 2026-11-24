@@ -914,7 +914,7 @@ html {
 }
 .destinations {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 .destination {
@@ -1210,7 +1210,7 @@ html {
 /* the five worlds, as the way around an exam */
 .worlds-nav {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 30px;
   padding: 6px;
@@ -1512,7 +1512,7 @@ html {
 
 @media (max-width: 1100px) {
   .destinations {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .world-tab-place {
     display: none;
