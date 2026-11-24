@@ -494,3 +494,57 @@ export function MoonPhase() {
     </section>
   );
 }
+
+/** One quiet line for each phase, under its name in the corner. */
+const VERSE: Record<PhaseName, string> = {
+  "New Moon": "a dark page, waiting to be written",
+  "Waxing Crescent": "a thin bow of light, growing",
+  "First Quarter": "half the way to fullness",
+  "Waxing Gibbous": "almost whole, still gathering",
+  "Full Moon": "the whole face, turned to us",
+  "Waning Gibbous": "giving back its light, slowly",
+  "Last Quarter": "half the way to rest",
+  "Waning Crescent": "a last silver thread before the dark",
+};
+
+/**
+ * Tonight's Moon, small, in the page's top-right corner (the Classic look's Prelims page): the real phase,
+ * its name and a line of verse. No controls and nothing ticking; it is redrawn every ten minutes.
+ */
+export function MoonCorner() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const tick = useSyncExternalStore(
+    (on) => {
+      const t = window.setInterval(on, 600000);
+      return () => window.clearInterval(t);
+    },
+    () => Math.floor(Date.now() / 600000),
+    () => 0,
+  );
+  const state = useMemo(() => (tick ? moonState(new Date(tick * 600000)) : null), [tick]);
+  useEffect(() => {
+    if (!state) return;
+    let live = true;
+    loadMap(true).then((map) => {
+      const canvas = ref.current;
+      if (!live || !canvas) return;
+      const n = Math.round(52 * Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = canvas.height = n;
+      renderMoon(canvas, map, geometry(state));
+    });
+    return () => {
+      live = false;
+    };
+  }, [state]);
+  if (!state) return <aside className="moon-corner" aria-hidden />;
+  const phase = phaseOf(state.elongation);
+  return (
+    <aside className="moon-corner" aria-label={`Tonight's Moon: ${phase}, ${Math.round(state.illuminated * 100)}% lit`}>
+      <canvas ref={ref} className="moon-corner-disc" style={{ ["--glow" as string]: state.illuminated.toFixed(2) }} aria-hidden />
+      <span className="moon-corner-words" aria-hidden>
+        <b>{phase}</b>
+        <i>{VERSE[phase]}</i>
+      </span>
+    </aside>
+  );
+}
