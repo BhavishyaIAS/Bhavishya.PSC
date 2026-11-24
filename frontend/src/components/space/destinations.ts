@@ -17,7 +17,7 @@ export interface Destination {
 export const DESTINATIONS: Destination[] = [
   { tab: "materials", world: "mars", place: "Mars", label: "Notes", long: "Material / Notes", blurb: "The research station. Full, prelims and mains notes, topic by topic." },
   { tab: "prelims", world: "moon", place: "The Moon", label: "Prelims PYQs", long: "Prelims PYQs", blurb: "The lunar facility. Previous-year objective questions, answered and explained." },
-  { tab: "mains", world: "saturn", place: "Saturn", label: "Mains PYQs", long: "Mains PYQs", blurb: "The long view. Previous-year descriptive questions with model answers." },
+  { tab: "mains", world: "jupiter", place: "Jupiter", label: "Mains PYQs", long: "Mains PYQs", blurb: "The long view. Previous-year descriptive questions with model answers." },
   { tab: "syllabus", world: "jupiter", place: "Jupiter", label: "Syllabus", long: "Syllabus Detailer", blurb: "The whole system. Every paper, subject and topic, and how far you have come." },
   { tab: "progress", world: "earth", place: "Earth", label: "Progress", long: "Progress Tracker", blurb: "Mission control. Your coverage of the syllabus, measured." },
 ];

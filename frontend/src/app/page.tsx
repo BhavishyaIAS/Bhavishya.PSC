@@ -18,6 +18,14 @@ import { getSkin } from "@/lib/skin";
  * Everything the old home page did is still here: the greeting, the admin's own
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
+/** The four worlds' names on the landing page. */
+const LANDING_NAMES: Record<string, string> = {
+  materials: "Syllabus-Wise Notes",
+  prelims: "Prelims PYQs with Solutions",
+  mains: "Mains PYQs with Model Answers",
+  progress: "Track Your Progress",
+};
+
 export default async function LandingPage() {
   const [commissions, user, site, skin] = await Promise.all([getCommissions(), currentUser(), getSite(), getSkin()]);
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
@@ -123,7 +131,7 @@ export default async function LandingPage() {
             {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => (
               <li key={d.tab} className={`destination destination-${d.world}`}>
                 <Globe world={d.world} size={96} />
-                <b>{d.tab === "materials" ? "Syllabus-Wise Notes" : d.long}</b>
+                <b>{LANDING_NAMES[d.tab] ?? d.long}</b>
               </li>
             ))}
           </ul>

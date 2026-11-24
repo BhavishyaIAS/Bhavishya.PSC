@@ -67,6 +67,8 @@ export const BODIES: Body[] = [
     blurb: "A dwarf planet of the Kuiper Belt (reclassified in 2006), with a heart-shaped plain of nitrogen ice: Tombaugh Regio." },
 ];
 export const SUN = 0, MOON = 4, SATURN = 7, URANUS = 8, PLUTO = 10;
+/** Bodies left out of the picture (Saturn: many Indians do not hold it auspicious). */
+export const HIDDEN = new Set([SATURN]);
 /** The examinations come after the natural bodies: indices FIRST_EXAM … FIRST_EXAM + 2. */
 export const FIRST_EXAM = BODIES.length;
 export const MAX_EXAMS = 3;
@@ -133,7 +135,7 @@ export function bodiesAt(t: number, big = 1): Omit<Scene, "orbits"> & { orbits: 
   const pos: Vec3[] = [], rad: number[] = [], spin: number[] = [], E: number[] = [];
   const orbits: Scene["orbits"] = [];
   BODIES.forEach((b, i) => {
-    rad.push(b.r * (i === SUN ? Math.min(big, 1.3) : big));
+    rad.push(HIDDEN.has(i) ? 0 : b.r * (i === SUN ? Math.min(big, 1.3) : big));
     spin.push(b.spin * t);
     if (!b.orbit) {
       pos.push([0, 0, 0]);
@@ -148,6 +150,7 @@ export function bodiesAt(t: number, big = 1): Omit<Scene, "orbits"> & { orbits: 
     const x = o.a * (Math.cos(Ei) - e), y = o.a * Math.sqrt(1 - e * e) * Math.sin(Ei);
     pos.push(add(mul(f.U, x), mul(f.V, y)));
     E.push(Ei);
+    if (HIDDEN.has(i)) return; // drawn nowhere: no orbit line either
     orbits.push({ c: mul(f.U, -o.a * e), U: f.U, V: f.V, N: f.N, a: o.a, b: o.a * Math.sqrt(1 - e * e), E: Ei, body: i });
   });
   // the Moon goes round the Earth (tidally locked: it turns once per orbit)
@@ -271,6 +274,7 @@ export function layout(opts: {
 export function pick(l: Layout, x: number, y: number, slack = 6): number {
   let best = -1, bestZ = Infinity;
   l.scene.pos.forEach((P, i) => {
+    if (l.scene.rad[i] <= 0) return; // not drawn, so not pointed at
     const s = toScreen(l.cam, P);
     const r = l.scene.rad[i] * s.k + (i === SUN ? 0 : slack);
     if ((x - s.x) ** 2 + (y - s.y) ** 2 < r * r && s.z < bestZ) {
