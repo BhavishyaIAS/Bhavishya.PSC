@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { MoonPhase } from "@/components/MoonPhase";
+import { MoonCorner } from "@/components/MoonPhase";
 import { PyqVault } from "@/components/pyq/PyqVault";
 import { getSkin } from "@/lib/skin";
 
@@ -10,8 +10,8 @@ export default async function PrelimsTab(props: PageProps<"/exams/[commission]/[
   const [{ commission, group }, searchParams, skin] = await Promise.all([props.params, props.searchParams, getSkin()]);
   return (
     <>
-      {/* the lunar facility's window: the Moon's real phase tonight (or on any chosen date), in the Classic look only */}
-      {skin === "classic" && <MoonPhase />}
+      {/* tonight's Moon, small and quiet in the top-right corner, in the Classic look only */}
+      {skin === "classic" && <MoonCorner />}
       <PyqVault commission={commission} group={group} stage="prelims" searchParams={searchParams} />
     </>
   );
