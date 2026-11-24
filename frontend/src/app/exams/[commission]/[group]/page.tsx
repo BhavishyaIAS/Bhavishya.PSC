@@ -32,7 +32,7 @@ export default async function ExamHome(
         >
           <ModuleMark skin={skin} tab={m.tab} size={dash ? 96 : 132} />
           <span className="exam-block-text">
-            {skin !== "living" && <span className="sky-kind">{m.portal}</span>}
+            {skin === "sky" && <span className="sky-kind">{m.portal}</span>}
             <b>{m.name}</b>
             <span>{m.blurb}</span>
             <span className="sky-enter">Open</span>
