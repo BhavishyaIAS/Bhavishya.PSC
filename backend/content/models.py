@@ -375,6 +375,37 @@ class StudyProgress(models.Model):
 REVISION_DAYS = [1, 3, 7, 21, 45]  # after completing, then after each revision
 
 
+class SyllabusLink(models.Model):
+    """
+    A topic of a Notes module's own syllabus covers a section of the general syllabus (content/syllabus_links.py):
+    the notes topic then shows that section's PYQs, and reading it counts towards the general progress.
+    Suggested from the titles; an editor confirms, rejects or adds links in Manage.
+    """
+
+    class State(models.TextChoices):
+        SUGGESTED = "suggested", "Suggested"
+        CONFIRMED = "confirmed", "Confirmed"
+        REJECTED = "rejected", "Rejected"
+
+    notes_mt = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="links_out")
+    general_mt = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="links_in")
+    score = models.FloatField(default=0)
+    status = models.CharField(max_length=10, choices=State.choices, default=State.SUGGESTED)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+")
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["notes_mt", "general_mt"], name="uniq_syllabus_link")]
+        indexes = [models.Index(fields=["notes_mt", "status"]), models.Index(fields=["general_mt", "status"])]
+
+
+def live_links(qs):
+    """The links in use: confirmed ones, and strong suggestions an editor has not yet looked at."""
+    from .syllabus_links import STRONG
+
+    return qs.filter(models.Q(status="confirmed") | models.Q(status="suggested", score__gte=STRONG))
+
+
 class Attempt(models.Model):
     """One answer a student chose to a Prelims question."""
 

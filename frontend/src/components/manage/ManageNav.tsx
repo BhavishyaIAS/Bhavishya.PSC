@@ -1,6 +1,6 @@
 "use client";
 
-import { BookUp, FileQuestion, FileUp, FolderOpen, Landmark, LayoutDashboard, LayoutGrid, ListTree, SlidersHorizontal, Users } from "lucide-react";
+import { BookUp, FileQuestion, FileUp, FolderOpen, Landmark, LayoutDashboard, LayoutGrid, Link2, ListTree, SlidersHorizontal, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -9,6 +9,7 @@ const ITEMS = [
   { href: "/manage/exams", label: "Exams", icon: Landmark },
   { href: "/manage/topics", label: "Topics catalogue", icon: LayoutGrid },
   { href: "/manage/syllabus", label: "Syllabus & notes", icon: ListTree },
+  { href: "/manage/syllabus-links", label: "Syllabus links", icon: Link2 },
   { href: "/manage/questions", label: "PYQ manager", icon: FileQuestion },
   { href: "/manage/import", label: "Bulk upload PYQs", icon: FileUp },
   { href: "/manage/notes-import", label: "Import notes (Word)", icon: BookUp },
