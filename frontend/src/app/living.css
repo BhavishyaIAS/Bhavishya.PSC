@@ -546,3 +546,21 @@
   border-color: var(--accent);
   color: var(--on-accent);
 }
+
+/* ═══════════ The name in the bar: larger, on its own (no tagline under it), in every look ═══════════ */
+.brand-name {
+  font-size: 30px;
+}
+@media (max-width: 980px) {
+  .brand-name {
+    font-size: 26px;
+  }
+}
+@media (max-width: 560px) {
+  .brand-name,
+  :root[data-skin="sky"] .brand-name {
+    font-size: 22px;
+    max-width: none;
+    white-space: nowrap;
+  }
+}
