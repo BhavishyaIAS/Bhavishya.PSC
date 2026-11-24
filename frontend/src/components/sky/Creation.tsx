@@ -9,8 +9,10 @@ import { COSMOS_SEEN, COSMOS_SESSION } from "./cosmos-boot";
  * The Sky look's home page: from a singularity to Bhavishya IAS, then a universe that keeps evolving behind it.
  *
  * One 2D canvas, behind the page, does both: the opening sequence (cosmos-boot.ts decides whether it plays) and,
- * after it, the slow evolution in the background: nebulae drifting, dust gathering, galaxies turning, now and then
- * a star being born. The sequence:
+ * after it, a creation that never stops: nebulae drift, dust flows, galaxies turn, stars are born, and every minute
+ * or so a new beginning, faint, somewhere in the sky (a point of light, a halo and slow rings, dust flung out that
+ * joins the flow, and a nebula and a galaxy forming where it happened; the oldest fade after about two cycles, so
+ * the sky renews itself without filling up). The sequence:
  *   1 singularity   a point of warm light in the dark, and a moment of silence
  *   2 first light   a halo, fine particles, slow rings of light; nothing flashes
  *   3 the cosmos    nebulae, dust, star clusters and distant galaxies gather; the colours of the Sky look
@@ -283,6 +285,14 @@ export function CreationCosmos() {
     });
     let births: { x: number; y: number; t0: number }[] = [];
     let nextBirth = 2;
+    // the creation goes on behind the page: now and then a new beginning, somewhere in the sky
+    const BMAX = 320;
+    const bx = new Float32Array(BMAX), by = new Float32Array(BMAX), bvx = new Float32Array(BMAX), bvy = new Float32Array(BMAX);
+    const bs = new Float32Array(BMAX), bc = new Uint8Array(BMAX);
+    let bang: { x: number; y: number; t0: number; n: number } | null = null;
+    let nextBang = -1; // set once the page is there
+    // what each beginning leaves behind: a nebula and a galaxy that form, stay a while, then fade
+    let gens: { x: number; y: number; t0: number; k: number; g: number; ang: number; sx: number; gs: number; rot: number }[] = [];
 
     const resize = () => {
       W = innerWidth;
@@ -382,8 +392,10 @@ export function CreationCosmos() {
         raf = requestAnimationFrame(frame);
         return;
       }
+      // move things by the time since they were last drawn, not since the last frame
+      const step = lastDraw ? Math.min(0.1, (now - lastDraw) / 1000) : dt;
       lastDraw = now;
-      draw(dt);
+      draw(step);
       raf = requestAnimationFrame(frame);
     };
 
@@ -532,6 +544,105 @@ export function CreationCosmos() {
           const r = 3 + smooth(Math.min(1, age / 4)) * 9;
           ctx.globalAlpha = a * (isNight ? 0.7 : 0.35);
           ctx.drawImage(isNight ? core : sprites.day.dust[0], b.x * W - r, b.y * H - r, r * 2, r * 2);
+        }
+      }
+
+      // ── the creation goes on: a new beginning every minute or so, faint, behind the page ──
+      if (phase === "ambient") {
+        const cycle = phone ? 60 : 48;
+        if (nextBang < 0) nextBang = time + (T ? 8 : 4);
+        if (time >= nextBang) {
+          // somewhere new, away from the edges and from the last one
+          let x = 0.15 + rnd() * 0.7, y = 0.18 + rnd() * 0.64;
+          if (bang && Math.hypot(x - bang.x, y - bang.y) < 0.25) { x = 1 - x; y = 1 - y; }
+          const n = phone ? 140 : BMAX, M0 = Math.max(W, H);
+          bang = { x, y, t0: time, n };
+          for (let i = 0; i < n; i++) {
+            const a = rnd() * TAU, sp = (0.15 + rnd() ** 1.5 * 1.25) * M0 * 0.11;
+            bx[i] = x * W; by[i] = y * H;
+            bvx[i] = Math.cos(a) * sp; bvy[i] = Math.sin(a) * sp;
+            bs[i] = 0.5 + rnd() ** 2 * 1.8; bc[i] = Math.floor(rnd() * 4);
+          }
+          gens.push({ x, y, t0: time, k: Math.floor(rnd() * 10), g: Math.floor(rnd() * 3), ang: rnd() * Math.PI, sx: 1.4 + rnd(), gs: 34 + rnd() * 30, rot: rnd() * TAU });
+          nextBang = time + cycle * (0.85 + rnd() * 0.35);
+        }
+        const pal = isNight ? PALETTES.night : PALETTES.day;
+        const spr = isNight ? sprites.night : sprites.day;
+        const M0 = Math.max(W, H);
+        // what earlier beginnings left: forming, then resting, then fading after about two cycles
+        gens = gens.filter((g) => time - g.t0 < cycle * 2.6);
+        ctx.globalCompositeOperation = pal.blend;
+        for (const g of gens) {
+          const age = time - g.t0;
+          const life = smooth(ramp(age, 8, 26)) * (1 - smooth(ramp(age, cycle * 1.7, cycle * 2.6)));
+          if (life <= 0.002) continue;
+          const r = (0.12 + 0.08 * smooth(ramp(age, 8, cycle))) * M0; // the cloud spreads as it ages
+          ctx.save();
+          ctx.translate(g.x * W, g.y * H);
+          ctx.rotate(g.ang + age * 0.004);
+          ctx.scale(g.sx, 1);
+          ctx.globalAlpha = pal.level.nebula * 0.7 * life;
+          ctx.drawImage(spr.neb[g.k], -r, -r, r * 2, r * 2);
+          ctx.restore();
+          const gl = smooth(ramp(age, 16, 34)) * (1 - smooth(ramp(age, cycle * 1.7, cycle * 2.6)));
+          if (gl > 0.002) {
+            ctx.save();
+            ctx.translate(g.x * W + Math.cos(g.rot) * r * 0.35, g.y * H + Math.sin(g.rot) * r * 0.25);
+            ctx.rotate(g.rot);
+            ctx.scale(1, 0.5);
+            ctx.rotate(age * 0.02);
+            ctx.globalAlpha = pal.level.galaxy * 0.9 * gl;
+            const gs = g.gs * (phone ? 0.7 : 1);
+            ctx.drawImage(spr.gal[g.g], -gs, -gs, gs * 2, gs * 2);
+            ctx.restore();
+          }
+        }
+        if (bang) {
+          const age = time - bang.t0, cx = bang.x * W, cy = bang.y * H;
+          const glow = isNight ? 1 : 0.5;
+          ctx.globalCompositeOperation = isNight ? "lighter" : "source-over";
+          // the point of light
+          const pt = smooth(ramp(age, 0, 2.5)) * (1 - smooth(ramp(age, 5, 10)));
+          if (pt > 0.002) {
+            const r = (1.2 + 1.8 * smooth(ramp(age, 2, 4))) * 6;
+            ctx.globalAlpha = pt * 0.85 * glow;
+            ctx.drawImage(isNight ? core : gold, cx - r, cy - r, r * 2, r * 2);
+          }
+          // its halo, opening and fading
+          const h = ramp(age, 2.5, 13);
+          if (h > 0 && h < 1) {
+            const r = 6 + smooth(h) * M0 * 0.2;
+            ctx.globalAlpha = 0.32 * Math.sin(h * Math.PI) * glow;
+            ctx.drawImage(halo, cx - r, cy - r, r * 2, r * 2);
+          }
+          // two slow rings
+          ctx.lineWidth = 1;
+          for (let k = 0; k < 2; k++) {
+            const p = ramp(age, 3 + k * 1.3, 9 + k * 1.3);
+            if (p <= 0 || p >= 1) continue;
+            ctx.globalAlpha = 0.09 * (1 - p) * Math.min(1, p * 6) * glow;
+            ctx.strokeStyle = isNight ? (k ? "#cfd8f4" : "#f1dcab") : "#6b55b8";
+            ctx.beginPath();
+            ctx.arc(cx, cy, 6 + easeInOut(p) * M0 * 0.34, 0, TAU);
+            ctx.stroke();
+          }
+          // the dust it flings out: slowing, then flowing with the rest of the sky, then fading into it
+          const da = smooth(ramp(age, 3, 4.5)) * (1 - smooth(ramp(age, 16, 36)));
+          if (da > 0.002) {
+            const drg = Math.exp(-dt * 0.7);
+            for (let i = 0; i < bang.n; i++) {
+              if (age > 3) {
+                const ang = flowAngle(bx[i], by[i], time), fl = smooth(ramp(age, 7, 14));
+                bvx[i] = bvx[i] * drg + Math.cos(ang) * 9 * fl * dt;
+                bvy[i] = bvy[i] * drg + Math.sin(ang) * 9 * fl * dt;
+                bx[i] += bvx[i] * dt;
+                by[i] += bvy[i] * dt;
+              }
+              ctx.globalAlpha = Math.min(1, da * (isNight ? 0.75 : 0.4));
+              const sz = isNight ? bs[i] * 2 : 0.9 + bs[i] * 0.5;
+              ctx.drawImage(spr.dust[bc[i]], bx[i] - sz, by[i] - sz, sz * 2, sz * 2);
+            }
+          } else if (age > 40) bang = null;
         }
       }
 
