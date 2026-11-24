@@ -2922,28 +2922,51 @@ ul.destinations {
   animation: none;
 }
 
-/* the five worlds: the planets themselves, each with its module's name */
+/* the five worlds: each planet in its own translucent box, edged with a glow in the planet's colour */
 :root:not([data-skin]) .destinations {
-  gap: clamp(18px, 3vw, 40px);
+  gap: clamp(14px, 2vw, 24px);
 }
 :root:not([data-skin]) .destination {
   overflow: visible;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 0;
-  background: none;
-  border: 0;
-  box-shadow: none;
+  justify-content: center;
+  gap: 18px;
+  min-height: 230px;
+  padding: 30px 16px 26px;
   text-align: center;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--d) 16%, transparent), transparent 70%),
+    rgb(14 16 38 / 0.38);
+  -webkit-backdrop-filter: blur(10px) saturate(1.2);
+  backdrop-filter: blur(10px) saturate(1.2);
+  border: 1px solid color-mix(in srgb, var(--d) 70%, white 10%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--d) 18%, transparent),
+    0 0 18px color-mix(in srgb, var(--d) 42%, transparent),
+    inset 0 0 22px color-mix(in srgb, var(--d) 16%, transparent),
+    0 22px 40px -24px rgb(0 0 0 / 0.75);
+  transition: transform 0.6s var(--ease), box-shadow 0.5s, border-color 0.5s;
 }
+/* a thin line of light along the top edge */
 :root:not([data-skin]) .destination::before {
-  display: none;
+  display: block;
+  inset: -1px 18% auto;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--d) 60%, white), transparent);
+  opacity: 0.9;
 }
 :root:not([data-skin]) .destination:hover {
-  transform: none;
-  background: none;
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--d) 85%, white 15%);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--d) 30%, transparent),
+    0 0 30px color-mix(in srgb, var(--d) 60%, transparent),
+    inset 0 0 28px color-mix(in srgb, var(--d) 22%, transparent),
+    0 26px 46px -24px rgb(0 0 0 / 0.8);
 }
 :root:not([data-skin]) .destination .globe {
   margin: 0;
@@ -2954,12 +2977,18 @@ ul.destinations {
   transition: transform 0.7s var(--ease);
 }
 :root:not([data-skin]) .destination:hover .globe {
-  transform: translateY(-4px) scale(1.04);
+  transform: scale(1.05);
 }
 :root:not([data-skin]) .destination b {
-  color: var(--w-lite, #eef0f6); /* on the scene, not on paper */
+  color: #eef0f6; /* on the glass over the scene, in day and night alike */
   font-size: clamp(16px, 1.4vw, 19px);
   text-shadow: 0 2px 14px rgb(0 0 0 / 0.7);
+}
+@media (max-width: 720px) {
+  :root:not([data-skin]) .destination {
+    min-height: 0;
+    padding: 22px 12px 18px;
+  }
 }
 @media (max-width: 720px) {
   :root:not([data-skin]) .destination .globe {
