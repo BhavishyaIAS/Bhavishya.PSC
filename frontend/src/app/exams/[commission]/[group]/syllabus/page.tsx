@@ -10,13 +10,20 @@ import type { StageKey, SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Syllabus Detailer" };
 
-export default async function SyllabusTab(props: PageProps<"/exams/[commission]/[group]/syllabus">) {
+export default async function SyllabusTab(
+  props: PageProps<"/exams/[commission]/[group]/syllabus">,
+) {
   const { commission, group } = await props.params;
   const sp = await props.searchParams;
   const user = await requireUser(`/exams/${commission}/${group}/syllabus`);
   const isAdmin = user.role === "admin";
-  const stage = sp.stage === "prelims" || sp.stage === "mains" ? (sp.stage as StageKey) : undefined;
-  const tree = await load<SyllabusTree>(`/tracks/${commission}/${group}/syllabus/${stage ? `?stage=${stage}` : ""}`);
+  const stage =
+    sp.stage === "prelims" || sp.stage === "mains"
+      ? (sp.stage as StageKey)
+      : undefined;
+  const tree = await load<SyllabusTree>(
+    `/tracks/${commission}/${group}/syllabus/${stage ? `?stage=${stage}` : ""}`,
+  );
   const manageHref = `/manage/syllabus?track=${commission}/${group}`;
   const counts = tree.papers.reduce(
     (acc, p) => {
@@ -36,62 +43,80 @@ export default async function SyllabusTab(props: PageProps<"/exams/[commission]/
   const stats = subjectStats(tree.papers);
   const studied = stats.reduce((n, s) => n + s.studied, 0);
 
+  // side by side: the subjects at a glance down the left (each jumps to its place), the whole syllabus beside them
   return (
-    <div className="stack" style={{ gap: 22 }}>
+    <div className={stats.length > 0 ? "topic-layout split" : "stack"}>
       {stats.length > 0 && (
-        <section className="panel" aria-labelledby="map-h">
-          <div className="panel-head">
-            <h2 id="map-h">The syllabus at a glance</h2>
-            <span className="muted small">
+        <aside className="topic-side split-side" aria-labelledby="map-h">
+          <div>
+            <h2
+              id="map-h"
+              className="topic-side-title"
+              style={{ fontSize: "inherit", margin: 0 }}
+            >
+              The syllabus at a glance
+            </h2>
+            <p className="muted small" style={{ margin: "8px 4px 0" }}>
               {isAdmin
                 ? `${stats.length} subjects · ${counts.total} sections · the arc shows how much of each has notes`
                 : `${stats.length} subjects · ${studied} of ${counts.total} sections studied · choose one to jump to it`}
-            </span>
+            </p>
           </div>
           <SubjectOrbits stats={stats} mode={isAdmin ? "admin" : "student"} />
-        </section>
+        </aside>
       )}
-      <section className="panel">
-        <div className="toolbar">
-          <div className="segmented" role="group" aria-label="Stage">
-            {[undefined, "prelims", "mains"].map((s) => (
-              <Link key={s ?? "all"} href={`?${s ? `stage=${s}` : ""}`} aria-current={stage === s ? "page" : undefined}>
-                {s ? s[0].toUpperCase() + s.slice(1) : "All papers"}
-              </Link>
-            ))}
-          </div>
-          <span className="muted small">
-            {isAdmin
-              ? `${counts.total} micro-themes · ${counts.draft} draft · ${counts.noNotes} without notes · ${counts.noPyq} without PYQs`
-              : "Tick a section once you have studied it; open it for notes, videos and PYQs."}
-          </span>
-          <div className="spacer" />
-          {isAdmin && (
-            <Link href={manageHref} className="btn btn-primary">
-              <Settings2 size={17} aria-hidden /> Open Syllabus Manager
-            </Link>
-          )}
-        </div>
-        {tree.papers.length === 0 ? (
-          <EmptyState
-            icon={Upload}
-            title="No syllabus yet"
-            action={
-              isAdmin && (
-                <Link href={manageHref} className="btn btn-primary">
-                  <Upload size={17} aria-hidden /> Add the first paper
+      <div className="split-main">
+        <section className="panel">
+          <div className="toolbar">
+            <div className="segmented" role="group" aria-label="Stage">
+              {[undefined, "prelims", "mains"].map((s) => (
+                <Link
+                  key={s ?? "all"}
+                  href={`?${s ? `stage=${s}` : ""}`}
+                  aria-current={stage === s ? "page" : undefined}
+                >
+                  {s ? s[0].toUpperCase() + s.slice(1) : "All papers"}
                 </Link>
-              )
-            }
-          >
-            {isAdmin
-              ? "Build this track's syllabus tree (Paper → Subject → Topic → Micro-theme), then map notes, PYQs and files to it."
-              : "The syllabus for this exam is being prepared. Check back soon."}
-          </EmptyState>
-        ) : (
-          <SyllabusOutline papers={tree.papers} commission={commission} group={group} mode={isAdmin ? "admin" : "student"} />
-        )}
-      </section>
+              ))}
+            </div>
+            <span className="muted small">
+              {isAdmin
+                ? `${counts.total} micro-themes · ${counts.draft} draft · ${counts.noNotes} without notes · ${counts.noPyq} without PYQs`
+                : "Tick a section once you have studied it; open it for notes, videos and PYQs."}
+            </span>
+            <div className="spacer" />
+            {isAdmin && (
+              <Link href={manageHref} className="btn btn-primary">
+                <Settings2 size={17} aria-hidden /> Open Syllabus Manager
+              </Link>
+            )}
+          </div>
+          {tree.papers.length === 0 ? (
+            <EmptyState
+              icon={Upload}
+              title="No syllabus yet"
+              action={
+                isAdmin && (
+                  <Link href={manageHref} className="btn btn-primary">
+                    <Upload size={17} aria-hidden /> Add the first paper
+                  </Link>
+                )
+              }
+            >
+              {isAdmin
+                ? "Build this track's syllabus tree (Paper → Subject → Topic → Micro-theme), then map notes, PYQs and files to it."
+                : "The syllabus for this exam is being prepared. Check back soon."}
+            </EmptyState>
+          ) : (
+            <SyllabusOutline
+              papers={tree.papers}
+              commission={commission}
+              group={group}
+              mode={isAdmin ? "admin" : "student"}
+            />
+          )}
+        </section>
+      </div>
     </div>
   );
 }

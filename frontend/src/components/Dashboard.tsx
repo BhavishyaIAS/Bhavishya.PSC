@@ -47,12 +47,14 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
   const fresh = !d.continue.length && !d.prelims.attempts && !d.topics.completed && !d.topics.studying;
   return (
     <section className="dash" aria-labelledby="dash-h">
-      <div className="dash-head">
+      <div className="dash-card dash-head">
         <h2 id="dash-h">Your preparation</h2>
-        {d.streak > 0 && (
+        {d.streak > 0 ? (
           <span className="dash-streak">
             <Flame size={16} aria-hidden /> {d.streak} day{d.streak === 1 ? "" : "s"} in a row
           </span>
+        ) : (
+          <span className="muted small">Your study days will be counted here.</span>
         )}
       </div>
 
@@ -104,6 +106,22 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
               <p className="muted">Topics you open will be listed here.</p>
             )}
           </div>
+
+          {!!d.kept_topics?.length && (
+            <div className="dash-card">
+              <h3>
+                <Bookmark size={17} aria-hidden /> Kept topics
+              </h3>
+              <ul className="dash-list">
+                {d.kept_topics.map((r) => (
+                  <li key={r.code}>
+                    <Link href={topicHref(commission, group, r)}>{r.title}</Link>
+                    <span className="muted small">{r.subject}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="dash-card">
             <h3>
@@ -157,6 +175,11 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
                     ))}
                   </ul>
                 )}
+                {d.prelims.attempts > d.prelims.correct && (
+                  <p className="small">
+                    <Link href={trackPath(commission, group, "prelims?mine=incorrect")}>Review the questions you answered wrong</Link>
+                  </p>
+                )}
                 {d.weak.length > 0 && (
                   <p className="small">
                     Weakest:{" "}
@@ -178,32 +201,16 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
             )}
           </div>
 
-          {!!d.kept_topics?.length && (
-            <div className="dash-card">
-              <h3>
-                <Bookmark size={17} aria-hidden /> Kept topics
-              </h3>
-              <ul className="dash-list">
-                {d.kept_topics.map((r) => (
-                  <li key={r.code}>
-                    <Link href={topicHref(commission, group, r)}>{r.title}</Link>
-                    <span className="muted small">{r.subject}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
           <div className="dash-card dash-small">
+            <h3>
+              <PenLine size={17} aria-hidden /> Mains practice
+            </h3>
             <Link href={trackPath(commission, group, "mains?mine=drafted")}>
               <PenLine size={16} aria-hidden /> {d.mains.drafts} Mains answer{d.mains.drafts === 1 ? "" : "s"} written
             </Link>
             <Link href={trackPath(commission, group, "prelims?mine=bookmarked")}>
               <Bookmark size={16} aria-hidden /> {d.bookmarks} question{d.bookmarks === 1 ? "" : "s"} kept
             </Link>
-            {d.prelims.attempts > d.prelims.correct && (
-              <Link href={trackPath(commission, group, "prelims?mine=incorrect")}>Review the questions you answered wrong</Link>
-            )}
           </div>
         </div>
       )}

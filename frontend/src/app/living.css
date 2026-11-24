@@ -557,10 +557,137 @@
   }
 }
 @media (max-width: 560px) {
-  .brand-name,
-  :root[data-skin="sky"] .brand-name {
+  .brand-name {
     font-size: 22px;
     max-width: none;
     white-space: nowrap;
+  }
+  /* the Sky look's wide capitals need less room beside the buttons */
+  :root[data-skin="sky"] .brand-name {
+    font-size: 17px;
+    letter-spacing: 0.02em;
+    max-width: none;
+    white-space: nowrap;
+  }
+}
+
+/* side columns (design.css .split): their controls and figures sized for the column, in every look */
+.split-side .segmented.vault-mine {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  border-radius: 14px;
+  gap: 2px;
+}
+.split-side .segmented.vault-mine a {
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: left;
+}
+.split-side .stat {
+  padding: 14px;
+  gap: 6px;
+  min-height: 0;
+}
+.split-side .stat-icon {
+  display: none;
+}
+.split-side .stat-value {
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+  line-height: 1.1;
+}
+.split-side .stat-label {
+  font-size: 0.8rem;
+}
+@media (max-width: 420px) {
+  .brand-name {
+    font-size: min(22px, 5vw);
+  }
+  :root[data-skin="sky"] .brand-name {
+    font-size: min(17px, 3.9vw);
+  }
+}
+
+/* ═══════════ An exam's home: your preparation in a column on the left, the modules two by two on the right ═══════════ */
+.exam-home {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.4fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 6px;
+}
+.exam-home .dash {
+  margin: 0;
+  gap: 14px;
+}
+.exam-home .dash-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.exam-home .dash-head {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.exam-home .dash-head h2 {
+  justify-self: stretch;
+  width: auto;
+  max-width: none;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.exam-home .dash-small {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.exam-home-modules {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.exam-home-modules-head {
+  display: grid;
+  place-items: center;
+  min-height: 92px;
+  padding: 18px 24px;
+  border-radius: 20px;
+  background: var(--plate, var(--surface));
+  border: 1.5px solid var(--edge, var(--border));
+  box-shadow: var(--shadow);
+}
+.exam-home-modules-head h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+}
+.exam-home .exam-blocks {
+  margin: 0;
+  gap: 18px;
+}
+/* each module a tall card: its mark, then its name and a line about it */
+.exam-home .exam-block {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  align-content: start;
+  gap: 16px;
+  min-height: 300px;
+  padding: 26px;
+}
+@media (max-width: 1100px) {
+  .exam-home {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .exam-home-modules {
+    order: -1; /* on smaller screens the modules come first: they are the way in */
+  }
+}
+@media (max-width: 760px) {
+  .exam-home .exam-block {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    min-height: 0;
+    padding: 18px;
+  }
+  .exam-home-modules-head {
+    min-height: 0;
   }
 }
