@@ -43,6 +43,15 @@ class BuildTests(TestCase):
         self.assertEqual(bn.nice("THE DELHI SULTANATE (1206–1526)"), "The Delhi Sultanate (1206–1526)")
         self.assertEqual(bn.nice("Module 6 · The Rise of Magadha"), "Module 6 · The Rise of Magadha")
 
+    def test_headings_keep_their_numbers_apart_and_start_with_a_capital(self):
+        self.assertEqual(bn.tidy_heading("6.1Who They Were"), "6.1 Who They Were")
+        self.assertEqual(bn.tidy_heading("Part 2 · the Timeline"), "Part 2 · The Timeline")
+        self.assertEqual(bn.tidy_heading("3. the Toolkit"), "3. The Toolkit")
+        self.assertEqual(bn.tidy_heading("1857 and after"), "1857 and after")
+        doc = {"type": "doc", "content": [{"type": "heading", "attrs": {"level": 4}, "content": [{"type": "text", "text": "2.1Why"}]}]}
+        self.assertTrue(bn.tidy_doc(doc))
+        self.assertFalse(bn.tidy_doc(doc))  # once tidy, left alone
+
 
 class HistoryNotesTests(TestCase):
     @classmethod
