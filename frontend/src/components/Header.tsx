@@ -7,10 +7,11 @@ import type { User } from "@/lib/types";
 import { HeaderSearch } from "./HeaderSearch";
 import { LogoutButton } from "./LogoutButton";
 import { ManageLink } from "./ManageLink";
+import { SkyThemeSwitch } from "./sky/SkyThemeSwitch";
 import { ThemeToggle } from "./ThemeToggle";
 
 /** Logo left · the examinations · search · account actions right. Phones navigate with the bottom bar. */
-export function Header({ user, exams = [] }: { user: User | null; exams?: { slug: string; short_name: string }[] }) {
+export function Header({ user, exams = [], sky = false }: { user: User | null; exams?: { slug: string; short_name: string }[]; sky?: boolean }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -45,7 +46,7 @@ export function Header({ user, exams = [] }: { user: User | null; exams?: { slug
             </Link>
           )}
           {user?.role === "admin" && <ManageLink />}
-          <ThemeToggle />
+          {sky ? <SkyThemeSwitch /> : <ThemeToggle />}
           {user ? (
             <LogoutButton name={user.display_name} />
           ) : (

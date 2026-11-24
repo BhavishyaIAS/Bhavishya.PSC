@@ -63,6 +63,7 @@ def site_payload(settings: SiteSettings):
         "show_codes": settings.show_codes,
         "show_contents": settings.show_contents,
         "backdrops": settings.backdrops,
+        "skin": settings.skin,
     }
 
 
@@ -72,7 +73,7 @@ def site_payload(settings: SiteSettings):
 class SiteSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteSettings
-        fields = ["hero_eyebrow", "hero_lead", "note_kinds", "reader_font", "reader_size", "show_codes", "show_contents", "backdrops"]
+        fields = ["hero_eyebrow", "hero_lead", "note_kinds", "reader_font", "reader_size", "show_codes", "show_contents", "backdrops", "skin"]
 
     def validate_reader_size(self, value):
         if not 1 <= value <= 4:

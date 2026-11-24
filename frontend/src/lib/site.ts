@@ -16,6 +16,7 @@ const DEFAULTS: Site = {
   show_codes: true,
   show_contents: true,
   backdrops: true,
+  skin: "sky",
 };
 
 /** Site settings, fetched once per request. Falls back to the defaults if the API can't be reached. */

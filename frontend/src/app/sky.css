@@ -1,0 +1,518 @@
+/*
+ * The Sky style (an experiment; Manage → Site settings → Look switches it, and back).
+ *
+ * A sky you look through: the page is thin glass over a star field, and every way in (an exam,
+ * a module) is a round portal that always shows night space. Everything here is scoped to
+ * <html data-skin="sky">; without it, none of this applies and the worlds look as they always have.
+ *
+ * It works through the worlds' own parameters (worlds.css): the scene's darkness, its glass, its ink,
+ * its paper and its accent. By day the "scene" is a pale lavender sky, so its ink is dark.
+ */
+
+:root[data-skin="sky"] {
+  color-scheme: light;
+  --w-deep: #e9e7fa; /* the day sky */
+  --w-glass: #ffffff;
+  --w-lite: #17143a; /* the ink on the sky: by day, dark */
+  --w-paper: #ffffff;
+  --w-ink: #17143a;
+  --accent: #5a2fd0;
+  --accent-ink: #5a2fd0;
+  --on-accent: #ffffff;
+  --gold: #a05c00;
+  --good: #17784c;
+  --brand-red: #c00d24;
+  --star: 44, 32, 120;
+  --sky-bg: #e9e7fa;
+  --sky-bg2: #f8f4ff;
+  --neb1: rgba(255, 176, 128, 0.42);
+  --neb2: rgba(120, 168, 255, 0.38);
+  --neb3: rgba(204, 140, 255, 0.3);
+  --glass: rgba(255, 255, 255, 0.74);
+  --glass-solid: #ffffff;
+  --line: rgba(44, 32, 120, 0.16);
+  --shadow-sky: 0 10px 30px rgba(44, 32, 120, 0.12);
+
+  --font-sky-display: var(--font-cinzel), "Trajan Pro", Georgia, serif;
+  --font-body: var(--font-figtree), var(--font-indic), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-sky-display);
+  --font-display: var(--font-sky-display);
+  --font-label: var(--font-figtree), var(--font-indic), system-ui, sans-serif;
+  --display-track: 0.04em;
+  --display-case: none;
+  --label-track: 0.16em;
+  --ctl-radius: 999px;
+  --radius: 14px;
+  --radius-lg: 24px;
+  --radius-xl: 28px;
+}
+:root[data-skin="sky"][data-theme="dark"] {
+  color-scheme: dark;
+  --w-deep: #060414;
+  --w-glass: #140e30;
+  --w-lite: #eeeaff;
+  --accent: #ffc66b;
+  --accent-ink: #ffc66b;
+  --on-accent: #1a1030;
+  --gold: #ffc66b;
+  --good: #5fd6a0;
+  --brand-red: #ff4d5b;
+  --star: 255, 255, 255;
+  --sky-bg: #060414;
+  --sky-bg2: #0e0828;
+  --neb1: rgba(190, 70, 160, 0.26);
+  --neb2: rgba(50, 90, 220, 0.28);
+  --neb3: rgba(110, 50, 200, 0.3);
+  --glass: rgba(22, 16, 54, 0.68);
+  --glass-solid: #140e30;
+  --line: rgba(176, 156, 255, 0.22);
+  --shadow-sky: 0 10px 34px rgba(0, 0, 0, 0.5);
+}
+
+/* the sky itself: nebulae over a soft gradient, and the stars (SkyBackdrop) above it */
+:root[data-skin="sky"] body {
+  background:
+    radial-gradient(60% 45% at 12% 8%, var(--neb1), transparent 70%),
+    radial-gradient(55% 50% at 92% 22%, var(--neb2), transparent 70%),
+    radial-gradient(70% 55% at 50% 105%, var(--neb3), transparent 70%),
+    linear-gradient(180deg, var(--sky-bg2), var(--sky-bg));
+  background-attachment: fixed;
+  color: var(--text);
+}
+.sky-stars {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+:root[data-skin="sky"] :is(.ws-stage, .solar-band, .solar-tip, .space) {
+  display: none !important;
+}
+:root[data-skin="sky"] :is(.ws-title, .page-head, .system-copy, .flow-head, .crumbs, .arrival) {
+  text-shadow: none;
+}
+
+/* glass: every sheet is thin glass over the sky */
+:root[data-skin="sky"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .bottom-nav, .station-card, .destination, .arrival-empty, .moon-card, .stat, .topic-card, .note-type, .side-list, .empty, .topic-row) {
+  --surface: var(--glass);
+  --bg: var(--glass);
+  background-color: var(--glass);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sky);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  clip-path: none;
+}
+:root[data-skin="sky"] :is(.panel, .q-card, .modal, .auth-card) {
+  border-radius: 24px;
+}
+:root[data-skin="sky"] :is(.topic-card, .note-type, .stat, .side-list, .card) {
+  border-radius: 20px;
+}
+:root[data-skin="sky"] :is(.panel, .q-card, .card) {
+  border-top: 1px solid var(--line);
+}
+:root[data-skin="sky"] :is(.panel, .card, .q-card) :is(.panel, .card, .q-card, .result, .file-card, .topic-card, .stat) {
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: var(--glass-solid);
+}
+:root[data-skin="sky"] :is(.topic-card, .note-type, .stat):hover {
+  border-color: var(--accent);
+}
+/* no worlds' hardware: square chamfers, capitals on buttons */
+:root[data-skin="sky"] :is(.btn, .world-tab, .badge, .mini-btn) {
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-body);
+  clip-path: none;
+}
+:root[data-skin="sky"] .btn {
+  border-radius: 999px;
+  font-weight: 700;
+}
+:root[data-skin="sky"] :is(.btn-primary, .btn-dark) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+:root[data-skin="sky"] .btn-ghost {
+  background: var(--glass-solid);
+  border: 1px solid var(--line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="sky"] .segmented {
+  border-radius: 999px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  background: var(--glass-solid);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="sky"] .segmented > * {
+  border-radius: 999px;
+}
+:root[data-skin="sky"] .segmented [aria-current="page"],
+:root[data-skin="sky"] .segmented [aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* titles in Cinzel capitals; labels in gold */
+:root[data-skin="sky"] :is(h1, h2, h3, .flow-title, .chapter-title) {
+  font-family: var(--font-sky-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+:root[data-skin="sky"] .reading :is(h3, h4),
+:root[data-skin="sky"] .prose :is(h3, h4) {
+  font-family: var(--font-body);
+  letter-spacing: -0.01em;
+}
+:root[data-skin="sky"] :is(.eyebrow, .sky-eyebrow, .section-title) {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+:root[data-skin="sky"] .ws-head h1 {
+  font-size: clamp(1.7rem, 4vw, 2.5rem);
+}
+
+/* ─── the menu bar ─── */
+:root[data-skin="sky"] .topbar {
+  --surface: var(--glass);
+  background: var(--glass);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+:root[data-skin="sky"] .brand-name {
+  font-family: var(--font-sky-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--brand-red);
+}
+:root[data-skin="sky"] .brand-name .suffix {
+  color: var(--brand-red);
+}
+:root[data-skin="sky"] .topbar-exams a {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+:root[data-skin="sky"] .topbar-exams a:hover {
+  color: var(--text-strong);
+  background: var(--line);
+}
+.sky-theme {
+  display: flex;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  background: var(--glass-solid);
+}
+.sky-theme button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font: 600 0.85rem var(--font-body);
+  color: var(--muted);
+  cursor: pointer;
+}
+.sky-theme button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.sky-theme svg {
+  width: 15px;
+  height: 15px;
+}
+@media (max-width: 640px) {
+  .sky-theme span {
+    display: none;
+  }
+  .sky-theme button {
+    padding: 6px 8px;
+  }
+}
+
+/* ─── portals ─── */
+.sky-portal {
+  display: block;
+  flex: none;
+  border-radius: 50%;
+  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ─── home ─── */
+.sky-home {
+  padding-bottom: 72px;
+}
+.sky-hero {
+  padding: 44px 0 26px;
+  max-width: 720px;
+}
+.sky-hero h1 {
+  font-size: clamp(2.2rem, 6vw, 3.9rem);
+  line-height: 1.05;
+  margin: 10px 0 14px;
+  color: var(--brand-red);
+}
+.sky-hero h1 span {
+  color: var(--brand-red);
+}
+.sky-hero p {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin: 0;
+  max-width: 56ch;
+}
+.sky-gates {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+  gap: 22px;
+  margin-top: 18px;
+}
+.sky-gate,
+.sky-tile {
+  border: 1px solid var(--line);
+  background: var(--glass);
+  box-shadow: var(--shadow-sky);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--text);
+}
+.sky-gate {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 22px;
+  align-items: center;
+  text-decoration: none;
+  padding: 26px;
+  border-radius: 28px;
+  transition: transform 0.25s, border-color 0.25s;
+}
+.sky-gate:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  text-decoration: none;
+}
+.sky-gate:hover .sky-portal {
+  transform: scale(1.07);
+}
+.sky-gate h2 {
+  font-size: 1.9rem;
+  margin: 2px 0 0;
+  color: var(--text-strong);
+}
+.sky-full {
+  font-weight: 600;
+  margin: 2px 0 8px;
+  color: var(--text-strong);
+}
+.sky-gate p {
+  margin: 0 0 12px;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+.sky-enter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.sky-enter::after {
+  content: "→";
+  transition: transform 0.25s;
+}
+.sky-gate:hover .sky-enter::after {
+  transform: translateX(5px);
+}
+@media (max-width: 520px) {
+  .sky-gate {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+}
+.sky-cta {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 26px 0 0;
+}
+.sky-panel {
+  border: 1px solid var(--line);
+  background: var(--glass);
+  border-radius: 24px;
+  padding: 22px;
+}
+.sky-modules {
+  margin-top: 64px;
+}
+.sky-modules > h2 {
+  font-size: clamp(1.3rem, 3vw, 1.7rem);
+  margin-bottom: 18px;
+  color: var(--text-strong);
+}
+.sky-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+.sky-tile {
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  text-align: center;
+  gap: 8px;
+  padding: 24px 16px 20px;
+  border-radius: 24px;
+  transition: transform 0.25s, border-color 0.25s;
+}
+.sky-tile:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+}
+.sky-tile:hover .sky-portal {
+  transform: scale(1.1) rotate(6deg);
+}
+.sky-tile h3 {
+  font-size: 1.02rem;
+  margin: 6px 0 0;
+  color: var(--text-strong);
+}
+.sky-tile p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.sky-kind {
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* ─── an exam's own page: its portal where the planet was ─── */
+.system-portal {
+  justify-self: center;
+  align-self: center;
+}
+
+/* ─── an exam's modules: pills, each with its small portal ─── */
+.sky-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px 12px;
+  margin: 10px 0 18px;
+  scrollbar-width: none;
+}
+.sky-tabs a {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  padding: 6px 16px 6px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font: 600 0.9rem var(--font-body);
+  color: var(--muted);
+  transition: color 0.2s, border-color 0.2s;
+}
+.sky-tabs a:hover {
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.sky-tabs a[aria-current="page"] {
+  color: var(--text-strong);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+/* ─── the warp: light bursts from where a portal was pressed ─── */
+.sky-warp {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), #fff 0, #9be7ff 5%, #7a4cf0 18%, #1a0d48 42%, #05030f 70%);
+  clip-path: circle(0 at var(--x, 50%) var(--y, 50%));
+}
+.sky-warp.in {
+  opacity: 1;
+  clip-path: circle(150vmax at var(--x, 50%) var(--y, 50%));
+  transition: clip-path 0.45s cubic-bezier(0.7, 0, 0.9, 0.5);
+}
+.sky-warp.out {
+  opacity: 0;
+  clip-path: circle(150vmax at var(--x, 50%) var(--y, 50%));
+  transition: opacity 0.4s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sky-gate,
+  .sky-tile,
+  .sky-portal {
+    transition: none !important;
+  }
+}
+
+/* the exam's workspace: no planet to make room for */
+:root[data-skin="sky"] .ws-head {
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  padding-top: 26px;
+}
+:root[data-skin="sky"] .ws-head h1 .sep {
+  color: var(--accent);
+}
+/* an exam's group cards */
+:root[data-skin="sky"] .station-card {
+  border-radius: 28px;
+}
+:root[data-skin="sky"] :is(.station-enter, .station-of, .station-idx) {
+  font-family: var(--font-body);
+  letter-spacing: 0.14em;
+  font-weight: 700;
+}
+:root[data-skin="sky"] .station-enter {
+  color: var(--accent);
+}
+:root[data-skin="sky"] .station-worlds li {
+  border-radius: 999px;
+}
+@media (max-width: 560px) {
+  :root[data-skin="sky"] .brand-name {
+    font-size: 16px;
+    letter-spacing: 0.03em;
+  }
+}

@@ -8,7 +8,10 @@ import { orbAttr } from "@/components/space/destinations";
 import { emblemFor } from "@/components/space/emblems";
 import { planetFor } from "@/components/space/worlds";
 import { EmptyState } from "@/components/ui/bits";
+import { examPortal } from "@/components/sky/portals";
+import { SkyPortal } from "@/components/sky/SkyPortal";
 import { getCommissions } from "@/lib/catalog";
+import { getSite } from "@/lib/site";
 import { currentUser } from "@/lib/server-api";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]">): Promise<Metadata> {
@@ -19,7 +22,7 @@ export async function generateMetadata(props: PageProps<"/exams/[commission]">):
 /** One examination's own system: its planet, close, and its exams in orbit around it. */
 export default async function ChooseGroupPage(props: PageProps<"/exams/[commission]">) {
   const { commission: slug } = await props.params;
-  const [commissions, user] = await Promise.all([getCommissions(), currentUser()]);
+  const [commissions, user, site] = await Promise.all([getCommissions(), currentUser(), getSite()]);
   const index = commissions.findIndex((c) => c.slug === slug);
   const commission = commissions[index];
   if (!commission) notFound();
@@ -40,8 +43,10 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
             {commission.description || "Pick the service you are preparing for. Everything inside is arranged for that exam."}
           </p>
         </div>
-        {/* the planet itself is drawn here by the renderer */}
-        {emblem ? (
+        {/* the planet itself is drawn here by the renderer (in the Sky style, the exam's portal) */}
+        {site.skin === "sky" ? (
+          <SkyPortal kind={examPortal(commission.slug, index)} size={200} className="system-portal" />
+        ) : emblem ? (
           <div
             className="system-orb has-emblem"
             data-orb={orbAttr({ a: emblem.tint, b: emblem.tint, kind: 0, ring: false })}
@@ -80,7 +85,7 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
           )}
         </EmptyState>
       ) : (
-        <GroupCards commission={commission} />
+        <GroupCards commission={commission} sky={site.skin === "sky"} />
       )}
 
       <nav aria-label="Breadcrumb" className="crumbs crumbs-center">

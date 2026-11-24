@@ -259,6 +259,7 @@ export interface Site {
   show_codes: boolean;
   show_contents: boolean;
   backdrops: boolean;
+  skin: "sky" | "classic"; // the look of the whole site (Manage → Site settings)
 }
 
 /** How a topic can be presented; "" lets the site guess from the topic's name. */
