@@ -84,7 +84,19 @@ export async function PyqVault({
           </div>
         )}
       </div>
-      <PyqFilters facets={facets} papers={tree.papers} isAdmin={isAdmin} />
+      <PyqFilters
+        facets={facets}
+        papers={tree.papers.map((p) => ({
+          id: p.id,
+          title: p.title,
+          subjects: p.subjects.map((s) => ({
+            id: s.id,
+            title: s.title,
+            topics: s.topics.map((t) => ({ id: t.id, title: t.title, micro_themes: t.micro_themes.map((m) => ({ code: m.code, title: m.title })) })),
+          })),
+        }))}
+        isAdmin={isAdmin}
+      />
       {data.results.length === 0 ? (
         <EmptyState icon={SearchX} title="No questions match">
           Try removing a filter or searching for a different word.

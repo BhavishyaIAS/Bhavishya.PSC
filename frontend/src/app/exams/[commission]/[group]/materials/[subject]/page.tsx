@@ -1,410 +1,248 @@
-import {
-  ArrowLeft,
-  ArrowRight,
-  BookMarked,
-  ExternalLink,
-  FileStack,
-  ListOrdered,
-  NotebookPen,
-  Pencil,
-  ScrollText,
-  Upload,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, FileStack, Pencil, Upload } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { JumpSelect } from "@/components/JumpSelect";
 import { MaterialList } from "@/components/MaterialList";
-import { NotesSteps } from "@/components/NotesSteps";
 import { ReaderTools } from "@/components/ReaderTools";
 import { RichText } from "@/components/rich/RichText";
 import { EmptyState, StatusBadge } from "@/components/ui/bits";
 import { trackPath } from "@/lib/format";
 import { load, requireUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
-import { syllabusTopics, topicTone } from "@/lib/topics";
-import type { Material, Note, NoteKind, SubjectNode, SyllabusTree } from "@/lib/types";
+import { topicTone } from "@/lib/topics";
+import type { Material, MicroThemeNode, Note, NoteKind, SyllabusTree, TopicNode } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Material / Notes" };
 
-const ICONS = { comprehensive: BookMarked, prelims: ScrollText, mains: NotebookPen };
-
 type NotesResponse = {
   kind: NoteKind;
-  results: { micro_theme: { id: number; code: string; title: string }; topic: { id: number; title: string }; note: Note }[];
+  results: { micro_theme: { id: number; code: string; title: string }; note: Note }[];
 };
-type OutlineResponse = {
-  kind: NoteKind;
-  results: { micro_theme: { id: number; code: string; title: string }; note: { id: number; status: Note["status"]; size: number } }[];
-};
+type OutlineResponse = { results: { micro_theme: { id: number }; note: { size: number } }[] };
+type Entry = { mt: MicroThemeNode; chapter: TopicNode; ci: number; mi: number };
 
-/** A chapter longer than this (characters of text) is read one section at a time — a whole book is too much for one page. */
-const ONE_PAGE_LIMIT = 90_000;
-
-/** Step 2 of the notes flow: one syllabus topic → choose the type of notes → read it chapter by chapter. */
-export default async function TopicNotes(props: PageProps<"/exams/[commission]/[group]/materials/[subject]">) {
+/**
+ * One subject of Material / Notes.
+ *   no ?section  its topics, syllabus-wise: chapter by chapter, each topic a line that opens its notes
+ *   ?section=id  that topic's notes, with the previous and next topic
+ */
+export default async function SubjectNotes(props: PageProps<"/exams/[commission]/[group]/materials/[subject]">) {
   const [{ commission, group, subject: subjectId }, sp] = await Promise.all([props.params, props.searchParams]);
   const base = `/tracks/${commission}/${group}`;
   const home = trackPath(commission, group, "materials");
   const here = `${home}/${subjectId}`;
-  // asked for a type of notes: that Notes module's own syllabus, where it has one (else the general syllabus)
-  const asked = ["comprehensive", "prelims", "mains"].includes(sp.kind as string) ? (sp.kind as NoteKind) : undefined;
-  const [user, tree, site] = await Promise.all([
+  const site = await getSite();
+  const kinds = site.note_kinds.filter((k) => k.enabled);
+  const kindInfo = kinds.find((k) => k.key === sp.kind) ?? kinds.find((k) => k.key === "comprehensive") ?? kinds[0];
+  if (!kindInfo || !/^\d+$/.test(subjectId)) notFound();
+  const kind = kindInfo.key;
+  const q = `?kind=${kind}`;
+  const notesQ = `${base}/notes/?kind=${kind}&subject=${subjectId}`;
+  const sectionId = typeof sp.section === "string" && /^\d+$/.test(sp.section) ? sp.section : undefined;
+
+  const [user, tree, outline, one] = await Promise.all([
     requireUser(here),
-    load<SyllabusTree>(`${base}/syllabus/${asked ? `?notes=${asked}` : ""}`),
-    getSite(),
+    load<SyllabusTree>(`${base}/syllabus/?notes=${kind}`),
+    sectionId ? undefined : load<OutlineResponse>(`${notesQ}&fields=outline`),
+    sectionId ? load<NotesResponse>(`${notesQ}&micro_theme=${sectionId}`) : undefined,
   ]);
-  const own = tree.notes_kind || undefined; // this topic is part of a Notes module's own syllabus: its type is fixed
   const isAdmin = user.role === "admin";
-  const NOTE_KINDS = site.note_kinds.filter((k) => k.enabled); // the types of notes this site offers, in its own words
+  const subject = tree.papers.flatMap((p) => p.subjects).find((s) => String(s.id) === subjectId);
+  if (!subject) notFound();
 
-  const topics = syllabusTopics(tree);
-  const current = topics.find((t) => String(t.subject.id) === subjectId);
-  if (!current) notFound();
-  const { subject, byKind } = current;
-  // With a single type of notes there is nothing to choose: go straight to reading.
-  const kind = own ?? (NOTE_KINDS.some((k) => k.key === sp.kind) ? (sp.kind as NoteKind) : NOTE_KINDS.length === 1 ? NOTE_KINDS[0].key : undefined);
-  const kindInfo = NOTE_KINDS.find((k) => k.key === kind);
+  const entries: Entry[] = subject.topics.flatMap((chapter, ci) => chapter.micro_themes.map((mt, mi) => ({ mt, chapter, ci, mi })));
+  const written = (e: Entry) => e.mt.note_kinds.includes(kind);
+  const label = (e: Entry) => `${e.ci + 1}.${e.mi + 1}`;
+  const sectionHref = (id: number) => `${here}${q}&section=${id}`;
+  const crumbs = (
+    <nav className="crumbs" aria-label="You are here">
+      <Link href={`${home}${q}`}>Material / Notes</Link>›{sectionId ? <Link href={`${here}${q}`}>{subject.title}</Link> : <span>{subject.title}</span>}
+    </nav>
+  );
 
-  // Chapters (= the subject's topics); one chapter is shown at a time.
-  const chapters = subject.topics.map((t) => ({
-    id: t.id,
-    label: t.title,
-    count: kind ? t.micro_themes.filter((m) => m.note_kinds.includes(kind)).length : 0,
-  }));
-  const chapter = kind
-    ? (chapters.find((c) => String(c.id) === sp.topic) ?? chapters.find((c) => c.count > 0) ?? chapters[0])
-    : undefined;
-  const chapterIndex = chapter ? chapters.indexOf(chapter) : -1;
-  const prevChapter = chapterIndex > 0 ? chapters[chapterIndex - 1] : undefined;
-  const nextChapter = chapterIndex >= 0 && chapterIndex < chapters.length - 1 ? chapters[chapterIndex + 1] : undefined;
-  const chapterHref = (id: number) => `${here}?kind=${kind}&topic=${id}`;
+  // ─── one topic's notes ───
+  if (sectionId) {
+    const at = entries.findIndex((e) => String(e.mt.id) === sectionId);
+    if (at < 0) notFound();
+    const cur = entries[at];
+    const note = one?.results[0]?.note;
+    const readable = entries.filter((e) => written(e) || e === cur);
+    const ri = readable.indexOf(cur);
+    const prev = readable[ri - 1], next = readable[ri + 1];
+    return (
+      <div className={topicTone(subject.title, subject.look)}>
+        {crumbs}
+        <section className="panel topic-read">
+          <header className="topic-read-head">
+            <div style={{ minWidth: 0 }}>
+              <div className="eyebrow">
+                Chapter {cur.ci + 1} · {cur.chapter.title.replace(/^\d+[.)]\s+/, "")}
+              </div>
+              <h2 className="topic-read-title">
+                <span className="h-num">{label(cur)}</span> {cur.mt.title}
+              </h2>
+            </div>
+            <div className="row" style={{ gap: 8 }}>
+              {isAdmin && note && <StatusBadge status={note.status} />}
+              {isAdmin && (
+                <Link href={`/manage/content/${cur.mt.id}?kind=${kind}`} className="mini-btn">
+                  <Pencil size={14} aria-hidden /> Edit
+                </Link>
+              )}
+              <ReaderTools />
+            </div>
+          </header>
+          {note ? (
+            <div className="reading">
+              <RichText doc={note.body} />
+            </div>
+          ) : (
+            <EmptyState title={`No ${kindInfo.label.toLowerCase()} for this topic yet`}>
+              {isAdmin ? "Write them with Edit above." : "They're being written — check back soon."}
+            </EmptyState>
+          )}
+          <nav className="prevnext section-nav" aria-label="Previous and next topic">
+            {prev ? (
+              <Link href={sectionHref(prev.mt.id)}>
+                <small>
+                  <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Previous · {label(prev)}
+                </small>
+                <b>{prev.mt.title}</b>
+              </Link>
+            ) : (
+              <Link href={`${here}${q}`}>
+                <small>
+                  <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Back
+                </small>
+                <b>All topics of {subject.title}</b>
+              </Link>
+            )}
+            {next ? (
+              <Link href={sectionHref(next.mt.id)} className="next">
+                <small>
+                  Next · {label(next)} <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
+                </small>
+                <b>{next.mt.title}</b>
+              </Link>
+            ) : (
+              <Link href={`${home}${q}`} className="next">
+                <small>
+                  Done <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
+                </small>
+                <b>All subjects</b>
+              </Link>
+            )}
+          </nav>
+        </section>
+      </div>
+    );
+  }
 
-  const chapterNotes = kind && chapter ? `${base}/notes/?kind=${kind}&topic=${chapter.id}` : undefined;
-  const [outline, materials] = await Promise.all([
-    chapterNotes ? load<OutlineResponse>(`${chapterNotes}&fields=outline`) : Promise.resolve<OutlineResponse>({ kind: "comprehensive", results: [] }),
-    kind
-      ? load<{ results: Material[] }>(`${base}/materials/?category=${kind}&subject=${subject.id}`)
-      : Promise.resolve({ results: [] as Material[] }),
-  ]);
-  // A long chapter is paged: its contents, then one section with previous / next.
-  const sections = outline.results;
-  const paged = sections.length > 1 && sections.reduce((n, r) => n + r.note.size, 0) > ONE_PAGE_LIMIT;
-  const sectionIndex = paged ? Math.max(0, sections.findIndex((r) => String(r.micro_theme.id) === sp.section)) : -1;
-  const section = paged ? sections[sectionIndex] : undefined;
-  const prevSection = paged && sectionIndex > 0 ? sections[sectionIndex - 1] : undefined;
-  const nextSection = paged && sectionIndex < sections.length - 1 ? sections[sectionIndex + 1] : undefined;
-  const sectionHref = (id: number) => `${chapterHref(chapter!.id)}&section=${id}`;
-  const notes: NotesResponse = chapterNotes
-    ? await load<NotesResponse>(section ? `${chapterNotes}&micro_theme=${section.micro_theme.id}` : chapterNotes)
-    : { kind: "comprehensive", results: [] };
-
+  // ─── the subject's topics, syllabus-wise ───
+  const sizes = new Map((outline?.results ?? []).map((r) => [r.micro_theme.id, r.note.size]));
+  const total = entries.length, done = entries.filter(written).length;
+  const materials = await load<{ results: Material[] }>(`${base}/materials/?category=${kind}&subject=${subject.id}`);
   return (
     <div className={topicTone(subject.title, subject.look)}>
       <div className="flow-head">
         <div style={{ minWidth: 0 }}>
-          <NotesSteps current={2} kindFirst={!!own} />
-          {own ? (
-            <nav className="crumbs" aria-label="You are here" style={{ marginTop: 10 }}>
-              <Link href={home}>Material / Notes</Link>›<Link href={`${home}?kind=${own}`}>{kindInfo?.label ?? "Notes"}</Link>›<span>{subject.title}</span>
-            </nav>
-          ) : (
-            <nav className="crumbs" aria-label="You are here" style={{ marginTop: 10 }}>
-              <Link href={home}>Material / Notes</Link>›
-              {kind ? <Link href={here}>{subject.title}</Link> : <span>{subject.title}</span>}
-              {kindInfo && (
-                <>
-                  ›<span>{kindInfo.label}</span>
-                </>
-              )}
-            </nav>
-          )}
+          {crumbs}
           <h2 className="flow-title">
             {subject.title} {isAdmin && subject.status !== "published" && <StatusBadge status={subject.status} />}
           </h2>
-          {!kind && (
-            <p className="muted" style={{ margin: "4px 0 0" }}>
-              Choose the type of notes to read.
-            </p>
-          )}
+          <p className="muted" style={{ margin: "4px 0 0" }}>
+            {kindInfo.label} · {subject.topics.length} chapter{subject.topics.length === 1 ? "" : "s"} · {done} of {total} topics written
+          </p>
         </div>
-        <div className="row" style={{ gap: 10, alignItems: "flex-end" }}>
-          <Link href={own ? `${home}?kind=${own}` : home} className="btn btn-ghost btn-sm">
-            <ArrowLeft size={15} aria-hidden /> All topics
-          </Link>
-          <JumpSelect
-            label="Topic"
-            className="jump-topic"
-            value={`${home}/${subject.id}${kind ? `?kind=${kind}` : ""}`}
-            options={topics.map((t) => ({
-              href: `${home}/${t.subject.id}${kind ? `?kind=${kind}` : ""}`,
-              label: t.subject.title,
-            }))}
-          />
-        </div>
+        <Link href={`${home}${q}`} className="btn btn-ghost btn-sm">
+          <ArrowLeft size={15} aria-hidden /> All subjects
+        </Link>
       </div>
 
-      <div className={`note-types ${kind ? "" : "note-types-big"}`} role="list" aria-label="Type of notes" hidden={NOTE_KINDS.length < 2 || !!own}>
-        {NOTE_KINDS.map((k) => {
-          const Icon = ICONS[k.key];
-          const n = byKind[k.key];
-          return (
-            <Link
-              key={k.key}
-              role="listitem"
-              href={`${here}?kind=${k.key}`}
-              className="note-type"
-              aria-current={k.key === kind ? "page" : undefined}
-            >
-              <span className="nt-icon" aria-hidden>
-                <Icon size={21} />
-              </span>
-              <span>
-                <b>{k.label}</b>
-                <span>{k.blurb}</span>
-                <span className={`nt-count ${n ? "" : "nt-none"}`}>{n ? `${n} section${n === 1 ? "" : "s"}` : "Not written yet"}</span>
-              </span>
-            </Link>
-          );
-        })}
-      </div>
-
-      {!kind ? (
-        <ChapterOverview subject={subject} />
+      {subject.topics.length === 0 ? (
+        <EmptyState title="No topics in this subject yet">{isAdmin ? "Add them in Manage → Syllabus." : "Check back soon."}</EmptyState>
       ) : (
-        <div className={chapters.length > 1 ? "subject-tree" : undefined}>
-          {chapters.length > 1 && (
-            <nav className="side-list chapter-list" aria-label="Chapters">
-              <div className="group-label">Chapters</div>
-              {chapters.map((c, i) => (
-                <Link key={c.id} href={chapterHref(c.id)} aria-current={c.id === chapter?.id ? "true" : undefined}>
-                  <span>{numbered(c.label, i)}</span>
-                  <span className="count">{c.count}</span>
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          <div className="stack" style={{ gap: 18, minWidth: 0 }}>
-            <section className="panel">
-              {chapters.length === 0 ? (
-                <EmptyState icon={NotebookPen} title="No chapters in this topic yet">
-                  {isAdmin ? (
-                    <>
-                      Import a Word book into it from{" "}
-                      <Link className="link" href="/manage/notes-import">
-                        Manage → Import notes (Word)
-                      </Link>
-                      .
-                    </>
-                  ) : (
-                    "Notes are being written — check back soon."
-                  )}
-                </EmptyState>
-              ) : (
-                <>
-                  <div className="panel-head reading-head">
-                    <div style={{ minWidth: 0 }}>
-                      <div className="eyebrow">{kindInfo!.label}</div>
-                      <h3 className="chapter-title">
-                        {chapters.length > 1 && <span className="kicker">Chapter {chapterIndex + 1}</span>}
-                        {chapter!.label}
-                      </h3>
-                    </div>
-                    <ReaderTools />
-                    {chapters.length > 1 && (
-                      <JumpSelect
-                        label="Chapter"
-                        className="jump-chapter"
-                        value={chapterHref(chapter!.id)}
-                        options={chapters.map((c, i) => ({
-                          href: chapterHref(c.id),
-                          label: `${numbered(c.label, i)} ${c.count ? `(${c.count})` : "(no notes yet)"}`,
-                        }))}
-                      />
-                    )}
-                  </div>
-                  {paged ? (
-                    <details className="chapter-contents" open={!sp.section}>
-                      <summary>
-                        <ListOrdered size={16} aria-hidden /> Contents · section {sectionIndex + 1} of {sections.length}
-                      </summary>
-                      <ol>
-                        {sections.map(({ micro_theme: mt, note }) => (
-                          <li key={mt.id}>
-                            <Link href={sectionHref(mt.id)} aria-current={mt.id === section?.micro_theme.id ? "true" : undefined}>
-                              {mt.title}
+        <div className="topic-index">
+          {subject.topics.map((chapter, ci) => {
+            const rows = entries.filter((e) => e.ci === ci);
+            const w = rows.filter(written).length;
+            return (
+              <section key={chapter.id} id={`chapter-${chapter.id}`} className="panel topic-chapter" aria-labelledby={`ch-${chapter.id}`}>
+                <header className="topic-chapter-head">
+                  <span className="np-index" aria-hidden>
+                    {String(ci + 1).padStart(2, "0")}
+                  </span>
+                  <h3 id={`ch-${chapter.id}`}>{chapter.title.replace(/^\d+[.)]\s+/, "")}</h3>
+                  <span className="np-meta">
+                    {w} / {rows.length} written
+                  </span>
+                </header>
+                {rows.length === 0 ? (
+                  <p className="muted small" style={{ margin: 0 }}>
+                    No topics yet.
+                  </p>
+                ) : (
+                  <ol className="topic-lines">
+                    {rows.map((e) => {
+                      const size = sizes.get(e.mt.id);
+                      const open = written(e) || isAdmin;
+                      const inner = (
+                        <>
+                          <span className="tl-num">{label(e)}</span>
+                          <span className="tl-title">{e.mt.title}</span>
+                          <span className={`tl-meta ${written(e) ? "" : "tl-soon"}`}>
+                            {written(e) ? (size ? readTime(size) : "Read") : isAdmin ? "Write" : "Coming soon"}
+                          </span>
+                        </>
+                      );
+                      return (
+                        <li key={e.mt.id}>
+                          {open ? (
+                            <Link href={written(e) ? sectionHref(e.mt.id) : `/manage/content/${e.mt.id}?kind=${kind}`} className="topic-line">
+                              {inner}
                             </Link>
-                            <span className="muted small"> · {readTime(note.size)}</span>
-                          </li>
-                        ))}
-                      </ol>
-                    </details>
-                  ) : site.show_contents && notes.results.length > 2 && (
-                    <details className="chapter-contents" open>
-                      <summary>
-                        <ListOrdered size={16} aria-hidden /> Contents · {notes.results.length} sections
-                      </summary>
-                      <ol>
-                        {notes.results.map(({ micro_theme: mt }) => (
-                          <li key={mt.id}>
-                            <a href={`#n-${mt.id}`}>{mt.title}</a>
-                          </li>
-                        ))}
-                      </ol>
-                    </details>
-                  )}
-                  {notes.results.length === 0 ? (
-                    <EmptyState icon={NotebookPen} title={`No ${kindInfo!.label.toLowerCase()} for this chapter yet`}>
-                      {isAdmin ? "Write them in the content editor (links below)." : "They're being written — check back soon."}
-                    </EmptyState>
-                  ) : (
-                    <div className="note-topic">
-                      {notes.results.map(({ micro_theme: mt, note }) => (
-                        <article key={mt.id} className="note-block" aria-labelledby={`n-${mt.id}`}>
-                          <header className="row" style={{ gap: 8, marginBottom: 6 }}>
-                            {(isAdmin || site.show_codes) && <span className="code-chip">{mt.code}</span>}
-                            <h4 id={`n-${mt.id}`} style={{ flex: 1, fontSize: 17 }}>
-                              {mt.title}
-                            </h4>
-                            {isAdmin && <StatusBadge status={note.status} />}
-                            {isAdmin && (
-                              <Link href={`/manage/content/${mt.id}?kind=${kind}`} className="mini-btn" aria-label={`Edit ${kindInfo!.label} for ${mt.code}`}>
-                                <Pencil size={14} aria-hidden /> Edit
-                              </Link>
-                            )}
-                            <Link href={trackPath(commission, group, `micro/${encodeURIComponent(mt.code)}?note=${kind}`)} className="mini-btn">
-                              <ExternalLink size={14} aria-hidden /> Open
-                            </Link>
-                          </header>
-                          <div className="reading">
-                            <RichText doc={note.body} />
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                  {paged && (
-                    <nav className="prevnext section-nav" aria-label="Previous and next section">
-                      {prevSection && (
-                        <Link href={sectionHref(prevSection.micro_theme.id)}>
-                          <small>
-                            <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Previous section
-                          </small>
-                          <b>{prevSection.micro_theme.title}</b>
-                        </Link>
-                      )}
-                      {nextSection && (
-                        <Link href={sectionHref(nextSection.micro_theme.id)} className="next">
-                          <small>
-                            Next section · {sectionIndex + 2} of {sections.length} <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
-                          </small>
-                          <b>{nextSection.micro_theme.title}</b>
-                        </Link>
-                      )}
-                    </nav>
-                  )}
-                  {chapters.length > 1 && (
-                    <nav className="prevnext chapter-nav" aria-label="Previous and next chapter">
-                      {prevChapter && (
-                        <Link href={chapterHref(prevChapter.id)}>
-                          <small>
-                            <ArrowLeft size={13} aria-hidden style={{ verticalAlign: "-2px" }} /> Previous chapter
-                          </small>
-                          <b>{prevChapter.label}</b>
-                        </Link>
-                      )}
-                      {nextChapter && (
-                        <Link href={chapterHref(nextChapter.id)} className="next">
-                          <small>
-                            Next chapter <ArrowRight size={13} aria-hidden style={{ verticalAlign: "-2px" }} />
-                          </small>
-                          <b>{nextChapter.label}</b>
-                        </Link>
-                      )}
-                    </nav>
-                  )}
-                  {isAdmin && chapter && <MissingNotes subject={subject} topicId={chapter.id} kind={kind} />}
-                </>
-              )}
-            </section>
-
-            <section className="panel" aria-labelledby="files">
-              <div className="panel-head">
-                <h2 id="files" style={{ fontSize: 18 }}>
-                  <FileStack size={18} aria-hidden style={{ verticalAlign: "-3px" }} /> {kindInfo!.label} — files
-                </h2>
-                {isAdmin && (
-                  <Link href={`/manage/materials?track=${commission}/${group}&category=${kind}`} className="btn btn-primary btn-sm">
-                    <Upload size={15} aria-hidden /> Upload file
-                  </Link>
+                          ) : (
+                            <span className="topic-line is-soon">{inner}</span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
                 )}
-              </div>
-              {materials.results.length === 0 ? (
-                <p className="muted small" style={{ margin: 0 }}>
-                  No downloadable {kindInfo!.label.toLowerCase()} for {subject.title} yet
-                  {isAdmin ? " — upload PDFs or slides and map them to this topic." : "."}
-                </p>
-              ) : (
-                <MaterialList items={materials.results} isAdmin={isAdmin} />
-              )}
-            </section>
-          </div>
+              </section>
+            );
+          })}
         </div>
+      )}
+
+      {(materials.results.length > 0 || isAdmin) && (
+        <section className="panel" aria-labelledby="files" style={{ marginTop: 22 }}>
+          <div className="panel-head">
+            <h2 id="files" style={{ fontSize: 18 }}>
+              <FileStack size={18} aria-hidden style={{ verticalAlign: "-3px" }} /> {kindInfo.label} — files
+            </h2>
+            {isAdmin && (
+              <Link href={`/manage/materials?track=${commission}/${group}&category=${kind}`} className="btn btn-primary btn-sm">
+                <Upload size={15} aria-hidden /> Upload file
+              </Link>
+            )}
+          </div>
+          {materials.results.length === 0 ? (
+            <p className="muted small" style={{ margin: 0 }}>
+              No downloadable files for {subject.title} yet — upload PDFs or slides and map them to this subject.
+            </p>
+          ) : (
+            <MaterialList items={materials.results} isAdmin={isAdmin} />
+          )}
+        </section>
       )}
     </div>
   );
-}
-
-/** "3. Title", unless the syllabus title is numbered already. */
-function numbered(label: string, i: number) {
-  return /^\d+[.)]\s/.test(label) ? label : `${i + 1}. ${label}`;
 }
 
 /** About how long a note takes to read: ~6 characters a word, ~200 words a minute. */
 function readTime(chars: number) {
   const min = Math.max(1, Math.round(chars / 6 / 200));
   return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${min % 60} min`;
-}
-
-/** Before a note type is chosen: what the topic contains. */
-function ChapterOverview({ subject }: { subject: SubjectNode }) {
-  if (subject.topics.length === 0) return null;
-  return (
-    <section className="panel" aria-labelledby="inside-h">
-      <h3 id="inside-h" style={{ fontSize: 17, marginBottom: 10 }}>
-        Inside {subject.title} · {subject.topics.length} chapter{subject.topics.length === 1 ? "" : "s"}
-      </h3>
-      <ol className="chapter-overview">
-        {subject.topics.map((t) => (
-          <li key={t.id}>
-            {t.title} <span className="muted small">· {t.micro_themes.length} sections</span>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function MissingNotes({ subject, topicId, kind }: { subject: SubjectNode; topicId: number; kind: NoteKind }) {
-  const missing = subject.topics
-    .filter((t) => t.id === topicId)
-    .flatMap((t) => t.micro_themes.filter((m) => !m.note_kinds.includes(kind)));
-  if (!missing.length) return null;
-  return (
-    <div className="alert alert-info" style={{ marginTop: 18 }}>
-      <b>Admin:</b> {missing.length} section{missing.length > 1 ? "s" : ""} in this chapter {missing.length > 1 ? "have" : "has"} no note of
-      this type yet —{" "}
-      {missing.map((m, i) => (
-        <span key={m.id}>
-          {i > 0 && ", "}
-          <Link className="link" href={`/manage/content/${m.id}?kind=${kind}`}>
-            {m.code}
-          </Link>
-        </span>
-      ))}
-      .
-    </div>
-  );
 }

@@ -213,3 +213,31 @@ export function examPortal(slug: string, index: number): PortalKind {
   if (slug === "appsc") return "spark";
   return (["galaxy", "whitehole", "blackhole", "waves"] as PortalKind[])[index % 4];
 }
+
+/** The four ways into an exam, in order: the home of an exam shows them as big blocks, every page inside as pills. */
+export const MODULES: { tab: string; name: string; short: string; kind: PortalKind; portal: string; blurb: string }[] = [
+  { tab: "materials", name: "Material / Notes", short: "Notes", kind: "whitehole", portal: "White hole", blurb: "Every subject, opened topic by topic, as the syllabus has it." },
+  { tab: "prelims", name: "Prelims PYQ Vault", short: "Prelims PYQs", kind: "wormhole", portal: "Wormhole", blurb: "Past Prelims questions, by year, paper or subject." },
+  { tab: "mains", name: "Mains PYQ Vault", short: "Mains PYQs", kind: "blackhole", portal: "Black hole", blurb: "Past Mains questions, with model answers." },
+  { tab: "progress", name: "Progress Tracker", short: "Progress", kind: "waves", portal: "Gravitational waves", blurb: "How much of the syllabus you have covered." },
+];
+
+/* ─── which portals are on screen: each registers itself when it appears (SkyPortal); PortalMotion draws them ─── */
+export const visiblePortals = new Set<HTMLCanvasElement>();
+let io: IntersectionObserver | null = null;
+
+export function registerPortal(c: HTMLCanvasElement): () => void {
+  io ??= new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      const el = e.target as HTMLCanvasElement;
+      if (e.isIntersecting) visiblePortals.add(el);
+      else visiblePortals.delete(el);
+    }
+  });
+  io.observe(c);
+  drawPortal(c, 1.3); // a first frame at once, so a portal is never blank
+  return () => {
+    io?.unobserve(c);
+    visiblePortals.delete(c);
+  };
+}

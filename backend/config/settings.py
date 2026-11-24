@@ -46,6 +46,8 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "config.middleware.ApiTrailingSlashMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # JSON to the browser goes out compressed (nginx passes proxied responses through as they are).
+    "django.middleware.gzip.GZipMiddleware",
     # Serves the Django admin's static files where there's no nginx in front (e.g. Render).
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",

@@ -39,8 +39,8 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
                 ))}
               </div>
             )}
-            <Link href={`/exams/${commission}`} className="btn btn-ghost btn-sm">
-              <ArrowLeft size={15} aria-hidden /> {track.commission_name} exams
+            <Link href="/" className="btn btn-ghost btn-sm">
+              <ArrowLeft size={15} aria-hidden /> All exams
             </Link>
           </div>
         </div>

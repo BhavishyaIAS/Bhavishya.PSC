@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
 
 import type { User } from "./types";
 
@@ -54,7 +55,8 @@ export async function load<T>(path: string, nextPath?: string): Promise<T> {
   }
 }
 
-export async function currentUser(): Promise<User | null> {
+/** The signed-in user, asked of the API once per request (the layout and the page both want it). */
+export const currentUser = cache(async function currentUser(): Promise<User | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
@@ -62,7 +64,7 @@ export async function currentUser(): Promise<User | null> {
   } catch {
     return null;
   }
-}
+});
 
 export async function requireUser(nextPath = "/"): Promise<User> {
   const user = await currentUser();

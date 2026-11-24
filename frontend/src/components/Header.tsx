@@ -11,7 +11,7 @@ import { SkyThemeSwitch } from "./sky/SkyThemeSwitch";
 import { ThemeToggle } from "./ThemeToggle";
 
 /** Logo left · the examinations · search · account actions right. Phones navigate with the bottom bar. */
-export function Header({ user, exams = [], sky = false }: { user: User | null; exams?: { slug: string; short_name: string }[]; sky?: boolean }) {
+export function Header({ user, exams = [], sky = false }: { user: User | null; exams?: { slug: string; short_name: string; tracks?: { group: string }[] }[]; sky?: boolean }) {
   return (
     <header className="topbar">
       <div className="topbar-inner">
@@ -30,7 +30,7 @@ export function Header({ user, exams = [], sky = false }: { user: User | null; e
         {exams.length > 0 && (
           <nav className="topbar-exams" aria-label="Examinations">
             {exams.map((e) => (
-              <Link key={e.slug} href={`/exams/${e.slug}`}>
+              <Link key={e.slug} href={e.tracks?.[0] ? `/exams/${e.slug}/${e.tracks[0].group}` : `/exams/${e.slug}`}>
                 {e.short_name}
               </Link>
             ))}

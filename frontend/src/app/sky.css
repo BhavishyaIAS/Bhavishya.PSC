@@ -28,7 +28,7 @@
   --neb1: rgba(255, 176, 128, 0.42);
   --neb2: rgba(120, 168, 255, 0.38);
   --neb3: rgba(204, 140, 255, 0.3);
-  --glass: rgba(255, 255, 255, 0.74);
+  --glass: rgba(255, 255, 255, 0.86);
   --glass-solid: #ffffff;
   --line: rgba(44, 32, 120, 0.16);
   --shadow-sky: 0 10px 30px rgba(44, 32, 120, 0.12);
@@ -63,7 +63,7 @@
   --neb1: rgba(190, 70, 160, 0.26);
   --neb2: rgba(50, 90, 220, 0.28);
   --neb3: rgba(110, 50, 200, 0.3);
-  --glass: rgba(22, 16, 54, 0.68);
+  --glass: rgba(22, 16, 54, 0.86);
   --glass-solid: #140e30;
   --line: rgba(176, 156, 255, 0.22);
   --shadow-sky: 0 10px 34px rgba(0, 0, 0, 0.5);
@@ -101,8 +101,6 @@
   background-color: var(--glass);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-sky);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   clip-path: none;
 }
 :root[data-skin="sky"] :is(.panel, .q-card, .modal, .auth-card) {
@@ -295,8 +293,6 @@
   border: 1px solid var(--line);
   background: var(--glass);
   box-shadow: var(--shadow-sky);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   color: var(--text);
 }
 .sky-gate {
@@ -442,8 +438,6 @@
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--glass);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
   font: 600 0.9rem var(--font-body);
   color: var(--muted);
   transition: color 0.2s, border-color 0.2s;
@@ -514,5 +508,25 @@
   :root[data-skin="sky"] .brand-name {
     font-size: 16px;
     letter-spacing: 0.03em;
+  }
+}
+
+/* Speed: a page arrives at once. No 3D entrance, no cards rising one after another. */
+:root[data-skin="sky"] .page-enter {
+  animation: sky-in 0.16s ease-out both;
+}
+:root[data-skin="sky"] .page-enter .page-enter {
+  animation: none;
+}
+:root[data-skin="sky"] :is(.topic-grid, .note-types, .grid-4, .grid-3, .grid-2, .q-list, .feature-strip, .chapter-contents, .note-block) > *,
+:root[data-skin="sky"] :is(.chapter-contents, .reading-head) {
+  animation: none;
+}
+:root[data-skin="sky"] :is(.topic-card, .note-type, .stat, [data-tilt]) {
+  transform: none;
+}
+@keyframes sky-in {
+  from {
+    opacity: 0.4;
   }
 }

@@ -4,12 +4,19 @@ import { Search, X } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
-import type { Facets, PaperNode } from "@/lib/types";
+import type { Facets } from "@/lib/types";
+
+/** Just the syllabus names the filters offer (the whole tree would be ~100 KB more on every PYQ page). */
+export type FilterPaper = {
+  id: number;
+  title: string;
+  subjects: { id: number; title: string; topics: { id: number; title: string; micro_themes: { code: string; title: string }[] }[] }[];
+};
 
 const KEYS = ["id", "year", "paper_label", "paper", "subject", "topic", "micro", "tag", "status", "q"] as const;
 
 /** Filter bar for the PYQ vault. State lives in the URL, so results are shareable and server-rendered. */
-export function PyqFilters({ facets, papers, isAdmin }: { facets: Facets; papers: PaperNode[]; isAdmin: boolean }) {
+export function PyqFilters({ facets, papers, isAdmin }: { facets: Facets; papers: FilterPaper[]; isAdmin: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
