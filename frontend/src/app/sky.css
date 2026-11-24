@@ -530,3 +530,47 @@
     opacity: 0.4;
   }
 }
+
+/* home: the exams fill the first screen; what is inside every exam is mentioned below, plainly */
+.sky-first {
+  min-height: calc(100svh - var(--topbar-h, 68px) - 24px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 24px;
+}
+.sky-first .sky-hero {
+  padding-top: 24px;
+}
+.sky-features {
+  margin-top: 40px;
+  padding-top: 28px;
+  border-top: 1px solid var(--line);
+}
+.sky-features h2 {
+  font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+  margin: 0 0 16px;
+  color: var(--text-strong);
+}
+.sky-features ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 14px 28px;
+}
+.sky-features li {
+  display: grid;
+  gap: 3px;
+  padding-left: 14px;
+  border-left: 2px solid var(--accent);
+}
+.sky-features b {
+  color: var(--text-strong);
+  font-weight: 700;
+}
+.sky-features span {
+  color: var(--muted);
+  font-size: 0.93rem;
+}

@@ -37,7 +37,7 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
   ]);
   const isAdmin = user.role === "admin";
   const track = `${commission}/${group}`;
-  const papers = tree.papers.filter((p) => p.subjects.length > 0);
+  const papers = tree.papers.filter((p) => p.subjects.length > 0 && !NOT_IN_NOTES.test(p.title));
   const paperTopics = papers.map((paper) => syllabusTopics({ ...tree, papers: [paper] }));
   const firstNumber = paperTopics.map((_, i) => paperTopics.slice(0, i).reduce((a, t) => a + t.length, 1));
 
@@ -140,6 +140,9 @@ export default async function MaterialsTab(props: PageProps<"/exams/[commission]
     </div>
   );
 }
+
+/** Papers Material / Notes leaves out: the qualifying languages, the essay, and the mental-ability paper. */
+const NOT_IN_NOTES = /^(english|telugu)\b|general essay|mental\s*(&|and)\s*psychological/i;
 
 /** "Paper II — History, Culture & Geography" → ["Paper II", "History, Culture & Geography"]. */
 function paperParts(title: string): [string | undefined, string] {

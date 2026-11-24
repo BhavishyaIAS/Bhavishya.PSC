@@ -4,6 +4,7 @@ Read endpoints for authenticated users. Every queryset goes through
 """
 
 import mimetypes
+import re
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -335,6 +336,10 @@ def filter_questions(qs, params):
     return qs.distinct()
 
 
+LANGUAGE_RE = re.compile(r"(?i)english|telugu")
+LANGUAGE_PAPER = Case(When(paper_label__iregex=r"english|telugu", then=Value(1)), default=Value(0), output_field=IntegerField())
+
+
 @api_view(["GET"])
 def track_questions(request, commission, group):
     track = get_track(commission, group, request.user)
@@ -351,6 +356,9 @@ def track_questions(request, commission, group):
     if not is_admin(request.user):
         params.pop("status", None)
     qs = filter_questions(qs, params)
+    if not (params.get("q") or "").strip():
+        # the qualifying language papers (English, Telugu) after the papers that count
+        qs = qs.annotate(language_paper=LANGUAGE_PAPER).order_by("language_paper", "-year", "paper_label", "question_no")
     paginator = StandardPagination()
     page = paginator.paginate_queryset(qs, request)
     ctx = {"visible_mt_ids": visible_mt_ids(request.user, track)}
@@ -365,7 +373,7 @@ def question_facets(request, commission, group):
     return Response({
         "total": qs.count(),
         "years": sorted(set(qs.values_list("year", flat=True)), reverse=True),
-        "paper_labels": sorted(set(qs.values_list("paper_label", flat=True))),
+        "paper_labels": sorted(set(qs.values_list("paper_label", flat=True)), key=lambda p: (bool(LANGUAGE_RE.search(p)), p)),
         "tags": list(
             qs.filter(tags__isnull=False)
             .values("tags__slug", "tags__name")

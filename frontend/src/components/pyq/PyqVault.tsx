@@ -86,7 +86,9 @@ export async function PyqVault({
       </div>
       <PyqFilters
         facets={facets}
-        papers={tree.papers.map((p) => ({
+        papers={[...tree.papers]
+          .sort((a, b) => Number(/english|telugu/i.test(a.title)) - Number(/english|telugu/i.test(b.title))) // language papers last
+          .map((p) => ({
           id: p.id,
           title: p.title,
           subjects: p.subjects.map((s) => ({
