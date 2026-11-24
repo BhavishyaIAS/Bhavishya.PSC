@@ -574,3 +574,92 @@
   color: var(--muted);
   font-size: 0.93rem;
 }
+
+/* ═══════════ The opening: from a singularity to Bhavishya IAS (Creation.tsx, cosmos-boot.ts) ═══════════ */
+.cosmos {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1; /* behind the page, above the star field */
+  pointer-events: none;
+}
+/* while it plays: only the sky, nothing to click but Skip */
+:root[data-intro="full"] :is(.topbar, main, .site-footer, .bottom-nav, .skip-link),
+:root[data-intro="short"] :is(.topbar, main, .site-footer, .bottom-nav, .skip-link) {
+  opacity: 0;
+  visibility: hidden;
+}
+/* the page appears; the name waits for its letters to arrive, then the portals rise one by one */
+:root[data-intro="reveal"] :is(.topbar, main, .site-footer, .bottom-nav) {
+  animation: cosmos-in 1.5s ease both;
+}
+:root[data-intro] .sky-hero h1 {
+  opacity: 0;
+}
+:root[data-intro][data-intro-name] .sky-hero h1 {
+  opacity: 1;
+  transition: opacity 1.3s ease;
+}
+:root[data-intro="reveal"] .sky-hero .sky-eyebrow {
+  animation: cosmos-in 1.6s 0.3s ease both;
+}
+:root[data-intro="reveal"] .sky-gate {
+  animation: cosmos-rise 1.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+:root[data-intro="reveal"] .sky-gate:nth-child(1) { animation-delay: 0.7s; }
+:root[data-intro="reveal"] .sky-gate:nth-child(2) { animation-delay: 1s; }
+:root[data-intro="reveal"] .sky-gate:nth-child(3) { animation-delay: 1.3s; }
+:root[data-intro="reveal"] :is(.sky-cta, .sky-features) {
+  animation: cosmos-in 1.4s 1.5s ease both;
+}
+/* reduced motion: a short fade, nothing moving */
+:root[data-intro="still"] main {
+  animation: cosmos-in 0.6s ease both;
+}
+@keyframes cosmos-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes cosmos-rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+}
+.cosmos-controls {
+  position: fixed;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  z-index: 300;
+  display: flex;
+  gap: 10px;
+  animation: cosmos-in 1.2s 0.8s ease both;
+}
+.cosmos-btn {
+  padding: 9px 16px;
+  border: 1px solid rgb(241 220 171 / 0.35);
+  border-radius: 999px;
+  background: rgb(10 8 26 / 0.55);
+  color: rgb(246 239 224 / 0.86);
+  font: 500 0.82rem/1 var(--font-body, system-ui), system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: border-color 0.3s, color 0.3s;
+}
+.cosmos-btn:hover {
+  border-color: rgb(241 220 171 / 0.7);
+  color: #fff;
+}
+.cosmos-btn:focus-visible {
+  outline: 2px solid #f1dcab;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-intro] :is(.sky-gate, .sky-hero .sky-eyebrow, .sky-cta, .sky-features, main, .topbar) {
+    animation-duration: 0.01s !important;
+  }
+}
