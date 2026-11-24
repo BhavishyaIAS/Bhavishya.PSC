@@ -28,6 +28,7 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
   const [codes, setCodes] = useState(site.show_codes);
   const [contents, setContents] = useState(site.show_contents);
   const [backdrops, setBackdrops] = useState(site.backdrops);
+  const [skin, setSkin] = useState(site.skin);
   const focused = exams.results.find((b) => b.id === exams.focus);
   const upsc = exams.results.find((b) => b.slug === "upsc");
   const [target, setTarget] = useState(String(upsc?.id ?? exams.results[0]?.id ?? ""));
@@ -135,11 +136,28 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
           e.preventDefault();
           const note_kinds = Object.fromEntries(kinds.map((k) => [k.key, { label: k.label, blurb: k.blurb, enabled: k.enabled }]));
           void run(
-            () => clientApi("/manage/site/", { method: "PATCH", json: { hero_eyebrow: eyebrow, hero_lead: lead, note_kinds, reader_font: font, reader_size: size, show_codes: codes, show_contents: contents, backdrops } }),
+            () => clientApi("/manage/site/", { method: "PATCH", json: { hero_eyebrow: eyebrow, hero_lead: lead, note_kinds, reader_font: font, reader_size: size, show_codes: codes, show_contents: contents, backdrops, skin } }),
             "Settings saved",
           );
         }}
       >
+        <section className="panel" aria-labelledby="look-h">
+          <div className="panel-head">
+            <h2 id="look-h">Look of the site</h2>
+            <span className="muted small">Changes only how pages look; no content changes. Switch back at any time.</span>
+          </div>
+          <div className="form-grid">
+            <label className="checkbox full">
+              <input type="radio" name="skin" checked={skin === "sky"} onChange={() => setSkin("sky")} /> <b>Sky</b> (experiment): glass pages over a
+              star field, round animated portals, Day / Night switch
+            </label>
+            <label className="checkbox full">
+              <input type="radio" name="skin" checked={skin === "classic"} onChange={() => setSkin("classic")} /> <b>Classic</b>: the worlds (Mars, the
+              Moon, Saturn, Jupiter, Earth) and the 3D solar system
+            </label>
+          </div>
+        </section>
+
         <section className="panel" aria-labelledby="home-h">
           <div className="panel-head">
             <h2 id="home-h">Home page wording</h2>

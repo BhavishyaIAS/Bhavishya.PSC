@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import {
+  Cinzel,
   Cormorant_Garamond,
+  Figtree,
   Fraunces,
   Geist,
   Geist_Mono,
@@ -20,6 +22,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
 import { Header } from "@/components/Header";
+import { SkyBackdrop } from "@/components/sky/SkyBackdrop";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
 import { worldForPath } from "@/components/space/worlds";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -31,6 +34,7 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 import "./design.css";
 import "./worlds.css";
+import "./sky.css";
 
 /*
  * Type. Each world has its own voice (see worlds.css); these are the faces they draw on.
@@ -57,10 +61,13 @@ const plexCondensed = IBM_Plex_Sans_Condensed({ subsets: ["latin", "latin-ext"],
 const plexMono = IBM_Plex_Mono({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500"], variable: "--font-plex-mono" });
 const cormorant = Cormorant_Garamond({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "600"], style: ["normal", "italic"], variable: "--font-cormorant" });
 const grotesk = Space_Grotesk({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-grotesk" });
+// the Sky style (Manage → Site settings): Cinzel capitals for titles, Figtree for everything else
+const cinzel = Cinzel({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["500", "700"], variable: "--font-cinzel" });
+const figtree = Figtree({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, weight: ["400", "500", "600", "700"], variable: "--font-figtree" });
 const manrope = Manrope({ subsets: ["latin", "latin-ext"], display: "swap", preload: false, variable: "--font-manrope" });
 const telugu = Noto_Sans_Telugu({ subsets: ["telugu"], variable: "--font-telugu", display: "swap", preload: false });
 const devanagari = Noto_Sans_Devanagari({ subsets: ["devanagari"], variable: "--font-devanagari", display: "swap", preload: false });
-const fonts = [sans, mono, serif, display, wide, plex, plexCondensed, plexMono, cormorant, grotesk, manrope, telugu, devanagari].map((f) => f.variable).join(" ");
+const fonts = [sans, mono, serif, display, wide, plex, plexCondensed, plexMono, cormorant, grotesk, manrope, cinzel, figtree, telugu, devanagari].map((f) => f.variable).join(" ");
 
 // Allow time for a sleeping API to wake (Render's free plan takes up to a minute).
 export const maxDuration = 60;
@@ -98,6 +105,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const [user, site, commissions, jar, head] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies(), headers()]);
   // Which world this page is in, known on the server (the proxy passes the path), so the first paint is already there.
   const world = worldForPath(head.get("x-bp-path") ?? "/");
+  // The Sky style replaces the worlds: no world, no 3D scenes, a star field instead (switch back in Site settings).
+  const sky = site.skin === "sky";
   // The phone bar links to the exams of the commission being browsed (or the one the site is dedicated to).
   const browsing = jar.get("bp_commission")?.value;
   const current =
@@ -109,7 +118,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-reader-size={site.reader_size}
       data-reader-font={site.reader_font}
       data-backdrops={site.backdrops ? undefined : "off"}
-      data-world={world}
+      data-world={sky ? undefined : world}
+      data-skin={sky ? "sky" : undefined}
       suppressHydrationWarning
     >
       <head>
@@ -120,10 +130,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        <SpaceLayer live={site.backdrops} />
+        {sky ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
         <Interactions />
         <ToastProvider>
-          <Header user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
+          <Header sky={sky} user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             <span>

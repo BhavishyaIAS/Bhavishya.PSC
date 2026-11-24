@@ -6,6 +6,7 @@ import { GroupCards } from "@/components/GroupCards";
 import { DESTINATIONS } from "@/components/space/destinations";
 import { Portal } from "@/components/space/Portal";
 import { Globe } from "@/components/space/Globe";
+import { SkyHome } from "@/components/sky/SkyHome";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
@@ -24,6 +25,18 @@ export default async function LandingPage() {
   const isAdmin = user?.role === "admin";
   const firstName = user?.display_name?.split(" ")[0];
   const eyebrow = site.hero_eyebrow || (focus ? focus.name : firstName ? `Welcome back, ${firstName}` : "Civil services preparation");
+
+  if (site.skin === "sky") {
+    return (
+      <SkyHome
+        commissions={shown}
+        user={user}
+        isAdmin={isAdmin}
+        eyebrow={site.hero_eyebrow || (firstName ? `Welcome back, ${firstName}` : shown.map((c) => c.short_name).join(" · ") || "Civil services preparation")}
+        lead={site.hero_lead || "Step through a gateway to find its syllabus, your notes, past papers and a record of how far you have come."}
+      />
+    );
+  }
 
   return (
     <div className="landing landing-refined">
