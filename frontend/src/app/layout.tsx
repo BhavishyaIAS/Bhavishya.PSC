@@ -25,7 +25,8 @@ import { Header } from "@/components/Header";
 import { AmbientToggle } from "@/components/living/AmbientToggle";
 import { LivingWorld } from "@/components/living/LivingWorld";
 import { LookSwitch } from "@/components/living/LookSwitch";
-import { sceneForPath } from "@/components/living/scenes";
+import { isScene, sceneForPath, WORLD_COOKIE } from "@/components/living/scenes";
+import { WorldPicker } from "@/components/living/WorldPicker";
 import { PortalMotion } from "@/components/sky/PortalMotion";
 import { SkyBackdrop } from "@/components/sky/SkyBackdrop";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
@@ -116,6 +117,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Sky and the Living Universe replace the worlds (no world, no 3D scenes); Classic keeps them. Site settings
   // chooses for everyone; a visitor can choose their own in the footer.
   const calm = skin !== "classic";
+  const pinnedWorld = jar.get(WORLD_COOKIE)?.value;
+  const pinned = isScene(pinnedWorld) ? pinnedWorld : null;
   // The phone bar links to the exams of the commission being browsed (or the one the site is dedicated to).
   const browsing = jar.get("bp_commission")?.value;
   const current =
@@ -129,7 +132,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-backdrops={site.backdrops ? undefined : "off"}
       data-world={calm ? undefined : world}
       data-skin={calm ? skin : undefined}
-      data-scene={skin === "living" ? sceneForPath(path) : undefined}
+      data-scene={skin === "living" ? (pinned ?? sceneForPath(path)) : undefined}
       suppressHydrationWarning
     >
       <head>
@@ -140,7 +143,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        {skin === "living" ? <LivingWorld /> : skin === "sky" ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
+        {skin === "living" ? <LivingWorld pinned={pinned} /> : skin === "sky" ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
         <PortalMotion />
         <Interactions />
         <ToastProvider>
@@ -152,6 +155,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </span>
             <span className="footer-controls">
               <LookSwitch current={skin} />
+              {skin === "living" && <WorldPicker pinned={pinned} />}
               {skin === "living" && <AmbientToggle />}
               <MotionToggle />
             </span>

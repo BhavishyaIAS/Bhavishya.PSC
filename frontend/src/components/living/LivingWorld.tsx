@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { World } from "./engine";
-import { sceneForPath } from "./scenes";
+import { isScene, sceneForPath, type Scene } from "./scenes";
 import { setAmbienceScene } from "./sound";
 
 const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "off";
@@ -13,14 +13,21 @@ const still = () => matchMedia("(prefers-reduced-motion: reduce)").matches || do
  * The Living Universe behind every page. One canvas, at most ~30 frames a second, paused while the tab is hidden;
  * with reduced motion (or Animations: off) it is a still picture, redrawn now and then as the light changes.
  */
-export function LivingWorld() {
+export function LivingWorld({ pinned }: { pinned: Scene | null }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const world = useRef<World | null>(null);
+  const pin = useRef<Scene | null>(pinned);
   const pathname = usePathname();
+  const show = (path: string) => {
+    const s = pin.current ?? sceneForPath(path);
+    document.documentElement.dataset.scene = s;
+    world.current?.setScene(s);
+    setAmbienceScene(s);
+  };
 
   useEffect(() => {
     const root = document.documentElement;
-    const w = new World(ref.current!, sceneForPath(location.pathname));
+    const w = new World(ref.current!, pin.current ?? sceneForPath(location.pathname));
     world.current = w;
     (window as unknown as { __livingWorld?: World }).__livingWorld = w; // for looking closely (tests, the console)
     const theme = () => {
@@ -65,6 +72,12 @@ export function LivingWorld() {
       w.scroll(scrollY - lastY);
       lastY = scrollY;
     };
+    const onPin = (e: Event) => {
+      const s = (e as CustomEvent).detail;
+      pin.current = isScene(s) ? s : null;
+      show(location.pathname);
+    };
+    addEventListener("living-world", onPin);
     addEventListener("resize", onResize);
     addEventListener("pointerdown", onClick, { passive: true });
     addEventListener("pointermove", onMove, { passive: true });
@@ -73,6 +86,7 @@ export function LivingWorld() {
       cancelAnimationFrame(raf);
       window.clearInterval(clock);
       themeObs.disconnect();
+      removeEventListener("living-world", onPin);
       removeEventListener("resize", onResize);
       removeEventListener("pointerdown", onClick);
       removeEventListener("pointermove", onMove);
@@ -82,10 +96,8 @@ export function LivingWorld() {
 
   // each page is a stage of the journey: the world transforms into the next, it never cuts
   useEffect(() => {
-    const s = sceneForPath(pathname);
-    document.documentElement.dataset.scene = s;
-    world.current?.setScene(s);
-    setAmbienceScene(s);
+    show(pathname);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   return <canvas ref={ref} className="living-world" aria-hidden />;

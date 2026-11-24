@@ -44,6 +44,40 @@ export default async function MaterialsTab(
 
   const site = await getSite();
   const kinds = site.note_kinds.filter((k) => k.enabled);
+
+  // First, only the types of notes: a subject list opens once one of them is chosen.
+  if (kinds.length > 1 && !kinds.some((k) => k.key === sp.kind)) {
+    await requireUser(here);
+    return (
+      <div>
+        <div className="flow-head">
+          <div>
+            <h2 className="flow-title">Material / Notes</h2>
+            <p className="muted" style={{ margin: "4px 0 0" }}>
+              Choose the notes you want to read.
+            </p>
+          </div>
+        </div>
+        <nav className="kind-tabs kind-tabs-big" aria-label="Type of notes">
+          {kinds.map((k) => {
+            const Icon = KIND_ICONS[k.key];
+            return (
+              <Link key={k.key} href={`${here}?kind=${k.key}`} className={`kind-tab kind-${k.key}`}>
+                <span className="kind-tab-icon" aria-hidden>
+                  <Icon size={30} />
+                </span>
+                <span className="kind-tab-text">
+                  <b>{k.label}</b>
+                  <span>{k.blurb}</span>
+                  <span className="kind-tab-go">Open →</span>
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    );
+  }
   const kind = (
     kinds.find((k) => k.key === sp.kind) ??
     kinds.find((k) => k.key === "comprehensive") ??
