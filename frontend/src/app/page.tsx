@@ -121,15 +121,10 @@ export default async function LandingPage() {
             Five worlds inside every exam
           </h2>
           <ul className="destinations">
-            {DESTINATIONS.map((d, i) => (
+            {DESTINATIONS.map((d) => (
               <li key={d.tab} className={`destination destination-${d.world}`}>
-                <span className="destination-idx" aria-hidden>
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <Globe world={d.world} size={54} />
-                <span className="destination-place">{d.place}</span>
+                <Globe world={d.world} size={96} />
                 <b>{d.long}</b>
-                <span className="destination-text">{d.blurb}</span>
               </li>
             ))}
           </ul>
