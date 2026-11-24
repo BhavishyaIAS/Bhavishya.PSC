@@ -20,7 +20,6 @@ export function WorkspaceTabs({ commission, group }: { commission: string; group
           <Link key={d.tab} href={href} className={`world-tab world-tab-${d.world}`} aria-current={active ? "page" : undefined}>
             <Globe world={d.world} size={22} />
             <span className="world-tab-text">
-              <span className="world-tab-place">{d.place}</span>
               <span className="world-tab-label">{d.long}</span>
             </span>
           </Link>

@@ -30,7 +30,7 @@ THEMES = ["red", "blue", "navy", "green", "teal", "violet", "orange", "gold"]
 LOOKS = ["history", "geography", "polity", "economy", "science", "environment", "general"]
 
 NOTE_KIND_DEFAULTS = {
-    NoteKind.COMPREHENSIVE: ("Comprehensive Notes", "Complete syllabus-linked reference notes"),
+    NoteKind.COMPREHENSIVE: ("Syllabus-Wise Notes", "Complete syllabus-linked reference notes"),
     NoteKind.PRELIMS: ("Prelims Notes", "Concise, fact-focused revision notes per micro-theme"),
     NoteKind.MAINS: ("Mains Notes", "Condensed analytical notes & answer frameworks"),
 }

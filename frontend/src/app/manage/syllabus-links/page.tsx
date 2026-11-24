@@ -18,7 +18,7 @@ type Data = {
 };
 
 const KINDS = [
-  ["comprehensive", "Comprehensive Notes"],
+  ["comprehensive", "Syllabus-Wise Notes"],
   ["prelims", "Prelims Notes"],
   ["mains", "Mains Notes"],
 ];

@@ -10,7 +10,7 @@ export function formatDate(iso: string) {
 
 export const stageLabel = (s: string) => (s === "mains" ? "Mains" : "Prelims");
 /** Papers of a Notes module's own syllabus, named as such in the admin's tools ("Prelims Notes syllabus · Paper I …"). */
-const NOTES_SYLLABUS: Record<string, string> = { comprehensive: "Comprehensive Notes syllabus", prelims: "Prelims Notes syllabus", mains: "Mains Notes syllabus" };
+const NOTES_SYLLABUS: Record<string, string> = { comprehensive: "Syllabus-Wise Notes syllabus", prelims: "Prelims Notes syllabus", mains: "Mains Notes syllabus" };
 export const paperLabel = (p: { title: string; notes_kind?: string }) => (p.notes_kind ? `${NOTES_SYLLABUS[p.notes_kind]} · ${p.title}` : p.title);
 
 export function trackPath(commission: string, group: string, rest = "") {

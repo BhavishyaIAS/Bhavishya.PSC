@@ -29,7 +29,7 @@ export function GroupCards({ commission, skin = "classic" }: { commission: Commi
             <p>{blurb}</p>
             {!t.has_content && <span className="station-soon">Content for this exam is being prepared</span>}
             <ul className="station-worlds">
-              {DESTINATIONS.map((d) => (
+              {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => (
                 <li key={d.tab}>
                   <Link href={trackPath(t.commission, t.group, d.tab)}>
                     {skin !== "classic" ? <ModuleMark skin={skin} tab={d.tab} size={20} /> : <Globe world={d.world} size={16} />}

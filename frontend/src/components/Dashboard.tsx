@@ -1,4 +1,4 @@
-import { ArrowRight, Bookmark, CalendarClock, Flame, PenLine, Target } from "lucide-react";
+import { ArrowRight, Bookmark, CalendarClock, Flame, Target } from "lucide-react";
 import Link from "next/link";
 
 import { trackPath } from "@/lib/format";
@@ -199,18 +199,6 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
                 No answers yet. <Link href={trackPath(commission, group, "prelims?mine=unattempted")}>Answer some Prelims questions</Link> to see your accuracy by subject.
               </p>
             )}
-          </div>
-
-          <div className="dash-card dash-small">
-            <h3>
-              <PenLine size={17} aria-hidden /> Mains practice
-            </h3>
-            <Link href={trackPath(commission, group, "mains?mine=drafted")}>
-              <PenLine size={16} aria-hidden /> {d.mains.drafts} Mains answer{d.mains.drafts === 1 ? "" : "s"} written
-            </Link>
-            <Link href={trackPath(commission, group, "prelims?mine=bookmarked")}>
-              <Bookmark size={16} aria-hidden /> {d.bookmarks} question{d.bookmarks === 1 ? "" : "s"} kept
-            </Link>
           </div>
         </div>
       )}
