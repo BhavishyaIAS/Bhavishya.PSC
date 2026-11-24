@@ -4,17 +4,17 @@ import Link from "next/link";
 import { SkyTabs } from "@/components/sky/SkyTabs";
 import { WorkspaceTabs } from "@/components/WorkspaceTabs";
 import { load, requireUser } from "@/lib/server-api";
-import { getSite } from "@/lib/site";
+import { getSkin } from "@/lib/skin";
 import type { TrackDetail } from "@/lib/types";
 
 /** Exam workspace shell: one commission × group. Every tab below is scoped to this track. */
 export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commission]/[group]">) {
   const { commission, group } = await props.params;
   const base = `/exams/${commission}/${group}`;
-  const [, track, site] = await Promise.all([
+  const [, track, skin] = await Promise.all([
     requireUser(base),
     load<TrackDetail>(`/tracks/${commission}/${group}/`, base),
-    getSite(),
+    getSkin(),
   ]);
 
   return (
@@ -47,7 +47,7 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
         {/* Where this world is drawn: the planet sits here, or the horizon runs under it (components/space). */}
         <div className="ws-stage" data-stage aria-hidden />
       </div>
-      {site.skin === "sky" ? <SkyTabs commission={commission} group={group} /> : <WorkspaceTabs commission={commission} group={group} />}
+      {skin !== "classic" ? <SkyTabs commission={commission} group={group} skin={skin} /> : <WorkspaceTabs commission={commission} group={group} />}
       {props.children}
     </div>
   );

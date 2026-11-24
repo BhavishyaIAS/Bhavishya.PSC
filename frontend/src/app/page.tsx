@@ -10,6 +10,7 @@ import { SkyHome } from "@/components/sky/SkyHome";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
+import { getSkin } from "@/lib/skin";
 
 /**
  * The arrival: the name, a distant Solar System behind the page (drawn by the renderer, see space/solar.ts,
@@ -18,7 +19,7 @@ import { getSite } from "@/lib/site";
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
 export default async function LandingPage() {
-  const [commissions, user, site] = await Promise.all([getCommissions(), currentUser(), getSite()]);
+  const [commissions, user, site, skin] = await Promise.all([getCommissions(), currentUser(), getSite(), getSkin()]);
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
   const focus = site.focus ? commissions.find((c) => c.slug === site.focus) : undefined;
   const shown = focus ? [focus] : commissions;
@@ -26,9 +27,10 @@ export default async function LandingPage() {
   const firstName = user?.display_name?.split(" ")[0];
   const eyebrow = site.hero_eyebrow || (focus ? focus.name : firstName ? `Welcome back, ${firstName}` : "Civil services preparation");
 
-  if (site.skin === "sky") {
+  if (skin !== "classic") {
     return (
       <SkyHome
+        skin={skin}
         commissions={shown}
         user={user}
         isAdmin={isAdmin}

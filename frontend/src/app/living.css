@@ -1,0 +1,366 @@
+/*
+ * The Living Universe (Manage → Site settings → Look of the site, or the Look switch at the foot of a page).
+ *
+ * Behind every page one world lives (components/living): the ocean on the home page, the rainforest inside an
+ * exam, the autumn tree where notes are read. The page itself is quiet paper laid over it, in that world's
+ * colours, by day and by night. Slow rather than busy; breathing rather than animated.
+ */
+
+/* ───────────── the palette of each world (by day) ───────────── */
+:root[data-skin="living"] {
+  color-scheme: light;
+  --w-deep: #dfe9ee;
+  --w-glass: #fbfdfd;
+  --w-lite: #12263a;
+  --w-paper: #fbfdfd;
+  --w-ink: #12263a;
+  --accent: #1f6f78;
+  --accent-ink: #1f6f78;
+  --on-accent: #ffffff;
+  --gold: #4d7f86;
+  --good: #2f7a52;
+  --brand-red: #b80f24;
+  --paper: rgba(251, 253, 253, 0.9);
+  --glass: rgba(251, 253, 253, 0.9);
+  --glass-solid: #fbfdfd;
+  --line: rgba(18, 38, 58, 0.13);
+  --shadow-sky: 0 18px 50px -24px rgba(18, 38, 58, 0.35);
+  --font-living-display: var(--font-cormorant), "Iowan Old Style", Georgia, serif;
+  --font-body: var(--font-figtree), var(--font-indic), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: var(--font-living-display);
+  --font-display: var(--font-living-display);
+  --font-label: var(--font-figtree), var(--font-indic), system-ui, sans-serif;
+  --display-track: 0.01em;
+  --display-case: none;
+  --label-track: 0.2em;
+  --ctl-radius: 999px;
+  --radius: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+}
+:root[data-skin="living"][data-scene="forest"] {
+  --w-deep: #dfe8dc;
+  --w-paper: #fbfcf7;
+  --w-glass: #fbfcf7;
+  --w-lite: #14281e;
+  --w-ink: #14281e;
+  --accent: #2f6b45;
+  --accent-ink: #2f6b45;
+  --gold: #6e6a2c;
+  --paper: rgba(251, 252, 247, 0.9);
+  --glass: rgba(251, 252, 247, 0.9);
+  --glass-solid: #fbfcf7;
+  --line: rgba(20, 40, 30, 0.13);
+  --shadow-sky: 0 18px 50px -24px rgba(20, 40, 30, 0.4);
+}
+:root[data-skin="living"][data-scene="autumn"] {
+  --w-deep: #efe3cf;
+  --w-paper: #fffbf4;
+  --w-glass: #fffbf4;
+  --w-lite: #2a1c12;
+  --w-ink: #2a1c12;
+  --accent: #9c4f17;
+  --accent-ink: #9c4f17;
+  --gold: #9a651c;
+  --paper: rgba(255, 251, 244, 0.93);
+  --glass: rgba(255, 251, 244, 0.93);
+  --glass-solid: #fffbf4;
+  --line: rgba(60, 36, 18, 0.13);
+  --shadow-sky: 0 18px 50px -24px rgba(60, 36, 18, 0.38);
+}
+
+/* ───────────── by night ───────────── */
+:root[data-skin="living"][data-theme="dark"] {
+  color-scheme: dark;
+  --w-deep: #050b16;
+  --w-glass: #0b1626;
+  --w-paper: #0b1626;
+  --w-lite: #e6eef2;
+  --w-ink: #e6eef2;
+  --accent: #86d6d0;
+  --accent-ink: #86d6d0;
+  --on-accent: #06121c;
+  --gold: #b9c7cf;
+  --good: #7fd6a6;
+  --brand-red: #ff5a66;
+  --paper: rgba(9, 18, 32, 0.9);
+  --glass: rgba(9, 18, 32, 0.9);
+  --glass-solid: #0b1626;
+  --line: rgba(200, 220, 235, 0.16);
+  --shadow-sky: 0 18px 50px -20px rgba(0, 0, 0, 0.7);
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="forest"] {
+  --w-deep: #060e0a;
+  --w-glass: #0c1812;
+  --w-paper: #0c1812;
+  --w-lite: #e4efe6;
+  --w-ink: #e4efe6;
+  --accent: #a4d9a6;
+  --accent-ink: #a4d9a6;
+  --gold: #d6d08c;
+  --paper: rgba(10, 22, 16, 0.9);
+  --glass: rgba(10, 22, 16, 0.9);
+  --glass-solid: #0c1812;
+}
+:root[data-skin="living"][data-theme="dark"][data-scene="autumn"] {
+  --w-deep: #120c08;
+  --w-glass: #1c130c;
+  --w-paper: #1c130c;
+  --w-lite: #f3e8d8;
+  --w-ink: #f3e8d8;
+  --accent: #f0b46a;
+  --accent-ink: #f0b46a;
+  --on-accent: #1c130c;
+  --gold: #e6be82;
+  --paper: rgba(26, 18, 12, 0.92);
+  --glass: rgba(26, 18, 12, 0.92);
+  --glass-solid: #1c130c;
+}
+
+/* ───────────── the world behind the page ───────────── */
+.living-world {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+:root[data-skin="living"] body {
+  background: var(--w-deep);
+  color: var(--text);
+}
+:root[data-skin="living"] :is(.ws-stage, .solar-band, .solar-tip, .space) {
+  display: none !important;
+}
+:root[data-skin="living"] :is(.ws-title, .page-head, .system-copy, .flow-head, .crumbs, .arrival, .sky-hero) {
+  text-shadow: 0 1px 22px color-mix(in srgb, var(--w-deep) 85%, transparent);
+}
+
+/* ───────────── quiet paper over the world ───────────── */
+:root[data-skin="living"] :is(.panel, .card, .q-card, .modal, .auth-card, .editor, .file-card, .import-chapter, .result, .paper, .bottom-nav, .station-card, .destination, .arrival-empty, .moon-card, .stat, .topic-card, .note-type, .side-list, .empty, .topic-row, .exam-block, .kind-tab, .topic-side, .sky-gate, .sky-panel) {
+  --surface: var(--paper);
+  --bg: var(--paper);
+  background-color: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sky);
+  clip-path: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="living"] :is(.panel, .q-card, .modal, .auth-card, .exam-block, .sky-gate) {
+  border-radius: 26px;
+}
+:root[data-skin="living"] :is(.topic-card, .note-type, .stat, .side-list, .card, .kind-tab, .topic-side) {
+  border-radius: 20px;
+}
+:root[data-skin="living"] :is(.panel, .card, .q-card, .modal) :is(.panel, .card, .q-card, .result, .file-card, .topic-card, .stat) {
+  box-shadow: none;
+  background-color: var(--glass-solid);
+}
+:root[data-skin="living"] :is(.topic-card, .note-type, .stat, .exam-block, .sky-gate, .kind-tab) {
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.6s, box-shadow 0.9s;
+}
+:root[data-skin="living"] :is(.topic-card, .exam-block, .sky-gate, .kind-tab):hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+:root[data-skin="living"] :is(.btn, .world-tab, .badge, .mini-btn) {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-family: var(--font-body);
+  clip-path: none;
+}
+:root[data-skin="living"] .btn {
+  border-radius: 999px;
+  font-weight: 600;
+}
+:root[data-skin="living"] :is(.btn-primary, .btn-dark) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+:root[data-skin="living"] :is(.btn-ghost, .segmented) {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="living"] .segmented {
+  border-radius: 999px;
+  padding: 3px;
+}
+:root[data-skin="living"] .segmented > * {
+  border-radius: 999px;
+}
+:root[data-skin="living"] .segmented :is([aria-current="page"], [aria-pressed="true"]) {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ───────────── type: an old serif for titles, a calm sans for the rest ───────────── */
+:root[data-skin="living"] :is(h1, h2, h3, .flow-title, .chapter-title, .np-title, .exam-block-text b, .topic-read-title) {
+  font-family: var(--font-living-display);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-transform: none;
+}
+:root[data-skin="living"] :is(.flow-title, .ws-head h1) {
+  font-size: clamp(2rem, 4.4vw, 3rem);
+  line-height: 1.05;
+}
+:root[data-skin="living"] .reading :is(h3, h4),
+:root[data-skin="living"] .prose :is(h3, h4) {
+  font-family: var(--font-body);
+}
+:root[data-skin="living"] .reading .prose h2 {
+  font-family: var(--font-living-display);
+  font-size: 1.9em;
+}
+:root[data-skin="living"] :is(.eyebrow, .sky-eyebrow, .section-title, .np-kicker, .sky-kind) {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+:root[data-skin="living"] .np-index {
+  font-family: var(--font-living-display);
+  font-style: italic;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+/* ───────────── the menu bar: paper, not glass ───────────── */
+:root[data-skin="living"] .topbar {
+  --surface: var(--paper);
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="living"] .brand-name {
+  font-family: var(--font-living-display);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--brand-red);
+}
+:root[data-skin="living"] .brand-name .suffix {
+  color: var(--brand-red);
+}
+:root[data-skin="living"] .topbar-exams a {
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+:root[data-skin="living"] .topbar-exams a:hover {
+  color: var(--text-strong);
+  background: var(--line);
+}
+
+/* ───────────── the home page: the doors in, and nothing else at first ───────────── */
+:root[data-skin="living"] .sky-hero h1 {
+  font-family: var(--font-living-display);
+  font-weight: 600;
+  font-size: clamp(2.8rem, 7.2vw, 5.4rem);
+  letter-spacing: 0.01em;
+  color: var(--brand-red);
+}
+:root[data-skin="living"] .sky-hero p {
+  font-family: var(--font-living-display);
+  font-style: italic;
+  font-size: clamp(1.15rem, 2vw, 1.4rem);
+  color: var(--text);
+}
+:root[data-skin="living"] .sky-gate .living-emblem {
+  width: 132px;
+  height: 132px;
+}
+:root[data-skin="living"] .sky-gate h2 {
+  font-size: 2.3rem;
+}
+:root[data-skin="living"] .sky-enter {
+  color: var(--accent);
+  letter-spacing: 0.04em;
+}
+:root[data-skin="living"] .sky-features li {
+  border-left-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+/* ───────────── the emblems: quiet line drawings that breathe ───────────── */
+.living-emblem {
+  flex: none;
+  display: block;
+  color: var(--accent);
+  overflow: visible;
+  animation: living-breathe 10s ease-in-out infinite;
+  transform-origin: 50% 50%;
+}
+.living-emblem-halo {
+  fill: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+.exam-block .living-emblem,
+.sky-gate .living-emblem {
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sky-tabs .living-emblem {
+  animation: none;
+}
+@keyframes living-breathe {
+  0%,
+  100% {
+    transform: scale(0.985);
+  }
+  50% {
+    transform: scale(1.025);
+  }
+}
+:root[data-skin="living"] .sky-tabs a {
+  background: var(--paper);
+  border-color: var(--line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-skin="living"] .sky-tabs a[aria-current="page"] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset;
+}
+
+/* ───────────── arriving at a page: like light coming up, not a cut ───────────── */
+:root[data-skin="living"] .page-enter {
+  animation: living-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+:root[data-skin="living"] .page-enter .page-enter {
+  animation: none;
+}
+:root[data-skin="living"] :is(.topic-grid, .note-types, .grid-4, .grid-3, .grid-2, .q-list, .feature-strip, .chapter-contents, .note-block) > *,
+:root[data-skin="living"] :is(.chapter-contents, .reading-head) {
+  animation: none;
+}
+:root[data-skin="living"] :is(.topic-card, .note-type, .stat, [data-tilt]) {
+  transform: none;
+}
+@keyframes living-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .living-emblem,
+  :root[data-skin="living"] .page-enter {
+    animation: none;
+  }
+}
+:root[data-motion="off"] .living-emblem {
+  animation: none;
+}
+:root[data-skin="living"][data-scene="ocean"]:not([data-theme="dark"]) .sky-hero .sky-eyebrow {
+  color: #17505a;
+}

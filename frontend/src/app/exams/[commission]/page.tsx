@@ -8,10 +8,9 @@ import { orbAttr } from "@/components/space/destinations";
 import { emblemFor } from "@/components/space/emblems";
 import { planetFor } from "@/components/space/worlds";
 import { EmptyState } from "@/components/ui/bits";
-import { examPortal } from "@/components/sky/portals";
-import { SkyPortal } from "@/components/sky/SkyPortal";
+import { ExamMark } from "@/components/living/Mark";
 import { getCommissions } from "@/lib/catalog";
-import { getSite } from "@/lib/site";
+import { getSkin } from "@/lib/skin";
 import { currentUser } from "@/lib/server-api";
 
 export async function generateMetadata(props: PageProps<"/exams/[commission]">): Promise<Metadata> {
@@ -22,7 +21,7 @@ export async function generateMetadata(props: PageProps<"/exams/[commission]">):
 /** One examination's own system: its planet, close, and its exams in orbit around it. */
 export default async function ChooseGroupPage(props: PageProps<"/exams/[commission]">) {
   const { commission: slug } = await props.params;
-  const [commissions, user, site] = await Promise.all([getCommissions(), currentUser(), getSite()]);
+  const [commissions, user, skin] = await Promise.all([getCommissions(), currentUser(), getSkin()]);
   const index = commissions.findIndex((c) => c.slug === slug);
   const commission = commissions[index];
   if (!commission) notFound();
@@ -45,8 +44,8 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
           </p>
         </div>
         {/* the planet itself is drawn here by the renderer (in the Sky style, the exam's portal) */}
-        {site.skin === "sky" ? (
-          <SkyPortal kind={examPortal(commission.slug, index)} size={200} className="system-portal" />
+        {skin !== "classic" ? (
+          <ExamMark skin={skin} slug={commission.slug} index={index} size={200} className="system-portal" />
         ) : emblem ? (
           <div
             className="system-orb has-emblem"
@@ -86,7 +85,7 @@ export default async function ChooseGroupPage(props: PageProps<"/exams/[commissi
           )}
         </EmptyState>
       ) : (
-        <GroupCards commission={commission} sky={site.skin === "sky"} />
+        <GroupCards commission={commission} skin={skin} />
       )}
 
       <nav aria-label="Breadcrumb" className="crumbs crumbs-center">

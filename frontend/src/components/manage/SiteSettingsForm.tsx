@@ -144,9 +144,13 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
         <section className="panel" aria-labelledby="look-h">
           <div className="panel-head">
             <h2 id="look-h">Look of the site</h2>
-            <span className="muted small">Changes only how pages look; no content changes. Switch back at any time.</span>
+            <span className="muted small">Changes only how pages look; no content changes. Switch back at any time. Visitors can also pick their own look at the foot of every page.</span>
           </div>
           <div className="form-grid">
+            <label className="checkbox full">
+              <input type="radio" name="skin" checked={skin === "living"} onChange={() => setSkin("living")} /> <b>Living Universe</b>: an ocean on the
+              home page, a rainforest inside each exam, an autumn tree where a sparrow builds its nest while you read; slow, breathing, serene
+            </label>
             <label className="checkbox full">
               <input type="radio" name="skin" checked={skin === "sky"} onChange={() => setSkin("sky")} /> <b>Sky</b> (experiment): glass pages over a
               star field, round animated portals, Day / Night switch

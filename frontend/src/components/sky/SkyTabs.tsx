@@ -5,14 +5,16 @@ import { usePathname } from "next/navigation";
 
 import { trackPath } from "@/lib/format";
 
+import { ModuleMark } from "@/components/living/Mark";
+import type { Skin } from "@/lib/types";
+
 import { MODULES } from "./portals";
-import { SkyPortal } from "./SkyPortal";
 
 /**
  * The four modules of an exam as pills, each with its own small portal, on every page inside the exam
  * (not on the exam's own home, where they are the big blocks).
  */
-export function SkyTabs({ commission, group }: { commission: string; group: string }) {
+export function SkyTabs({ commission, group, skin }: { commission: string; group: string; skin: Skin }) {
   const pathname = usePathname();
   if (pathname === trackPath(commission, group)) return null;
   return (
@@ -22,7 +24,7 @@ export function SkyTabs({ commission, group }: { commission: string; group: stri
         const active = pathname === href || pathname.startsWith(href + "/") || (m.tab === "materials" && pathname.includes("/micro/"));
         return (
           <Link key={m.tab} href={href} aria-current={active ? "page" : undefined} data-warp>
-            <SkyPortal kind={m.kind} size={34} />
+            <ModuleMark skin={skin} tab={m.tab} size={34} />
             {m.name}
           </Link>
         );

@@ -166,9 +166,11 @@ class SiteSettings(TimeStamped):
     show_codes = models.BooleanField(default=True)  # section codes (MIH-01-01) beside headings, for students
     show_contents = models.BooleanField(default=True)  # the "Contents" box above a chapter
     backdrops = models.BooleanField(default=True)  # the 3D scenes behind pages
-    # The look of the whole site: "sky" (the night-sky experiment: glass over stars, round portals) or
-    # "classic" (the worlds). Switching back is just this setting; neither changes any content.
-    skin = models.CharField(max_length=8, choices=[("sky", "Sky"), ("classic", "Classic")], default="sky")
+    # The look of the whole site: "living" (the Living Universe: ocean, rainforest, autumn), "sky" (glass over
+    # stars, round portals) or "classic" (the worlds). Only how pages look; a visitor may pick their own.
+    skin = models.CharField(
+        max_length=8, choices=[("living", "Living Universe"), ("sky", "Sky"), ("classic", "Classic")], default="living"
+    )
 
     class Meta:
         verbose_name_plural = "site settings"

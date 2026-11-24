@@ -22,6 +22,10 @@ import { BottomNav } from "@/components/BottomNav";
 import { Interactions } from "@/components/fx/Interactions";
 import { MotionToggle } from "@/components/fx/MotionToggle";
 import { Header } from "@/components/Header";
+import { AmbientToggle } from "@/components/living/AmbientToggle";
+import { LivingWorld } from "@/components/living/LivingWorld";
+import { LookSwitch } from "@/components/living/LookSwitch";
+import { sceneForPath } from "@/components/living/scenes";
 import { PortalMotion } from "@/components/sky/PortalMotion";
 import { SkyBackdrop } from "@/components/sky/SkyBackdrop";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
@@ -30,12 +34,14 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
 import { getSite } from "@/lib/site";
+import { getSkin } from "@/lib/skin";
 import { cookies, headers } from "next/headers";
 
 import "./globals.css";
 import "./design.css";
 import "./worlds.css";
 import "./sky.css";
+import "./living.css";
 
 /*
  * Type. Each world has its own voice (see worlds.css); these are the faces they draw on.
@@ -103,11 +109,13 @@ const brandCss = `:root{--brand-primary:${brand.colors.primary};--brand-primary-
 const themeScript = `(function(){try{var d=document.documentElement,s=localStorage,t=s.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}d.dataset.theme=t;if(s.getItem('motion')==='off')d.dataset.motion='off';var z=s.getItem('reader-size');if(z)d.setAttribute('data-reader-size',z);var f=s.getItem('reader-font');if(f)d.setAttribute('data-reader-font',f)}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [user, site, commissions, jar, head] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies(), headers()]);
+  const [user, site, commissions, jar, head, skin] = await Promise.all([currentUser(), getSite(), getCommissions(), cookies(), headers(), getSkin()]);
   // Which world this page is in, known on the server (the proxy passes the path), so the first paint is already there.
-  const world = worldForPath(head.get("x-bp-path") ?? "/");
-  // The Sky style replaces the worlds: no world, no 3D scenes, a star field instead (switch back in Site settings).
-  const sky = site.skin === "sky";
+  const path = head.get("x-bp-path") ?? "/";
+  const world = worldForPath(path);
+  // Sky and the Living Universe replace the worlds (no world, no 3D scenes); Classic keeps them. Site settings
+  // chooses for everyone; a visitor can choose their own in the footer.
+  const calm = skin !== "classic";
   // The phone bar links to the exams of the commission being browsed (or the one the site is dedicated to).
   const browsing = jar.get("bp_commission")?.value;
   const current =
@@ -119,8 +127,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-reader-size={site.reader_size}
       data-reader-font={site.reader_font}
       data-backdrops={site.backdrops ? undefined : "off"}
-      data-world={sky ? undefined : world}
-      data-skin={sky ? "sky" : undefined}
+      data-world={calm ? undefined : world}
+      data-skin={calm ? skin : undefined}
+      data-scene={skin === "living" ? sceneForPath(path) : undefined}
       suppressHydrationWarning
     >
       <head>
@@ -131,17 +140,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <a href="#main" className="skip-link">
           Skip to content
         </a>
-        {sky ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
+        {skin === "living" ? <LivingWorld /> : skin === "sky" ? <SkyBackdrop /> : <SpaceLayer live={site.backdrops} />}
         <PortalMotion />
         <Interactions />
         <ToastProvider>
-          <Header sky={sky} user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
+          <Header sky={calm} user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
           <main id="main">{children}</main>
           <footer className="site-footer">
             <span>
               {brand.name} {brand.suffix} · {brand.tagline}
             </span>
-            <MotionToggle />
+            <span className="footer-controls">
+              <LookSwitch current={skin} />
+              {skin === "living" && <AmbientToggle />}
+              <MotionToggle />
+            </span>
           </footer>
           {user && <BottomNav exams={current?.tracks ?? []} isAdmin={user.role === "admin"} />}
         </ToastProvider>

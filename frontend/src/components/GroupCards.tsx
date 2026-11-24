@@ -2,17 +2,16 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { DESTINATIONS } from "@/components/space/destinations";
-import { MODULE_PORTALS } from "@/components/sky/portals";
-import { SkyPortal } from "@/components/sky/SkyPortal";
+import { ModuleMark } from "@/components/living/Mark";
 import { Globe } from "@/components/space/Globe";
 import { trackPath } from "@/lib/format";
-import type { Commission } from "@/lib/types";
+import type { Commission, Skin } from "@/lib/types";
 
 /**
  * A commission's exams (Group 1, Group 2, Civil Services…), each as a station in orbit:
  * the exam itself, and under it the five worlds you can go straight to.
  */
-export function GroupCards({ commission, sky = false }: { commission: Commission; sky?: boolean }) {
+export function GroupCards({ commission, skin = "classic" }: { commission: Commission; skin?: Skin }) {
   return (
     <div className={commission.tracks.length === 1 ? "stations single" : "stations"}>
       {commission.tracks.map((t, i) => {
@@ -33,7 +32,7 @@ export function GroupCards({ commission, sky = false }: { commission: Commission
               {DESTINATIONS.map((d) => (
                 <li key={d.tab}>
                   <Link href={trackPath(t.commission, t.group, d.tab)}>
-                    {sky ? <SkyPortal kind={MODULE_PORTALS[d.tab]?.kind ?? "galaxy"} size={20} /> : <Globe world={d.world} size={16} />}
+                    {skin !== "classic" ? <ModuleMark skin={skin} tab={d.tab} size={20} /> : <Globe world={d.world} size={16} />}
                     <span>{d.long}</span>
                   </Link>
                 </li>
