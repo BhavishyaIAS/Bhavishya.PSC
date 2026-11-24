@@ -1,4 +1,4 @@
-import { BookA, FileQuestion, ListTree, NotebookText, Search, SearchX } from "lucide-react";
+import { BookA, Bookmark, FileQuestion, ListTree, NotebookText, Search, SearchX } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -11,6 +11,7 @@ import type { SearchGroup } from "@/lib/types";
 export const metadata: Metadata = { title: "Search" };
 
 const ICONS: Record<string, typeof Search> = {
+  kept: Bookmark,
   micro_theme: ListTree,
   note: NotebookText,
   glossary: BookA,
@@ -30,7 +31,10 @@ function Highlighted({ text }: { text: string }) {
 }
 
 function hrefFor(type: string, item: SearchGroup["items"][number]) {
-  if (type.endsWith("_question")) return trackPath(item.commission, item.group, `${item.stage}?id=${item.id}`);
+  if (item.stage) return trackPath(item.commission, item.group, `${item.stage}?id=${item.id}`);
+  // a Notes module's own topic opens in its reading view
+  if (item.notes_kind && item.subject_id && item.mt_id)
+    return trackPath(item.commission, item.group, `materials/${item.subject_id}?kind=${item.notes_kind}&section=${item.mt_id}`);
   const q = type === "note" && item.kind ? `?note=${item.kind}` : "";
   return trackPath(item.commission, item.group, `micro/${encodeURIComponent(item.code ?? "")}${q}`);
 }
@@ -105,6 +109,7 @@ export default async function SearchPage(props: PageProps<"/search">) {
                     <div className="row" style={{ gap: 8 }}>
                       <span className="r-title">{item.title}</span>
                       <span className="spacer" />
+                      {item.syllabus && <span className="badge badge-neutral r-syllabus">{item.syllabus}</span>}
                       <span className="badge badge-neutral">{item.track_label}</span>
                     </div>
                     <div className="r-snippet">

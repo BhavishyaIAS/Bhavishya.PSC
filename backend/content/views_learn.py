@@ -25,6 +25,7 @@ from .models import (
     Stage,
     StudyProgress,
     SyllabusLink,
+    TopicBookmark,
     live_links,
 )
 from .serializers import QuestionReadSerializer
@@ -199,6 +200,35 @@ def name_matches(qs, title: str):
     return list(qs.order_by("-year", "question_no")[:8])
 
 
+def _topic(request, commission, group, code):
+    track = get_track(commission, group, request.user)
+    return track, get_object_or_404(MicroTheme.objects.visible_to(request.user), track=track, code=code.upper())
+
+
+@api_view(["PUT"])
+def reading_position(request, commission, group, code):
+    """How far down a topic's notes the student has read (0 to 1), so "Continue" opens there."""
+    track, mt = _topic(request, commission, group, code)
+    try:
+        pos = min(1.0, max(0.0, float(request.data.get("position", 0))))
+    except (TypeError, ValueError):
+        return Response({"detail": "position is a number from 0 to 1."}, status=400)
+    kind = str(request.data.get("kind", ""))[:16]
+    Activity.objects.update_or_create(user=request.user, micro_theme=mt, defaults={"track": track, "note_kind": kind, "position": pos})
+    return Response({"position": pos})
+
+
+@api_view(["POST", "DELETE"])
+def keep_topic(request, commission, group, code):
+    """Keep a topic (its notes) to come back to."""
+    _, mt = _topic(request, commission, group, code)
+    if request.method == "POST":
+        TopicBookmark.objects.get_or_create(user=request.user, micro_theme=mt)
+    else:
+        TopicBookmark.objects.filter(user=request.user, micro_theme=mt).delete()
+    return Response({"kept": request.method == "POST"})
+
+
 def record_reading(user, track, mt, kind=""):
     if user.is_authenticated:
         Activity.objects.update_or_create(user=user, micro_theme=mt, defaults={"track": track, "note_kind": kind})
@@ -219,7 +249,7 @@ def dashboard(request, commission, group):
         return {"code": mt.code, "id": mt.id, "title": mt.title, "subject": mt.topic.subject.title, "subject_id": mt.topic.subject_id, "notes_kind": paper.notes_kind, **(extra or {})}
 
     cont = [
-        ref(a.micro_theme, {"note_kind": a.note_kind, "seen_at": a.seen_at})
+        ref(a.micro_theme, {"note_kind": a.note_kind, "seen_at": a.seen_at, "position": round(a.position, 3)})
         for a in Activity.objects.filter(user=user, track=track).select_related("micro_theme__topic__subject__paper").order_by("-seen_at")[:5]
     ]
     due = [ref(p.micro_theme, {"next_due": p.next_due, "status": p.status, "revisions": p.revisions}) for p in progress.filter(next_due__lte=today).order_by("next_due")[:8]]
@@ -278,6 +308,10 @@ def dashboard(request, commission, group):
         "prelims": {"available": prelims_total, "answered": answered, "attempts": total, "correct": right, "accuracy": round(100 * right / total) if total else None, "this_week": week},
         "mains": {"drafts": AnswerDraft.objects.filter(user=user, question__track=track).count()},
         "bookmarks": Bookmark.objects.filter(user=user, question__track=track).count(),
+        "kept_topics": [
+            ref(b.micro_theme)
+            for b in TopicBookmark.objects.filter(user=user, micro_theme__track=track).select_related("micro_theme__topic__subject__paper").order_by("-created_at")[:6]
+        ],
         "continue": cont,
         "due": due,
         "attention": attention,

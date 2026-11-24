@@ -240,10 +240,17 @@ def micro_theme_detail(request, commission, group, code):
 
 
 def _progress(user, mt, track):
+    from .models import Activity, TopicBookmark
     from .views_learn import progress_out, record_reading
 
+    seen = Activity.objects.filter(user=user, micro_theme=mt).first()
+    position = seen.position if seen else 0
     record_reading(user, track, mt)
-    return progress_out(StudyProgress.objects.filter(user=user, micro_theme=mt).first())
+    return {
+        **progress_out(StudyProgress.objects.filter(user=user, micro_theme=mt).first()),
+        "kept": TopicBookmark.objects.filter(user=user, micro_theme=mt).exists(),
+        "position": position,
+    }
 
 
 @api_view(["POST", "DELETE"])
@@ -523,14 +530,20 @@ def search(request):
         return qs.filter(**{field: track}) if track else qs
 
     def mt_link(mt):
+        """Where a topic opens: a Notes module's own topic in its reading view, a general one on its topic page."""
         t = mt.track
-        return {"commission": t.commission.slug, "group": t.group.slug, "code": mt.code, "track_label": str(t)}
+        paper = mt.topic.subject.paper
+        out = {"commission": t.commission.slug, "group": t.group.slug, "code": mt.code, "track_label": str(t),
+               "syllabus": NoteKind(paper.notes_kind).label if paper.notes_kind else "General syllabus"}
+        if paper.notes_kind:
+            out.update(notes_kind=paper.notes_kind, subject_id=mt.topic.subject_id, mt_id=mt.id)
+        return out
+
+    MT_REL = ("track__commission", "track__group", "topic__subject__paper")
 
     groups = []
 
-    mts = scoped(MicroTheme.objects.visible_to(user)).select_related(
-        "track__commission", "track__group", "topic__subject"
-    ).filter(Q(title__icontains=q) | Q(code__iexact=q) | Q(topic__title__icontains=q))[:limit]
+    mts = scoped(MicroTheme.objects.visible_to(user)).select_related(*MT_REL).filter(Q(title__icontains=q) | Q(code__iexact=q) | Q(topic__title__icontains=q))[:limit]
     groups.append({"type": "micro_theme", "label": "Syllabus", "items": [
         {**mt_link(mt), "title": f"{mt.code} · {mt.title}", "snippet": f"{mt.topic.subject.title} › {mt.topic.title}"}
         for mt in mts
@@ -546,7 +559,7 @@ def search(request):
                 start_sel="«", stop_sel="»",
             ),
         )
-        .select_related("micro_theme__track__commission", "micro_theme__track__group")
+        .select_related(*(f"micro_theme__{r}" for r in MT_REL))
         .order_by("-rank")[:limit]
     )
     groups.append({"type": "note", "label": "Notes", "items": [
@@ -566,7 +579,7 @@ def search(request):
         gloss_qs.annotate(sv=SearchVector("term", weight="A", config=SEARCH_CONFIG)
                           + SearchVector("definition", weight="B", config=SEARCH_CONFIG))
         .filter(Q(sv=query) | Q(term__icontains=q))
-        .select_related("micro_theme__track__commission", "micro_theme__track__group")[:limit]
+        .select_related(*(f"micro_theme__{r}" for r in MT_REL))[:limit]
     )
     groups.append({"type": "glossary", "label": "Glossary", "items": [
         {**mt_link(g.micro_theme), "title": g.term, "snippet": _snippet(g.definition, q)} for g in gloss
@@ -588,6 +601,30 @@ def search(request):
             }
             for x in qs
         ]})
+
+    # what the student kept that matches, first: their own shortlist
+    if SiteSettings.load().study_tools and user.is_authenticated:
+        from .models import Bookmark, TopicBookmark
+
+        kept_t = (
+            scoped(TopicBookmark.objects.filter(user=user, micro_theme__in=MicroTheme.objects.visible_to(user)), "micro_theme__track")
+            .filter(Q(micro_theme__title__icontains=q) | Q(micro_theme__topic__title__icontains=q) | Q(micro_theme__code__iexact=q))
+            .select_related(*(f"micro_theme__{r}" for r in MT_REL))[:limit]
+        )
+        kept_q = (
+            filter_questions(scoped(Question.objects.visible_to(user)).filter(bookmarks__user=user), {"q": q})
+            .select_related("track__commission", "track__group")[:limit]
+        )
+        items = [
+            {**mt_link(b.micro_theme), "title": f"{b.micro_theme.code} · {b.micro_theme.title}",
+             "snippet": f"{b.micro_theme.topic.subject.title} › {b.micro_theme.topic.title}"}
+            for b in kept_t
+        ] + [
+            {"id": x.id, "commission": x.track.commission.slug, "group": x.track.group.slug, "track_label": str(x.track),
+             "stage": x.stage, "title": f"{x.year} · {x.paper_label} · Q{x.question_no}", "snippet": _snippet(x.text, q, 220)}
+            for x in kept_q
+        ]
+        groups.insert(0, {"type": "kept", "label": "Kept by you", "items": items})
 
     groups = [g for g in groups if g["items"]]
     return Response({"query": q, "total": sum(len(g["items"]) for g in groups), "groups": groups})

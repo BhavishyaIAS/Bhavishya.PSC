@@ -444,6 +444,17 @@ class AnswerDraft(models.Model):
         constraints = [models.UniqueConstraint(fields=["user", "question"], name="uniq_answer_draft")]
 
 
+class TopicBookmark(models.Model):
+    """A topic a student kept to come back to (its notes)."""
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="topic_bookmarks")
+    micro_theme = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="bookmarks")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["user", "micro_theme"], name="uniq_topic_bookmark")]
+
+
 class Activity(models.Model):
     """The last time a student opened a section's notes (for "Continue where you left off")."""
 
@@ -452,6 +463,7 @@ class Activity(models.Model):
     micro_theme = models.ForeignKey(MicroTheme, on_delete=models.CASCADE, related_name="+")
     note_kind = models.CharField(max_length=16, blank=True)
     seen_at = models.DateTimeField(auto_now=True)
+    position = models.FloatField(default=0)  # how far down the notes the student had read (0 to 1)
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["user", "micro_theme"], name="uniq_activity")]
