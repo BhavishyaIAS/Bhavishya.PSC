@@ -22,6 +22,8 @@ from accounts.models import is_admin
 
 from .coverage import track_coverage
 from .models import (
+    SyllabusLink,
+    live_links,
     SiteSettings,
     SEARCH_CONFIG,
     Commission,
@@ -141,6 +143,12 @@ def syllabus_tree(request, commission, group):
         Question.objects.visible_to(user).filter(micro_theme__in=mts).values_list("micro_theme").annotate(n=Count("id"))
     )
     states = {m: (s, d) for m, s, d in StudyProgress.objects.filter(user=user, micro_theme__in=mts).values_list("micro_theme_id", "status", "next_due")}
+    # progress made in a Notes module's topic counts for the general sections it is linked to
+    for g, s, d in live_links(SyllabusLink.objects.filter(general_mt__in=mts, notes_mt__progress__user=user)).values_list(
+        "general_mt_id", "notes_mt__progress__status", "notes_mt__progress__next_due"
+    ):
+        if g not in states and s:
+            states[g] = (s, d)
     studied = {m for m, (s, _) in states.items() if s != "studying"}
 
     def node(obj, **extra):

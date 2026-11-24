@@ -13,7 +13,20 @@ from django.utils import timezone
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import REVISION_DAYS, Activity, AnswerDraft, Attempt, Bookmark, MicroTheme, Note, Question, Stage, StudyProgress
+from .models import (
+    REVISION_DAYS,
+    Activity,
+    AnswerDraft,
+    Attempt,
+    Bookmark,
+    MicroTheme,
+    Note,
+    Question,
+    Stage,
+    StudyProgress,
+    SyllabusLink,
+    live_links,
+)
 from .serializers import QuestionReadSerializer
 from .views_read import get_track, track_ref, visible_mt_ids
 
@@ -153,25 +166,37 @@ def related_questions(request, commission, group, code):
         qs = qs.filter(stage=stage)
     exact = qs.filter(micro_theme=mt)
     how = "mapped"
+    links = list(live_links(SyllabusLink.objects.filter(notes_mt=mt)).values_list("general_mt_id", "status"))
     if exact.exists():
         found = list(exact.order_by("-year", "question_no")[:12])
     else:
-        how = "matched"
-        # only the words that name this topic: generic ones ("rise", "age", "role", "India"…) match everything
-        words = [w for w in "".join(ch if ch.isalnum() else " " for ch in mt.title).split() if len(w) > 3 and w.lower() not in GENERIC]
-        if not words:
-            return Response({"how": how, "results": [], "mine": {}})
-        # a topic is named by its proper nouns (Magadha, Kushans, Mughal): match on those; common words never alone
-        names = [w for w in words if w[0].isupper()] or words
-        # every naming word, by its stem (Mughal/Mughals, Kushan/Kushans, Magadha/Magadhan), in the question itself:
-        # a model answer mentions too much in passing to be a guide
-        for w in names:
-            stem = w.lower()[: max(5, len(w) - 2)]
-            qs = qs.filter(Q(text__iregex=r"\m" + re.escape(stem)) | Q(keywords__iregex=r"\m" + re.escape(stem)))
-        found = list(qs.order_by("-year", "question_no")[:8])
+        found = []
+        if links:
+            # a notes topic: the PYQs of the general sections it covers
+            found = list(qs.filter(micro_theme_id__in=[g for g, _ in links]).order_by("-year", "question_no")[:16])
+            if found:
+                how = "linked" if all(st == "confirmed" for _, st in links) else "linked-suggested"
+        if len(found) < 8:
+            # and the questions that name the topic, when the linked sections have few
+            seen = {q.id for q in found}
+            named = [q for q in name_matches(qs, mt.title) if q.id not in seen]
+            if named and not found:
+                how = "matched"
+            found += named[: 8 - len(found)]
     data = QuestionReadSerializer(found, many=True, context={"visible_mt_ids": visible_mt_ids(request.user, track)}).data
     mine = mine_for(request.user, [q.id for q in found])
     return Response({"how": how, "results": data, "mine": {str(k): v for k, v in mine.items()}})
+
+
+def name_matches(qs, title: str):
+    """Questions whose own text names the topic: its proper nouns, by stem (Mughal/Mughals, Magadha/Magadhan)."""
+    words = [w for w in "".join(ch if ch.isalnum() else " " for ch in title).split() if len(w) > 3 and w.lower() not in GENERIC]
+    if not words:
+        return []
+    for w in [w for w in words if w[0].isupper()] or words:
+        stem = w.lower()[: max(5, len(w) - 2)]
+        qs = qs.filter(Q(text__iregex=r"\m" + re.escape(stem)) | Q(keywords__iregex=r"\m" + re.escape(stem)))
+    return list(qs.order_by("-year", "question_no")[:8])
 
 
 def record_reading(user, track, mt, kind=""):

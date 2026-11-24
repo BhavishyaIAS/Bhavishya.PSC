@@ -13,7 +13,7 @@
 export const brand = {
   name: "Bhavishya", // full name = name + " " + suffix
   suffix: "IAS",
-  tagline: "Explore Knowledge. Conquer Horizons.",
+  tagline: "Back to the Future",
   heroTitle: "Bhavishya IAS", // the home page heading (brand red)
   subtitle: "UPSC & State PSC Preparation",
   description:

@@ -5,6 +5,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts import api as auth_api
 from content import views_learn as learn
+from content import views_links as links
 from content import views_manage as manage
 from content import views_read as read
 from content import views_site as site
@@ -69,6 +70,10 @@ urlpatterns = [
     path("manage/import-reference/", manage.import_reference),
     path("manage/import-docx/", manage.import_docx),
     path("manage/tags/", manage.tags),
+    path("manage/syllabus-links/", links.links),
+    path("manage/syllabus-links/review/", links.review),
+    path("manage/syllabus-links/suggest/", links.suggest),
+    path("manage/syllabus-links/general/", links.general_sections),
     path("manage/uploads/image/", manage.upload_image),
     path("manage/", include(router.urls)),
     # Public media (note images only — private material files are never served from here)

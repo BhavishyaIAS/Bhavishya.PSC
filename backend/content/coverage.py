@@ -11,12 +11,13 @@ Personal progress = micro-themes the user marked as studied ÷ micro-themes in s
 
 from collections import defaultdict
 
-from django.db.models import Case, Count, Exists, OuterRef, When
+from django.db.models import Case, Count, Exists, OuterRef, Q, When
 
 from accounts.models import is_admin
 
 from .models import MicroTheme, Note, Paper, Question, Stage, Status, StudyMaterial, StudyProgress, Track
 from .serializers import track_ref
+from .syllabus_links import STRONG
 
 
 def pct(part, whole):
@@ -30,7 +31,18 @@ def track_coverage(track: Track, user, include_papers=True):
         .filter(track=track, topic__subject__paper__notes_kind="")  # the general syllabus (Notes modules' own ones aside)
         .annotate(
             has_content=Exists(Note.objects.filter(micro_theme=OuterRef("pk"), status=Status.PUBLISHED)),
-            studied=Exists(StudyProgress.objects.filter(micro_theme=OuterRef("pk"), user_id=user.id).exclude(status="studying")),
+            studied=Exists(
+                StudyProgress.objects.filter(user_id=user.id)
+                .exclude(status="studying")
+                .filter(
+                    Q(micro_theme=OuterRef("pk"))
+                    | Q(micro_theme__links_out__general_mt=OuterRef("pk"))
+                    & (
+                        Q(micro_theme__links_out__status="confirmed")
+                        | Q(micro_theme__links_out__status="suggested", micro_theme__links_out__score__gte=STRONG)
+                    )
+                )
+            ),
         )
         .values("id", "status", "has_content", "studied", "topic__subject__paper_id")
     )

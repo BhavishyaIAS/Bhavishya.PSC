@@ -18,14 +18,16 @@ import { getSkin } from "@/lib/skin";
  * Everything the old home page did is still here: the greeting, the admin's own
  * headline (Site settings), the dedicated-exam mode, and the way into each module.
  */
+/** The small line above the name on the home page (Site settings can set another). */
+const INVITATION = "Enter the New Dimension of Preparation";
+
 export default async function LandingPage() {
   const [commissions, user, site, skin] = await Promise.all([getCommissions(), currentUser(), getSite(), getSkin()]);
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
   const focus = site.focus ? commissions.find((c) => c.slug === site.focus) : undefined;
   const shown = focus ? [focus] : commissions;
   const isAdmin = user?.role === "admin";
-  const firstName = user?.display_name?.split(" ")[0];
-  const eyebrow = site.hero_eyebrow || (focus ? focus.name : firstName ? `Welcome back, ${firstName}` : "Civil services preparation");
+  const eyebrow = site.hero_eyebrow || (focus ? focus.name : INVITATION);
 
   if (skin !== "classic") {
     return (
@@ -34,7 +36,7 @@ export default async function LandingPage() {
         commissions={shown}
         user={user}
         isAdmin={isAdmin}
-        eyebrow={site.hero_eyebrow || (firstName ? `Welcome back, ${firstName}` : shown.map((c) => c.short_name).join(" · ") || "Civil services preparation")}
+        eyebrow={site.hero_eyebrow || INVITATION}
         lead={site.hero_lead || "Step through a gateway to find its syllabus, your notes, past papers and a record of how far you have come."}
       />
     );
@@ -50,8 +52,8 @@ export default async function LandingPage() {
           <h1 id="arrival-h" className="hero-title">
             {brand.name} <span>{brand.suffix}</span>
           </h1>
-          <p className="hero-tagline">{brand.tagline}</p>
-          <p className="hero-lead">{site.hero_lead || "Syllabus, notes, previous-year questions and your progress, for every examination."}</p>
+          <p className="hero-tagline">Beyond the Horizon of Knowledge</p>
+          <p className="hero-lead">{site.hero_lead || "The Universe of Wisdom"}</p>
         </div>
 
         {/* the distant Solar System fills the page behind this (Universe.tsx lays it out here) */}
