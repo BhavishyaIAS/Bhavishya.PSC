@@ -22,6 +22,7 @@ from accounts.models import is_admin
 
 from .coverage import track_coverage
 from .models import (
+    SiteSettings,
     SEARCH_CONFIG,
     Commission,
     GlossaryTerm,
@@ -384,7 +385,7 @@ def track_questions(request, commission, group):
     page = paginator.paginate_queryset(qs, request)
     ctx = {"visible_mt_ids": visible_mt_ids(request.user, track)}
     data = QuestionReadSerializer(page, many=True, context=ctx).data
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and SiteSettings.load().study_tools:
         from .views_learn import mine_for
 
         mine = mine_for(request.user, [q["id"] for q in data])

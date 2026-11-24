@@ -5,6 +5,7 @@ import { ModuleMark } from "@/components/living/Mark";
 import { MODULES } from "@/components/sky/portals";
 import { trackPath } from "@/lib/format";
 import { load } from "@/lib/server-api";
+import { getSite } from "@/lib/site";
 import { getSkin } from "@/lib/skin";
 
 /** An exam's home: the student's dashboard, then the four modules as big blocks. */
@@ -12,13 +13,14 @@ export default async function ExamHome(
   props: PageProps<"/exams/[commission]/[group]">,
 ) {
   const { commission, group } = await props.params;
-  const [skin, dash] = await Promise.all([
-    getSkin(),
-    load<DashboardData>(`/tracks/${commission}/${group}/dashboard/`),
-  ]);
+  const [skin, site] = await Promise.all([getSkin(), getSite()]);
+  // the preparation tools can be switched off in Site settings: the page is then as it was before them
+  const dash = site.study_tools
+    ? await load<DashboardData>(`/tracks/${commission}/${group}/dashboard/`)
+    : null;
   return (
     <>
-      <Dashboard d={dash} commission={commission} group={group} />
+      {dash && <Dashboard d={dash} commission={commission} group={group} />}
       <nav className="exam-blocks" aria-label="Exam modules">
         {MODULES.map((m) => (
           <Link

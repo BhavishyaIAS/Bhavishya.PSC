@@ -122,12 +122,17 @@ export default async function SubjectNotes(
     const at = entries.findIndex((e) => String(e.mt.id) === sectionId);
     if (at < 0) notFound();
     const cur = entries[at];
-    const [related, detail] = await Promise.all([
-      load<Related>(
-        `${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/related-questions/`,
-      ),
-      load<Detail>(`${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/`),
-    ]);
+    const empty: Related = { how: "mapped", results: [], mine: {} };
+    const [related, detail] = site.study_tools
+      ? await Promise.all([
+          load<Related>(
+            `${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/related-questions/`,
+          ),
+          load<Detail>(
+            `${base}/micro-themes/${encodeURIComponent(cur.mt.code)}/`,
+          ),
+        ])
+      : [empty, null];
     const relPrelims = related.results.filter((q) => q.stage === "prelims");
     const relMains = related.results.filter((q) => q.stage === "mains");
     const note = one?.results[0]?.note;
@@ -199,11 +204,13 @@ export default async function SubjectNotes(
                 )}
                 <ReaderTools />
               </div>
-              <TopicStatus
-                base={base}
-                code={cur.mt.code}
-                initial={detail.progress}
-              />
+              {detail && (
+                <TopicStatus
+                  base={base}
+                  code={cur.mt.code}
+                  initial={detail.progress}
+                />
+              )}
             </header>
             {note ? (
               <div className="reading">
@@ -375,7 +382,7 @@ export default async function SubjectNotes(
                           <span className="tl-num">{label(e)}</span>
                           <span className="tl-title">
                             {e.mt.title}
-                            {e.mt.state && (
+                            {site.study_tools && e.mt.state && (
                               <span
                                 className={`tl-state tl-${e.mt.due && e.mt.state !== "studying" && e.mt.due <= today ? "due" : e.mt.state}`}
                               >

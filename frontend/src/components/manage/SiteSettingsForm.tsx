@@ -29,6 +29,7 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
   const [contents, setContents] = useState(site.show_contents);
   const [backdrops, setBackdrops] = useState(site.backdrops);
   const [skin, setSkin] = useState(site.skin);
+  const [tools, setTools] = useState(site.study_tools);
   const focused = exams.results.find((b) => b.id === exams.focus);
   const upsc = exams.results.find((b) => b.slug === "upsc");
   const [target, setTarget] = useState(String(upsc?.id ?? exams.results[0]?.id ?? ""));
@@ -136,7 +137,7 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
           e.preventDefault();
           const note_kinds = Object.fromEntries(kinds.map((k) => [k.key, { label: k.label, blurb: k.blurb, enabled: k.enabled }]));
           void run(
-            () => clientApi("/manage/site/", { method: "PATCH", json: { hero_eyebrow: eyebrow, hero_lead: lead, note_kinds, reader_font: font, reader_size: size, show_codes: codes, show_contents: contents, backdrops, skin } }),
+            () => clientApi("/manage/site/", { method: "PATCH", json: { hero_eyebrow: eyebrow, hero_lead: lead, note_kinds, reader_font: font, reader_size: size, show_codes: codes, show_contents: contents, backdrops, skin, study_tools: tools } }),
             "Settings saved",
           );
         }}
@@ -160,6 +161,17 @@ export function SiteSettingsForm({ site, exams }: { site: Site; exams: ExamsData
               Moon, Saturn, Jupiter, Earth) and the 3D solar system
             </label>
           </div>
+        </section>
+
+        <section className="panel" aria-labelledby="tools-h">
+          <div className="panel-head">
+            <h2 id="tools-h">Preparation tools</h2>
+            <span className="muted small">Off: pages are as they were before these tools. Students&apos; answers, drafts and progress are kept.</span>
+          </div>
+          <label className="checkbox full">
+            <input type="checkbox" checked={tools} onChange={(e) => setTools(e.target.checked)} /> The exam dashboard, recorded Prelims answers and
+            Keep, Mains answer writing, topic status with revision, and a topic&apos;s PYQs below its notes
+          </label>
         </section>
 
         <section className="panel" aria-labelledby="home-h">

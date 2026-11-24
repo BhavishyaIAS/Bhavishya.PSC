@@ -171,6 +171,9 @@ class SiteSettings(TimeStamped):
     skin = models.CharField(
         max_length=8, choices=[("living", "Living Universe"), ("sky", "Sky"), ("classic", "Classic")], default="living"
     )
+    # The preparation tools (dashboard, recorded answers, Keep, answer writing, topic status and revision, a topic's
+    # PYQs below its notes). Off: the pages are as they were before them; students' records are kept.
+    study_tools = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = "site settings"

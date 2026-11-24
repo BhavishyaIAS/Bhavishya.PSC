@@ -279,6 +279,7 @@ export interface Site {
   show_contents: boolean;
   backdrops: boolean;
   skin: Skin; // the look of the whole site (Manage → Site settings)
+  study_tools: boolean; // dashboard, recorded answers, Keep, answer writing, topic status and its PYQs
 }
 
 /** How a topic can be presented; "" lets the site guess from the topic's name. */
