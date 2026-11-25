@@ -574,3 +574,23 @@
   color: var(--muted);
   font-size: 0.93rem;
 }
+
+/* home: the Big Bang behind the page (SkyGenesis), above the stars, below everything you read */
+.sky-genesis {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  opacity: calc(0.62 * var(--genesis-fade, 1));
+  animation: sky-genesis-in 2.4s ease-out both;
+}
+:root[data-skin="sky"]:not([data-theme="dark"]) .sky-genesis {
+  opacity: calc(0.5 * var(--genesis-fade, 1));
+}
+@keyframes sky-genesis-in {
+  from {
+    opacity: 0;
+  }
+}
