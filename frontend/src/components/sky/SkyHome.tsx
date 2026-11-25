@@ -7,6 +7,7 @@ import { ExamMark } from "@/components/living/Mark";
 import type { Skin } from "@/lib/types";
 
 import { MODULES } from "./portals";
+import { SkyGenesis } from "./SkyGenesis";
 
 /** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
 function region(name: string) {
@@ -22,7 +23,7 @@ function groupsLine(c: Commission) {
 
 /**
  * The home page in the Sky style: the name, then one gateway per examination, each a round portal
- * of night space; below, the five portals every exam opens into.
+ * of night space; below, the five portals every exam opens into. Behind it all, the Big Bang goes on (SkyGenesis).
  */
 export function SkyHome({
   skin,
@@ -39,6 +40,7 @@ export function SkyHome({
 }) {
   return (
     <div className="page sky-home">
+      {skin === "sky" && <SkyGenesis />}
       <div className="sky-first">
         <section className="sky-hero" aria-labelledby="sky-h">
           <div className="sky-eyebrow">{eyebrow}</div>
