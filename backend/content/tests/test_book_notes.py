@@ -84,3 +84,30 @@ class HistoryNotesTests(TestCase):
         one = c.get(url + f"&micro_theme={outline[3]['micro_theme']['id']}").json()["results"]
         self.assertEqual([r["micro_theme"]["code"] for r in one], ["NC-P2-1-01-04"])
         self.assertEqual(one[0]["note"]["body"]["type"], "doc")
+
+
+class EconomyNotesTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        ns.load(ns.read(DATA / "appsc-g1-notes-syllabi.json.gz"), get)
+        cls.bundle = bn.read(DATA / "appsc-g1-economy-notes.json.gz")
+        cls.counts = bn.load(cls.bundle, get)
+
+    def test_the_book_fills_the_economy_sections_it_covers(self):
+        self.assertEqual(self.counts, {"created": 72, "filled": 0, "kept": 0, "missing": 0})
+        self.assertTrue(all(code.startswith("NC-P4-1-") for code in self.bundle["notes"]))
+        note = Note.objects.get(micro_theme__code="NC-P4-1-02-04", kind="comprehensive")
+        self.assertEqual(note.status, "published")
+        self.assertIn("Balance of Payments", note.body_text)
+        # text diagrams are kept line for line, in a fixed-width block
+        self.assertTrue(any(b["type"] == "codeBlock" and "CURRENT ACCOUNT" in b["content"][0]["text"] for b in note.body["content"]))
+        # a split section: land goes to land reforms, water to irrigation
+        self.assertIn("operational holding", Note.objects.get(micro_theme__code="NC-P4-1-08-06").body_text)
+        self.assertIn("4.2 Water and irrigation", Note.objects.get(micro_theme__code="NC-P4-1-08-05").body_text)
+        # the sections the book doesn't cover stay empty, to be written later
+        empty = ["NC-P4-1-01-01", "NC-P4-1-02-05", "NC-P4-1-03-09", "NC-P4-1-03-11", "NC-P4-1-04-01", "NC-P4-1-05-07",
+                 "NC-P4-1-07-15", "NC-P4-1-10-13", "NC-P4-1-13-01"]
+        self.assertFalse(Note.objects.filter(micro_theme__code__in=empty).exists())
+        # loading again changes nothing, and a note someone has written is never replaced
+        self.assertEqual(bn.load(self.bundle, get), {"created": 0, "filled": 0, "kept": 72, "missing": 0})

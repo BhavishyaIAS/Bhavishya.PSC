@@ -34,15 +34,25 @@ SKIP_STYLES = {"Title", "Subtitle", "Date", "TOC Heading", "Contents Note", "Mod
 class _Stream(_Parser):
     """docx_import's parser, but every block (and every heading, as a marker) goes into one flat stream."""
 
-    def __init__(self, document):
+    def __init__(self, document, mono=False):
         super().__init__(document)
         self.items: list[dict] = []
+        self.mono = mono  # keep fixed-width lines (text diagrams) as they are, joined into code blocks
 
     def _emit(self, block):
         self.items.append(block)
 
     def _paragraph(self, el, style):
         if style in SKIP_STYLES or style.lower().startswith("toc"):
+            return
+        if self.mono and _monospace(el):
+            text = "".join(" " if n.tag == qn("w:tab") else (n.text or "") for n in el.iter(qn("w:t"), qn("w:tab")))
+            if text.strip():
+                last = self.items[-1] if self.items else None
+                if last and last.get("type") == "codeBlock":
+                    last["content"][0]["text"] += ("\n\n" if last.pop("_gap", False) else "\n") + text.rstrip()
+                else:
+                    self.items.append({"type": "codeBlock", "content": [{"type": "text", "text": text.rstrip()}]})
             return
         m = re.match(r"(?i)heading\s*(\d)", style)
         if m:
@@ -62,6 +72,8 @@ class _Stream(_Parser):
             return
         inline = _inline(el)
         if not inline:
+            if self.mono and self.items and self.items[-1].get("type") == "codeBlock":
+                self.items[-1]["_gap"] = True  # a blank line inside a diagram
             return
         if style == "Label":
             for n in inline:
@@ -82,12 +94,28 @@ class _Stream(_Parser):
     def _finish(self):
         flat = []
         for b in self.items:
+            if isinstance(b, dict):
+                b.pop("_gap", None)
             flat.extend(b if isinstance(b, list) else [b])
         self.items = flat
 
 
-def stream(path) -> list[dict]:
-    return _Stream(Document(path)).parse().items
+MONO_FONTS = {"consolas", "courier new", "courier", "lucida console", "menlo", "monaco"}
+
+
+def _monospace(el) -> bool:
+    """A paragraph set wholly in a fixed-width font (a line of a text diagram)."""
+    fonts = []
+    for r in el.iter(qn("w:r")):
+        if not "".join(t.text or "" for t in r.iter(qn("w:t"))).strip():
+            continue
+        rf = r.find(qn("w:rPr") + "/" + qn("w:rFonts"))
+        fonts.append((rf.get(qn("w:ascii")) or "").lower() if rf is not None else "")
+    return bool(fonts) and all(f in MONO_FONTS for f in fonts)
+
+
+def stream(path, mono=False) -> list[dict]:
+    return _Stream(Document(path), mono=mono).parse().items
 
 
 def nice(text: str) -> str:
@@ -296,6 +324,97 @@ def build_appsc_history(ancient: str, medieval: str, modern: str) -> dict:
         "kind": "comprehensive",
         "source": "Ancient Indian History (book edition), Medieval Indian History, Modern Indian History",
         "notes": notes,
+    }
+
+
+# ───────────────────────────── APPSC Group I: Indian economy ─────────────────────────────
+
+
+def economy_book(path: str) -> dict:
+    """
+    "Indian Economy — Topic Notes": TOPIC n (heading 1) → sections "k. TITLE" (heading 2; the unnumbered opener,
+    "THE WHOLE TOPIC IN ONE PICTURE", is section "P") → numbered sub-sections "k.j Title" (heading 3, the parts).
+    Each section is a chapter keyed (topic, k); each topic's own heading and subtitle are chapter (topic, "T").
+    """
+    state = {"topic": None}
+
+    def key(level, text):
+        if level == 1:
+            m = re.match(r"(?i)^TOPIC\s+(\d+)\b", text)
+            if not m:
+                raise ValueError(f"Unexpected heading 1: {text!r}")
+            state["topic"] = int(m.group(1))
+            return (state["topic"], "T")
+        if level == 2 and state["topic"] is not None:
+            m = re.match(r"^(\d+)\.\s", text)
+            return (state["topic"], int(m.group(1)) if m else "P")
+        return None
+
+    items = [{**it, "text": it["text"].replace("**", "")} if it["type"] == "_h" else it for it in stream(path, mono=True)]
+    return {"eco": chapters(items, chapter_level=2, part_level=3, chapter_key=key, part_number=_num(r"^\d+\.(\d+)\s"))}
+
+
+def _sec(topic, *keys, parts=None):
+    """Whole sections of a topic, or (with parts) some numbered sub-sections of one section."""
+    if parts is not None:
+        return [("eco", (topic, keys[0]), parts)]
+    return [("eco", (topic, k), None) for k in keys]
+
+
+def _open(topic, *keys):
+    """A topic's opening: its own heading and subtitle, the one-page picture, then the given sections."""
+    return _sec(topic, "T", "P", *keys)
+
+
+# Comprehensive Notes → Paper IV → Economy & Development (NC-P4-1-<topic>-<section>). The book's own topic numbers
+# (1, 2, 6, 7, 8, 11) are its source syllabus's; here they go to the topics of the same name. A topic's opening (its
+# picture and first principles) goes with its first section; its closing (how it connects, the way forward, rapid
+# revision) with its strategy section where the syllabus has one, else with its last section that has notes.
+# Sections the book doesn't cover stay empty, to be written later: 02-05 India and WTO, 03-09 banking reforms,
+# 03-11 stock exchanges and SEBI, 07-13/14/15 (A.P. schemes, A.P. skilling, DWCRA), 10-13 Stand-up India, and the
+# whole of the A.P. topics and topics 01 and 05 (the book has no chapters on them).
+APPSC_ECONOMY = {
+    # 1. Major Challenges of the Indian Economy (book: Topic 1)
+    "02-01": _open(1, 0, 1), "02-02": _sec(1, 2, 3), "02-03": _sec(1, 4), "02-04": _sec(1, 5),
+    "02-06": _sec(1, 6), "02-07": _sec(1, 7), "02-08": _sec(1, 8), "02-09": _sec(1, 9),
+    "02-10": _sec(1, 10, 11, 12, 13, 14),
+    # 2. Resource Mobilisation in the Indian Economy (book: Topic 2)
+    "03-01": _open(2, 0, 1), "03-02": _sec(2, 2, 3, 4), "03-03": _sec(2, 5), "03-04": _sec(2, 6),
+    "03-05": _sec(2, 7), "03-06": _sec(2, 8), "03-07": _sec(2, 9, 10), "03-08": _sec(2, 12),
+    "03-10": _sec(2, 11), "03-12": _sec(2, 13), "03-13": _sec(2, 14), "03-14": _sec(2, 15, 16, 17),
+    # 6. Inclusive Growth (book: Topic 6)
+    "07-01": _open(6, 0, 1, 2), "07-02": _sec(6, 15, 16, 17), "07-03": _sec(6, 3), "07-04": _sec(6, 4),
+    "07-05": _sec(6, 5, 6), "07-06": _sec(6, 7), "07-07": _sec(6, 8), "07-08": _sec(6, 9),
+    "07-09": _sec(6, 10, 11), "07-10": _sec(6, 12), "07-11": _sec(6, 13), "07-12": _sec(6, 14),
+    # 7. Agricultural Development (book: Topic 7)
+    "08-01": _open(7, 0, 1, 2), "08-02": _sec(7, 3), "08-03": _sec(7, 4, parts=r(3, 7)), "08-04": _sec(7, 5),
+    "08-05": _sec(7, 4, parts=[2]), "08-06": _sec(7, 4, parts=[1]), "08-07": _sec(7, 6, 7, 8, 9),
+    "08-08": _sec(7, 10), "08-09": _sec(7, 11, 14, 15, 16), "08-10": _sec(7, 12), "08-11": _sec(7, 13),
+    # 9. Industrial Development and Policy (book: Topic 8)
+    "10-01": _open(8, 0, 1), "10-02": _sec(8, 2), "10-03": _sec(8, 3), "10-04": _sec(8, 4), "10-05": _sec(8, 5),
+    "10-06": _sec(8, 6), "10-07": _sec(8, 7), "10-08": _sec(8, 8), "10-09": _sec(8, 9),
+    "10-10": _sec(8, 10, parts=[1]), "10-11": _sec(8, 11), "10-12": _sec(8, 12), "10-14": _sec(8, 10, parts=[2]),
+    "10-15": _sec(8, 13), "10-16": _sec(8, 14, 15, 16, 17),
+    # 11. Infrastructure in India (book: Topic 11)
+    "12-01": _open(11, 0) + _sec(11, 1, parts=r(1, 5)), "12-02": _sec(11, 1, parts=[6]), "12-03": _sec(11, 2),
+    "12-04": _sec(11, 3), "12-05": _sec(11, 4), "12-06": _sec(11, 5, 6), "12-07": _sec(11, 7, parts=[5]),
+    "12-08": _sec(11, 7, parts=r(1, 4)), "12-09": _sec(11, 8), "12-10": _sec(11, 9), "12-11": _sec(11, 10),
+    "12-12": _sec(11, 11), "12-13": _sec(11, 12, 13, 14, 15),
+}
+
+
+def build_appsc_economy(path: str) -> dict:
+    books = economy_book(path)
+    mapping = {f"NC-P4-1-{k}": v for k, v in APPSC_ECONOMY.items()}
+    placed = {key for pieces in mapping.values() for _, key, _ in pieces}
+    left = [ch.title for key, ch in books["eco"].items() if key not in placed]
+    if left:  # build() checks the parts; a section without parts must be placed too
+        raise ValueError(f"Sections not placed anywhere: {left}")
+    return {
+        "track": {"commission": "appsc", "group": "group-1"},
+        "kind": "comprehensive",
+        "source": "Indian Economy — Topic Notes",
+        "notes": build(books, mapping),
     }
 
 
