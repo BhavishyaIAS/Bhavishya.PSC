@@ -6,8 +6,6 @@ import type { Commission, User } from "@/lib/types";
 import { ExamMark } from "@/components/living/Mark";
 import type { Skin } from "@/lib/types";
 
-import { COSMOS_BOOT } from "./cosmos-boot";
-import { CreationCosmos } from "./Creation";
 import { MODULES } from "./portals";
 
 /** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
@@ -41,13 +39,6 @@ export function SkyHome({
 }) {
   return (
     <div className="page sky-home">
-      {skin === "sky" && (
-        <>
-          {/* decides before the first paint whether the opening plays (cosmos-boot.ts) */}
-          <script dangerouslySetInnerHTML={{ __html: COSMOS_BOOT }} />
-          <CreationCosmos />
-        </>
-      )}
       <div className="sky-first">
         <section className="sky-hero" aria-labelledby="sky-h">
           <div className="sky-eyebrow">{eyebrow}</div>
