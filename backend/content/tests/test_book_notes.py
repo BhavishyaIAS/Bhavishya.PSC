@@ -136,3 +136,59 @@ class APHistoryMainsNotesTests(TestCase):
         empty = ["NM-P2-2-01-06", "NM-P2-2-02-04", "NM-P2-2-03-09", "NM-P2-2-04-13", "NM-P2-2-05-01"]
         self.assertFalse(Note.objects.filter(micro_theme__code__in=empty).exists())
         self.assertEqual(bn.load(self.bundle, get), {"created": 0, "filled": 0, "kept": 21, "missing": 0})
+
+
+class EthicsNotesTests(TestCase):
+    """The ethics book replaces what the Ethics sections hold, and the subject is put back in its syllabus shape."""
+
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        cls.syllabus = ns.read(DATA / "appsc-g1-notes-syllabi.json.gz")
+        ns.load(cls.syllabus, get)
+        cls.bundle = bn.read(DATA / "appsc-g1-ethics-notes.json.gz")
+
+    def tidy(self):
+        return bn.tidy_syllabus_subject(
+            get, track_ref=self.bundle["track"], kind="comprehensive", paper_code="P3", subject_index=3,
+            syllabus=self.syllabus, hide_subjects=r"ethic",
+        )
+
+    def test_a_word_import_is_tidied_away_and_the_book_replaces_old_notes(self):
+        from content.models import Subject, Topic
+
+        subject = Subject.objects.get(paper__notes_kind="comprehensive", paper__code="P3", code="P3-3")
+        human = Topic.objects.get(subject=subject, code="3.1")
+        # what a Word import of the book into this subject leaves behind: its own chapters, numbered 1, 2, …,
+        # and the syllabus chapters pushed about
+        imported = Topic.objects.create(subject=subject, title="Chapter 1 — Ethics and Human Interface", code="01", order=1, status="published")
+        stray = MicroTheme.objects.create(topic=imported, track=human.subject.paper.track, code="ETH-01-01", title="Part 1", order=1, status="published")
+        Note.objects.create(micro_theme=stray, kind="comprehensive", body={"type": "doc", "content": [para("Imported.")]}, status="published")
+        Topic.objects.filter(pk=human.pk).update(order=7, title="Ethics & Human Interface (old)")
+        side = Subject.objects.create(paper=subject.paper, title="Ethics, Integrity and Aptitude", code="ETH", order=4, status="published")
+        old = MicroTheme.objects.get(code="NC-P3-3-01-02")
+        Note.objects.create(micro_theme=old, kind="comprehensive", body={"type": "doc", "content": [para("An old note.")]}, status="published")
+
+        report = self.tidy()
+        self.assertEqual(report["chapters_fixed"], 1)
+        self.assertEqual(report["hidden"], ["subject: Ethics, Integrity and Aptitude", "Chapter 1 — Ethics and Human Interface"])
+        human.refresh_from_db()
+        self.assertEqual((human.order, human.title), (1, "Ethics and Human Interface"))
+        self.assertEqual(
+            list(Topic.objects.filter(subject=subject, status="published").order_by("order").values_list("code", flat=True)),
+            ["3.1", "3.2", "3.3", "3.4", "3.5"],
+        )
+        imported.refresh_from_db()
+        side.refresh_from_db()
+        self.assertEqual((imported.status, side.status), ("draft", "draft"))  # hidden, not deleted
+        self.assertEqual(Note.objects.get(micro_theme=stray).status, "draft")
+        self.assertEqual(self.tidy()["chapters_fixed"], 0)  # once tidy, left alone
+
+        counts = bn.load(self.bundle, get)
+        self.assertEqual(counts, {"created": 22, "filled": 0, "kept": 0, "missing": 0, "replaced": 1})
+        note = Note.objects.get(micro_theme=old, kind="comprehensive")
+        self.assertIn("Dimensions of Ethics", note.body_text)
+        self.assertNotIn("An old note.", note.body_text)
+        self.assertEqual(note.status, "published")
+        self.assertEqual(note.body["content"][0]["content"][0]["text"], "Chapter 1 — Ethics and Human Interface")
+        self.assertFalse(Note.objects.filter(micro_theme__code__startswith="NC-P3-3-05-").exists())  # laws: not in the book
