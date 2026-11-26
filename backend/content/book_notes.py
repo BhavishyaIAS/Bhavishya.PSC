@@ -418,6 +418,105 @@ def build_appsc_economy(path: str) -> dict:
     }
 
 
+# ───────────────────────────── APPSC Group I: history and culture of Andhra Pradesh ─────────────────────────────
+
+
+class _TitledStream(_Stream):
+    """A book whose chapters start at a "Title" paragraph (or, for its first, a line in capitals): those become
+    level-0 heading markers; the cover and contents before the first chapter are dropped."""
+
+    def __init__(self, document, first_title):
+        super().__init__(document)
+        self.first_title = first_title
+        self.started = False
+
+    def _paragraph(self, el, style):
+        text = re.sub(r"\s+", " ", "".join(t.text or "" for t in el.iter(qn("w:t")))).strip()
+        if style == "Title" or (not self.started and text == self.first_title):
+            self.started = True
+            self.items.append({"type": "_h", "level": 0, "text": text})
+            return
+        if not self.started:
+            return  # the cover and the contents
+        if style == "Normal" and re.match(r"^Part [IVX]+ [–-] ", text):
+            return  # "Part II – Modern Andhra": the book's own grouping, not notes
+        super()._paragraph(el, style)
+
+
+def titled_chapters(items) -> dict:
+    """Chapters from level-0 markers; every heading 1 is a part, numbered in order (1, 2, …) whatever its label
+    ("(a) Administration", "3. Political History", "Quick Revision"). A heading 2 that opens a group of parts
+    ("Part A: …") joins the next part; other headings 2 and 3 are sub-headings of the part they fall in."""
+    out: dict = {}
+    ch = current = None
+    pending: list = []
+
+    def heading(level, text):
+        return {"type": "heading", "attrs": {"level": level}, "content": [{"type": "text", "text": text}]}
+
+    for it in items:
+        if it["type"] == "_h":
+            level, text = it["level"], tidy_heading(it["text"])
+            if level == 0:
+                key = len(out) + 1
+                ch = out[key] = Chapter(key, nice(text))
+                current, pending = ch.head, []
+            elif ch is None:
+                continue
+            elif level == 1:
+                n = len(ch.order) + 1
+                ch.parts[n] = [*pending, heading(3, text)]
+                ch.order.append(n)
+                current, pending = ch.parts[n], []
+            elif level == 2 and re.match(r"(?i)^Part [A-Z]\b", text):
+                pending.append(heading(3, text))
+            else:
+                current.append(heading(4, text))
+            continue
+        if ch is not None:
+            current.append(it)
+    if pending:
+        raise ValueError(f"{ch.title}: a divider with no part after it")
+    return out
+
+
+def ap_history_book(path: str) -> dict:
+    return {"aph": titled_chapters(_TitledStream(Document(path), "THE SATAVAHANAS").parse().items)}
+
+
+# Mains Notes → Paper II → History and Culture of Andhra Pradesh (NM-P2-2-<topic>-<section>), from "Andhra Pradesh
+# History — Revision Notes" (chapters numbered as in the book: 1 Satavahanas … 17 Formation of Andhra State).
+# Where a chapter covers several syllabus sections it is split by its parts: the social reformers go to 03-08, the
+# freedom fighters to 04-08, nationalist and revolutionary literature (Part C) to 04-04, the Dalit writers (Part B)
+# to 04-05, and Potti Sriramulu's fast to 04-12 (formation of Andhra State). Sections the book doesn't cover stay
+# empty, to be written later.
+APPSC_AP_HISTORY = {
+    # 6. Ancient Andhra
+    "01-01": [("aph", 1, None)], "01-02": [("aph", 2, None)], "01-03": [("aph", 3, None)], "01-04": [("aph", 4, None)],
+    "01-05": [("aph", 6, None)], "01-07": [("aph", 7, None)], "01-09": [("aph", 5, None)],
+    # 7. Medieval Andhra
+    "02-03": [("aph", 8, None)], "02-05": [("aph", 9, None)],
+    # 8. Modern Andhra
+    "03-01": [("aph", 10, None)], "03-03": [("aph", 11, None)], "03-04": [("aph", 12, None)],
+    "03-05": [("aph", 13, [1, 2, 3, 4, 6])],
+    "03-08": [("aph", 14, r(1, 3)), ("aph", 15, [1]), ("aph", 13, [5])],
+    # 9. Nationalist Movement
+    "04-04": [("aph", 14, r(7, 12))], "04-05": [("aph", 14, r(4, 6))], "04-08": [("aph", 15, r(2, 7))],
+    "04-09": [("aph", 16, [1])], "04-10": [("aph", 16, r(2, 5))],
+    "04-11": [("aph", 17, [1, 2, 3, 4, 6, 7])], "04-12": [("aph", 17, [5])],
+}
+
+
+def build_appsc_ap_history(path: str) -> dict:
+    notes = build(ap_history_book(path), {f"NM-P2-2-{k}": v for k, v in APPSC_AP_HISTORY.items()})
+    return {
+        "track": {"commission": "appsc", "group": "group-1"},
+        "kind": "mains",
+        "source": "Andhra Pradesh History — Revision Notes",
+        "notes": notes,
+    }
+
+
 # ───────────────────────────── loading ─────────────────────────────
 
 
