@@ -572,7 +572,8 @@ def tidy_syllabus_subject(
 ) -> dict:
     """
     Put one Notes subject back in its syllabus's shape: its chapters in syllabus order with their syllabus titles and
-    numbers, each section under its chapter in order. Chapters in the subject that the syllabus doesn't have (one a
+    numbers, each section under its chapter in order; a chapter or section that was deleted comes back, empty, with
+    its syllabus code (so notes for it can be placed again). Chapters in the subject that the syllabus doesn't have (one a
     Word import added, say) are hidden — set to draft with their sections and notes, never deleted — and listed;
     so are other subjects of the paper whose title matches `hide_subjects` (a regex) and that aren't the syllabus's.
     """
@@ -589,7 +590,7 @@ def tidy_syllabus_subject(
     subject = Subject.objects.filter(paper=paper, code=f"{paper_code}-{subject_index}").first()
     if subject is None:
         return {"skipped": "subject not found"}
-    report = {"chapters_fixed": 0, "sections_fixed": 0, "hidden": []}
+    report = {"chapters_fixed": 0, "sections_fixed": 0, "chapters_restored": 0, "sections_restored": 0, "hidden": []}
     if subject.title != s["title"] or subject.order != subject_index:
         subject.title, subject.order = s["title"], subject_index
         subject.save(update_fields=["title", "order"])
@@ -600,16 +601,20 @@ def tidy_syllabus_subject(
         topic = (Topic.objects.filter(subject=subject, code=f"{subject_index}.{ti}").first()
                  or Topic.objects.filter(subject=subject, title=t["title"]).first()
                  or next((m.topic for m in mts.values()), None))
-        if topic is None:
-            continue
-        if (topic.subject_id, topic.title, topic.code, topic.order) != (subject.id, t["title"], f"{subject_index}.{ti}", ti):
+        if topic is None:  # deleted: the syllabus chapter comes back
+            topic = Topic.objects.create(subject=subject, title=t["title"], code=f"{subject_index}.{ti}", order=ti, status="published")
+            report["chapters_restored"] += 1
+        elif (topic.subject_id, topic.title, topic.code, topic.order) != (subject.id, t["title"], f"{subject_index}.{ti}", ti):
             topic.subject, topic.title, topic.code, topic.order = subject, t["title"], f"{subject_index}.{ti}", ti
             topic.save(update_fields=["subject", "title", "code", "order"])
             report["chapters_fixed"] += 1
         keep.add(topic.id)
         for mi, title in enumerate(t["sections"], 1):
             mt = mts.get(f"{prefix}{mi:02d}")
-            if mt and (mt.topic_id, mt.order, mt.title) != (topic.id, mi, title):
+            if mt is None:  # deleted: the syllabus section comes back
+                MicroTheme.objects.create(topic=topic, track=track, code=f"{prefix}{mi:02d}", title=title, order=mi, status="published")
+                report["sections_restored"] += 1
+            elif (mt.topic_id, mt.order, mt.title) != (topic.id, mi, title):
                 mt.topic, mt.order, mt.title = topic, mi, title
                 mt.save(update_fields=["topic", "order", "title"])
                 report["sections_fixed"] += 1
