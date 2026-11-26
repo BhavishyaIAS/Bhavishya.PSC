@@ -192,3 +192,21 @@ class EthicsNotesTests(TestCase):
         self.assertEqual(note.status, "published")
         self.assertEqual(note.body["content"][0]["content"][0]["text"], "Chapter 1 — Ethics and Human Interface")
         self.assertFalse(Note.objects.filter(micro_theme__code__startswith="NC-P3-3-05-").exists())  # laws: not in the book
+
+    def test_deleted_syllabus_chapters_come_back_and_get_their_notes(self):
+        from content.models import Subject, Topic
+
+        subject = Subject.objects.get(paper__notes_kind="comprehensive", paper__code="P3", code="P3-3")
+        Topic.objects.filter(subject=subject, code__in=["3.1", "3.3"]).delete()  # their nine sections go with them
+        self.assertEqual(bn.load(self.bundle, get)["missing"], 9)
+        report = self.tidy()
+        self.assertEqual((report["chapters_restored"], report["sections_restored"]), (2, 9))
+        self.assertEqual(
+            list(Topic.objects.filter(subject=subject).order_by("order").values_list("code", "title")),
+            [(f"3.{i}", t["title"]) for i, t in enumerate(ns.read(DATA / "appsc-g1-notes-syllabi.json.gz")["syllabi"]["comprehensive"][4]["subjects"][2]["topics"], 1)],
+        )
+        counts = bn.load(self.bundle, get)
+        self.assertEqual((counts["missing"], counts["created"], counts["replaced"]), (0, 9, 14))
+        mt = MicroTheme.objects.get(code="NC-P3-3-03-04")
+        self.assertEqual((mt.topic.code, mt.order, mt.status), ("3.3", 4, "published"))
+        self.assertEqual(self.tidy()["sections_restored"], 0)
