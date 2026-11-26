@@ -517,6 +517,125 @@ def build_appsc_ap_history(path: str) -> dict:
     }
 
 
+# ───────────────────────────── APPSC Group I: ethics ─────────────────────────────
+
+
+def ethics_book(path: str) -> dict:
+    """"Ethics, Integrity and Aptitude — Complete Notes": CHAPTER n (heading 1) → PART k (heading 2) → headings 3–4."""
+    return {"eth": chapters(
+        stream(path), chapter_level=1, part_level=2,
+        chapter_key=lambda lvl, t: _num(r"^CHAPTER\s+(\d+)\b")(t) if lvl == 1 else None,
+        part_number=_num(r"^PART\s+(\d+)\b"),
+    )}
+
+
+# Syllabus-Wise Notes → Paper III → Ethics in Public Service and Knowledge of Law (NC-P3-3-<chapter>-<section>), from
+# "Ethics, Integrity and Aptitude — Complete Notes" (11 chapters, numbered as in the book). The book's chapters are
+# cut by part and placed under the syllabus's own headings; a chapter's revision toolkit goes with its last piece.
+# The book has nothing on chapter 5 (Basic Knowledge of Laws): its nine sections stay empty, to be written later.
+APPSC_ETHICS = {
+    # 1. Ethics and Human Interface
+    "01-01": [("eth", 1, r(1, 3))], "01-02": [("eth", 1, [4])], "01-03": [("eth", 1, [5, 7])],
+    "01-04": [("eth", 1, [6, 8]), ("eth", 4, None)],  # integrity and accountability: and the foundational values
+    # 2. Human Values
+    "02-01": [("eth", 2, r(1, 3))], "02-02": [("eth", 2, [4])], "02-03": [("eth", 2, [5])], "02-04": [("eth", 2, [6])],
+    "02-05": [("eth", 2, [7, 8]), ("eth", 6, None)],  # lessons from great leaders: and the moral thinkers
+    # 3. Attitude and Emotional Intelligence
+    "03-01": [("eth", 3, r(1, 3))], "03-02": [("eth", 3, [4])], "03-03": [("eth", 3, r(5, 8))],
+    "03-04": [("eth", 5, [1, 2, 3, 6])], "03-05": [("eth", 5, [4, 5, 7])],
+    # 4. Public Service, Governance and Probity
+    "04-01": [("eth", 7, [1, 2]), ("eth", 8, r(1, 3))],
+    "04-02": [("eth", 8, [4, 5, 7])],
+    "04-03": [("eth", 9, [4])],
+    "04-04": [("eth", 7, [6, 8]), ("eth", 8, [6]), ("eth", 9, [7])],
+    "04-05": [("eth", 7, [4, 5, 7, 9]), ("eth", 11, r(5, 7))],
+    "04-06": [("eth", 7, [3, 10, 11, 12]), ("eth", 8, [8]), ("eth", 9, [1, 2, 3, 5, 6, 8, 9, 10, 11])],
+    "04-07": [("eth", 11, [1, 2, 3, 4, 8])],
+    "04-08": [("eth", 10, [1, 2, 3, 4, 5, 6, 8, 9, 10])],
+    "04-09": [("eth", 10, [7])],
+}
+
+
+def build_appsc_ethics(path: str) -> dict:
+    notes = build(ethics_book(path), {f"NC-P3-3-{k}": v for k, v in APPSC_ETHICS.items()})
+    return {
+        "track": {"commission": "appsc", "group": "group-1"},
+        "kind": "comprehensive",
+        "source": "Ethics, Integrity and Aptitude — Complete Notes",
+        "replace": True,  # asked for: these notes replace whatever the sections hold
+        "notes": notes,
+    }
+
+
+def tidy_syllabus_subject(
+    get_model, *, track_ref: dict, kind: str, paper_code: str, subject_index: int, syllabus: dict, hide_subjects: str = ""
+) -> dict:
+    """
+    Put one Notes subject back in its syllabus's shape: its chapters in syllabus order with their syllabus titles and
+    numbers, each section under its chapter in order. Chapters in the subject that the syllabus doesn't have (one a
+    Word import added, say) are hidden — set to draft with their sections and notes, never deleted — and listed;
+    so are other subjects of the paper whose title matches `hide_subjects` (a regex) and that aren't the syllabus's.
+    """
+    Track, Paper, Subject = get_model("Track"), get_model("Paper"), get_model("Subject")
+    Topic, MicroTheme, Note = get_model("Topic"), get_model("MicroTheme"), get_model("Note")
+    from .notes_syllabus import PREFIX
+
+    track = Track.objects.filter(commission__slug=track_ref["commission"], group__slug=track_ref["group"]).first()
+    paper = track and Paper.objects.filter(track=track, notes_kind=kind, code=paper_code).first()
+    p = next((x for x in syllabus["syllabi"][kind] if x["code"] == paper_code), None)
+    if paper is None or p is None:
+        return {"skipped": "paper not found"}
+    s = p["subjects"][subject_index - 1]
+    subject = Subject.objects.filter(paper=paper, code=f"{paper_code}-{subject_index}").first()
+    if subject is None:
+        return {"skipped": "subject not found"}
+    report = {"chapters_fixed": 0, "sections_fixed": 0, "hidden": []}
+    if subject.title != s["title"] or subject.order != subject_index:
+        subject.title, subject.order = s["title"], subject_index
+        subject.save(update_fields=["title", "order"])
+    keep = set()
+    for ti, t in enumerate(s["topics"], 1):
+        prefix = f"{PREFIX[kind]}-{paper_code}-{subject_index}-{ti:02d}-"
+        mts = {m.code: m for m in MicroTheme.objects.filter(track=track, code__startswith=prefix)}
+        topic = (Topic.objects.filter(subject=subject, code=f"{subject_index}.{ti}").first()
+                 or Topic.objects.filter(subject=subject, title=t["title"]).first()
+                 or next((m.topic for m in mts.values()), None))
+        if topic is None:
+            continue
+        if (topic.subject_id, topic.title, topic.code, topic.order) != (subject.id, t["title"], f"{subject_index}.{ti}", ti):
+            topic.subject, topic.title, topic.code, topic.order = subject, t["title"], f"{subject_index}.{ti}", ti
+            topic.save(update_fields=["subject", "title", "code", "order"])
+            report["chapters_fixed"] += 1
+        keep.add(topic.id)
+        for mi, title in enumerate(t["sections"], 1):
+            mt = mts.get(f"{prefix}{mi:02d}")
+            if mt and (mt.topic_id, mt.order, mt.title) != (topic.id, mi, title):
+                mt.topic, mt.order, mt.title = topic, mi, title
+                mt.save(update_fields=["topic", "order", "title"])
+                report["sections_fixed"] += 1
+    if hide_subjects:  # a whole subject an import added beside this one, on the same theme
+        others = Subject.objects.filter(paper=paper, title__iregex=hide_subjects).exclude(id=subject.id).exclude(
+            code__in=[f"{paper_code}-{i}" for i in range(1, len(p["subjects"]) + 1)]
+        )
+        for other in others:
+            report["hidden"].append(f"subject: {other.title}")
+            mts = MicroTheme.objects.filter(topic__subject=other)
+            Note.objects.filter(micro_theme__in=mts).update(status="draft")
+            mts.update(status="draft")
+            Topic.objects.filter(subject=other).update(status="draft")
+            other.status = "draft"
+            other.save(update_fields=["status"])
+    extra = Topic.objects.filter(subject=subject).exclude(id__in=keep).order_by("order", "id")
+    for n, topic in enumerate(extra, len(s["topics"]) + 1):
+        report["hidden"].append(topic.title)
+        mts = MicroTheme.objects.filter(topic=topic)
+        Note.objects.filter(micro_theme__in=mts).update(status="draft")
+        mts.update(status="draft")
+        topic.status, topic.order = "draft", n
+        topic.save(update_fields=["status", "order"])
+    return report
+
+
 # ───────────────────────────── loading ─────────────────────────────
 
 
@@ -529,7 +648,10 @@ def read(path) -> dict:
 
 
 def load(bundle: dict, get_model) -> dict:
-    """Create the bundle's notes, published. A section whose note of this kind already has text is left alone."""
+    """
+    Create the bundle's notes, published. A section whose note of this kind already has text is left alone, unless
+    the bundle says "replace" (then its text is replaced).
+    """
     from django.contrib.postgres.search import SearchVector
 
     Track, MicroTheme, Note = get_model("Track"), get_model("MicroTheme"), get_model("Note")
@@ -540,13 +662,15 @@ def load(bundle: dict, get_model) -> dict:
     kind = bundle["kind"]
     mts = {m.code: m for m in MicroTheme.objects.filter(track=track, code__in=list(bundle["notes"]))}
     counts = {"created": 0, "filled": 0, "kept": 0, "missing": 0}
+    if bundle.get("replace"):
+        counts["replaced"] = 0
     for code, doc in bundle["notes"].items():
         mt = mts.get(code)
         if mt is None:
             counts["missing"] += 1
             continue
         note = Note.objects.filter(micro_theme=mt, kind=kind).first()
-        if note is not None and (note.body_text or "").strip():
+        if note is not None and (note.body_text or "").strip() and not bundle.get("replace"):
             counts["kept"] += 1
             continue
         text = doc_to_text(doc)
@@ -554,8 +678,9 @@ def load(bundle: dict, get_model) -> dict:
             note = Note.objects.create(micro_theme=mt, kind=kind, body=doc, body_text=text, status="published")
             counts["created"] += 1
         else:
+            had = bool((note.body_text or "").strip())
             note.body, note.body_text, note.status = doc, text, "published"
             note.save()
-            counts["filled"] += 1
+            counts["replaced" if had else "filled"] += 1
         Note.objects.filter(pk=note.pk).update(search_vector=SearchVector("body_text", config="english"))
     return counts

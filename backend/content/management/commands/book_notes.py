@@ -4,11 +4,12 @@ Whole books placed section by section into a Notes module (content/book_notes.py
     manage.py book_notes build ANCIENT.docx MEDIEVAL.docx MODERN.docx [--out content/data/appsc-g1-history-notes.json.gz]
     manage.py book_notes economy ECONOMY.docx [--out content/data/appsc-g1-economy-notes.json.gz]
     manage.py book_notes ap-history AP_HISTORY.docx [--out content/data/appsc-g1-ap-history-mains-notes.json.gz]
+    manage.py book_notes ethics ETHICS.docx [--out content/data/appsc-g1-ethics-notes.json.gz]
     manage.py book_notes load [--bundle …] [--dry-run]
 
 `build` cuts the three history books into APPSC Group I's Comprehensive Notes sections (and fails if any part
 of a book is left out or placed twice); `economy` does the same for the Indian Economy topic notes (Paper IV), `ap-history` for the Andhra Pradesh
-history revision notes (Mains Notes, Paper II);
+history revision notes (Mains Notes, Paper II), `ethics` for the ethics notes (Paper III, replacing what is there);
 `load` creates the notes, published, leaving alone any section whose
 note already has text (migration 0013 does this on deploy).
 """
@@ -42,18 +43,23 @@ class Command(BaseCommand):
         a = sub.add_parser("ap-history")
         a.add_argument("ap_history")
         a.add_argument("--out", default="content/data/appsc-g1-ap-history-mains-notes.json.gz")
+        et = sub.add_parser("ethics")
+        et.add_argument("ethics")
+        et.add_argument("--out", default="content/data/appsc-g1-ethics-notes.json.gz")
         ld = sub.add_parser("load")
         ld.add_argument("--bundle", default=DEFAULT)
         ld.add_argument("--dry-run", action="store_true")
 
     def handle(self, *args, **opts):
-        if opts["action"] in ("build", "economy", "ap-history"):
+        if opts["action"] in ("build", "economy", "ap-history", "ethics"):
             if opts["action"] == "build":
                 bundle = book_notes.build_appsc_history(opts["ancient"], opts["medieval"], opts["modern"])
             elif opts["action"] == "economy":
                 bundle = book_notes.build_appsc_economy(opts["economy"])
-            else:
+            elif opts["action"] == "ap-history":
                 bundle = book_notes.build_appsc_ap_history(opts["ap_history"])
+            else:
+                bundle = book_notes.build_appsc_ethics(opts["ethics"])
             for code, doc in bundle["notes"].items():
                 self.stdout.write(f"{code}  {len(doc_to_text(doc).split()):6d} words")
             with gzip.open(opts["out"], "wt", encoding="utf-8") as f:
