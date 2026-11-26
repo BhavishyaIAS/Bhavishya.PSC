@@ -111,3 +111,28 @@ class EconomyNotesTests(TestCase):
         self.assertFalse(Note.objects.filter(micro_theme__code__in=empty).exists())
         # loading again changes nothing, and a note someone has written is never replaced
         self.assertEqual(bn.load(self.bundle, get), {"created": 0, "filled": 0, "kept": 72, "missing": 0})
+
+
+class APHistoryMainsNotesTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        ns.load(ns.read(DATA / "appsc-g1-notes-syllabi.json.gz"), get)
+        cls.bundle = bn.read(DATA / "appsc-g1-ap-history-mains-notes.json.gz")
+        cls.counts = bn.load(cls.bundle, get)
+
+    def test_the_book_fills_the_ap_history_mains_sections_it_covers(self):
+        self.assertEqual(self.counts, {"created": 21, "filled": 0, "kept": 0, "missing": 0})
+        self.assertEqual(self.bundle["kind"], "mains")
+        self.assertTrue(all(code.startswith("NM-P2-2-") for code in self.bundle["notes"]))
+        note = Note.objects.get(micro_theme__code="NM-P2-2-01-01", kind="mains")
+        self.assertEqual(note.status, "published")
+        self.assertEqual(note.body["content"][0]["content"][0]["text"], "The Satavahanas")
+        # a chapter split by person: Annie Besant goes with the social reformers, the others with Brown and Munro
+        self.assertIn("Annie Besant", Note.objects.get(micro_theme__code="NM-P2-2-03-08").body_text)
+        self.assertIn("C.P. Brown", Note.objects.get(micro_theme__code="NM-P2-2-03-05").body_text)
+        # only mains notes are written; the sections the book doesn't cover stay empty
+        self.assertFalse(Note.objects.filter(micro_theme__code__startswith="NM-P2-2-", kind="comprehensive").exists())
+        empty = ["NM-P2-2-01-06", "NM-P2-2-02-04", "NM-P2-2-03-09", "NM-P2-2-04-13", "NM-P2-2-05-01"]
+        self.assertFalse(Note.objects.filter(micro_theme__code__in=empty).exists())
+        self.assertEqual(bn.load(self.bundle, get), {"created": 0, "filled": 0, "kept": 21, "missing": 0})
