@@ -45,7 +45,7 @@ export default async function MicroThemePage(props: PageProps<"/exams/[commissio
       <div className="stack" style={{ gap: 20, minWidth: 0 }}>
         <div>
           <nav className="crumbs" aria-label="Syllabus position">
-            <Link href={trackPath(commission, group, "materials")}>Material / Notes</Link>›
+            <Link href={trackPath(commission, group, "materials")}>Notes/Material</Link>›
             <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}`)}>{d.breadcrumb.subject.title}</Link>›
             <Link href={trackPath(commission, group, `materials/${d.breadcrumb.subject.id}?kind=${kind ?? "comprehensive"}&topic=${d.breadcrumb.topic.id}`)}>
               {d.breadcrumb.topic.title}

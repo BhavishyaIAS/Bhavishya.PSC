@@ -72,7 +72,7 @@ export function TopicsManager({ commissions, trackKey, papers }: { commissions: 
           <div className="eyebrow">Topics catalogue</div>
           <h1>{track.label}</h1>
           <p>
-            These are the topics a learner picks from in Material / Notes, in this order. Drag to reorder. A hidden topic — and
+            These are the topics a learner picks from in Notes/Material, in this order. Drag to reorder. A hidden topic — and
             everything inside it — is visible to admins only.
           </p>
         </div>

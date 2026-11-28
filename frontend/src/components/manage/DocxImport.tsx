@@ -221,7 +221,7 @@ export function DocxImport({ commissions, initialTrack }: { commissions: Commiss
               <b>{done.notes_written}</b> sections imported into <b>{subject}</b> ({done.topics_created} new chapters,{" "}
               {done.micro_themes_created} new sections, {done.micro_themes_updated} updated).{" "}
               <Link className="link" href={`/exams/${done.track.commission}/${done.track.group}/materials/${done.subject_id}?kind=${paper?.notes_kind || kind}`}>
-                Read them in Material / Notes →
+                Read them in Notes/Material →
               </Link>{" "}
               ·{" "}
               <Link className="link" href={`/manage/syllabus?track=${done.track.commission}/${done.track.group}`}>

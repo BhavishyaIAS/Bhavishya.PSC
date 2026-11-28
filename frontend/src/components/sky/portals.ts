@@ -216,7 +216,7 @@ export function examPortal(slug: string, index: number): PortalKind {
 
 /** The four ways into an exam, in order: the home of an exam shows them as big blocks, every page inside as pills. */
 export const MODULES: { tab: string; name: string; short: string; kind: PortalKind; portal: string; blurb: string }[] = [
-  { tab: "materials", name: "Material / Notes", short: "Notes", kind: "whitehole", portal: "White hole", blurb: "Every subject, opened topic by topic, as the syllabus has it." },
+  { tab: "materials", name: "Notes/Material", short: "Notes", kind: "whitehole", portal: "White hole", blurb: "Every subject, opened topic by topic, as the syllabus has it." },
   { tab: "prelims", name: "Prelims PYQ Vault", short: "Prelims PYQs", kind: "wormhole", portal: "Wormhole", blurb: "Past Prelims questions, by year, paper or subject." },
   { tab: "mains", name: "Mains PYQ Vault", short: "Mains PYQs", kind: "blackhole", portal: "Black hole", blurb: "Past Mains questions, with model answers." },
   { tab: "progress", name: "Progress Tracker", short: "Progress", kind: "waves", portal: "Gravitational waves", blurb: "How much of the syllabus you have covered." },

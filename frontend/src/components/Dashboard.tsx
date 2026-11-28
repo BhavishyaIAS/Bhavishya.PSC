@@ -60,7 +60,7 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
 
       {fresh ? (
         <div className="dash-card dash-start">
-          <b>Begin here.</b> Open <Link href={trackPath(commission, group, "materials")}>Material &amp; Notes</Link> and read a topic, or answer a few{" "}
+          <b>Begin here.</b> Open <Link href={trackPath(commission, group, "materials")}>Notes/Material</Link> and read a topic, or answer a few{" "}
           <Link href={trackPath(commission, group, "prelims?mine=unattempted")}>Prelims questions</Link>. Your progress, what is due for revision and where you
           are strong or weak will appear here as you go.
         </div>
@@ -81,7 +81,7 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
                 ))}
               </ol>
             ) : (
-              <p className="muted">You are up to date. Pick a new topic in Material &amp; Notes.</p>
+              <p className="muted">You are up to date. Pick a new topic in Notes/Material.</p>
             )}
           </div>
 
