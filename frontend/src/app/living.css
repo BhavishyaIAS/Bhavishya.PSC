@@ -834,3 +834,108 @@
 :root:is([data-skin="living"], [data-skin="sky"]) :is(.flow-head, .np-head, .vault-head, .page-head, .system-copy) :is(h1, h2, h3, .flow-title, .np-title, .np-index, .np-kicker, .eyebrow) {
   text-shadow: 0 0 16px color-mix(in srgb, var(--w-deep, var(--bg)) 70%, transparent);
 }
+
+/* ═══════════ Living home: the examination as a plant (ExamHub) - its emblem at the foot with roots beneath it, a
+ * trunk rising, and the four modules at the ends of the branches, a leaf or two on each ═══════════ */
+.exam-hub-living {
+  aspect-ratio: 2 / 1;
+  min-height: 500px;
+}
+.plant path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
+  stroke-linecap: round;
+}
+.plant .plant-trunk {
+  stroke-width: 5;
+}
+.plant .plant-branch {
+  stroke-width: 3;
+}
+.plant .plant-root {
+  stroke-width: 2.2;
+  stroke: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.exam-hub-living .hub-emblem::before {
+  background: conic-gradient(from 0deg, var(--accent), color-mix(in srgb, var(--accent) 25%, transparent), var(--accent));
+  filter: none;
+}
+.exam-hub-living .hub-centre-mark {
+  border-radius: 50%;
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--plate) 55%, transparent);
+}
+@media (max-width: 720px) {
+  .exam-hub-living {
+    aspect-ratio: 1 / 1.9;
+    min-height: 0;
+  }
+}
+/* two plants one above the other: room for the roots of the first */
+.exam-hubs:has(.exam-hub-living) {
+  gap: clamp(80px, 12vh, 130px);
+}
+/* ═══════════ Compact: less empty space between the menu bar, a page's title and what follows, in every look ═══════════ */
+.page {
+  padding-top: 22px;
+}
+/* an exam's head: as tall as its name needs (Classic's planet keeps a modest strip beside it) */
+.ws-head,
+:root:root .ws-head {
+  min-height: 0;
+  margin-top: 0;
+  margin-bottom: 18px;
+  padding-top: 0;
+}
+.ws-stage {
+  min-height: 84px;
+}
+/* the home pages: the name near the top, the examination right under it (no screen-high box to centre in) */
+.hero,
+:root:root .hero {
+  min-height: 0;
+  justify-content: flex-start;
+  padding-top: clamp(14px, 3vh, 28px);
+  gap: clamp(10px, 2vh, 20px);
+}
+.exam-system {
+  aspect-ratio: 2.6 / 1;
+  min-height: 380px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-first {
+  min-height: 0;
+  justify-content: flex-start;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .sky-first .sky-hero {
+  padding: clamp(10px, 2.5vh, 24px) 0 clamp(4px, 1vh, 10px);
+}
+.exam-hubs {
+  margin-top: 4px;
+}
+.exam-hub {
+  aspect-ratio: 2.6 / 1;
+  min-height: 380px;
+}
+.exam-hub-living {
+  aspect-ratio: 2.2 / 1;
+  min-height: 450px;
+}
+@media (max-width: 720px) {
+  .page {
+    padding-top: 14px;
+  }
+  .ws-stage {
+    min-height: 0;
+  }
+  .exam-system {
+    aspect-ratio: 1 / 1.35;
+    min-height: 0;
+  }
+  .exam-hub {
+    aspect-ratio: 1 / 1.6;
+    min-height: 0;
+  }
+  .exam-hub-living {
+    aspect-ratio: 1 / 1.8;
+    min-height: 0;
+  }
+}

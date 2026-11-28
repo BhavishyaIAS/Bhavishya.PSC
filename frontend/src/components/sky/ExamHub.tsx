@@ -2,7 +2,8 @@ import { EyeOff } from "lucide-react";
 import Link from "next/link";
 
 import { ExamMark, ModuleMark } from "@/components/living/Mark";
-import { SPOKES, type Spoke } from "@/components/space/ExamOrbit";
+import { SPOKES } from "@/components/space/ExamOrbit";
+import { emblemFor } from "@/components/space/emblems";
 import type { Commission, Skin } from "@/lib/types";
 
 function groupsLine(c: Commission) {
@@ -12,48 +13,74 @@ function groupsLine(c: Commission) {
 }
 
 type Where = "wide" | "narrow";
-
-/** Where a module sits: as on the Classic page, but on a phone further out above and below (the names are larger here). */
-function pos(s: Spoke, where: Where): [number, number] {
-  if (where === "wide") return s.wide;
-  return [s.narrow[0], s.narrow[1] < 50 ? 9 : 88];
-}
+type Pt = [number, number];
 
 /**
- * A point along a spoke, in % of the box: straight for the Sky's constellation lines; for Living's branches an S-curve
- * (M 50 50 C m 50, m y, x y) that leaves the examination sideways and reaches the module from the side, clear of the
- * names beneath the marks.
+ * The Living look's plant, in % of its box: the examination at its foot (the roots), a trunk rising from it, and
+ * the four modules at the ends of its branches - two high, two lower - on a wide screen and on a phone.
  */
-function along(s: Spoke, where: Where, t: number, curved: boolean): [number, number] {
-  const [x, y] = pos(s, where);
-  if (!curved) return [50 + (x - 50) * t, 50 + (y - 50) * t];
-  const m = (50 + x) / 2, u = 1 - t;
-  const bx = u * u * u * 50 + 3 * u * u * t * m + 3 * u * t * t * m + t * t * t * x;
-  const by = u * u * u * 50 + 3 * u * u * t * 50 + 3 * u * t * t * y + t * t * t * y;
-  return [bx, by];
+const PLANT: Record<Where, { hub: Pt; at: Record<string, Pt>; forks: { upper: number; lower: number }; roots: number }> = {
+  wide: {
+    hub: [50, 62],
+    at: { materials: [25, 13], mains: [75, 13], prelims: [12, 42], progress: [88, 42] },
+    forks: { upper: 28, lower: 46 },
+    roots: 77,
+  },
+  narrow: {
+    hub: [50, 60],
+    at: { materials: [25, 8], mains: [75, 8], prelims: [17, 32], progress: [83, 32] },
+    forks: { upper: 17, lower: 35 },
+    roots: 72,
+  },
+};
+
+/** Where a module sits in the Sky (as on the Classic page; on a phone a little further out above and below). */
+function skyAt(tab: string, where: Where): Pt {
+  const s = SPOKES.find((x) => x.tab === tab)!;
+  return where === "wide" ? s.wide : [s.narrow[0], s.narrow[1] < 50 ? 9 : 88];
 }
 
-function Spokes({ where, curved }: { where: Where; curved: boolean }) {
+/** A branch: out of the trunk sideways, then on to the module, reaching it from the side. */
+function branch([x, y]: Pt, fork: number) {
+  return `M50 ${fork} C ${50 + (x - 50) * 0.35} ${fork}, ${50 + (x - 50) * 0.7} ${y}, ${x} ${y}`;
+}
+
+/** A point on that branch (for its leaves). */
+function onBranch([x, y]: Pt, fork: number, t: number): Pt {
+  const u = 1 - t;
+  const c1: Pt = [50 + (x - 50) * 0.35, fork], c2: Pt = [50 + (x - 50) * 0.7, y];
+  return [
+    u * u * u * 50 + 3 * u * u * t * c1[0] + 3 * u * t * t * c2[0] + t * t * t * x,
+    u * u * u * fork + 3 * u * u * t * c1[1] + 3 * u * t * t * c2[1] + t * t * t * y,
+  ];
+}
+
+function Plant({ where }: { where: Where }) {
+  const p = PLANT[where];
+  const top = Math.min(...Object.values(p.at).map(([, y]) => y)) + 6;
+  const roots: Pt[] = [[30, 97], [40, 103], [50, 105], [60, 103], [70, 97]];
+  const forkOf = (tab: string) => (p.at[tab][1] < 25 ? p.forks.upper : p.forks.lower);
   return (
     <>
-      <svg className={`hub-lines hub-lines-${where}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-        {SPOKES.map((s, i) => {
-          const [x, y] = pos(s, where);
-          const d = curved ? `M50 50 C${(50 + x) / 2} 50 ${(50 + x) / 2} ${y} ${x} ${y}` : `M50 50 L${x} ${y}`;
-          return (
-            <g key={s.tab} className="hub-spoke">
-              <path d={d} vectorEffect="non-scaling-stroke" />
-              <path className="hub-flow" d={d} pathLength={1} vectorEffect="non-scaling-stroke" style={{ animationDelay: `${i * -0.7}s` }} />
-            </g>
-          );
-        })}
+      <svg className={`hub-lines hub-lines-${where} plant`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        <path className="plant-trunk" d={`M50 ${p.hub[1]} L50 ${top}`} vectorEffect="non-scaling-stroke" />
+        {SPOKES.map((s) => (
+          <path key={s.tab} className="plant-branch" d={branch(p.at[s.tab], forkOf(s.tab))} vectorEffect="non-scaling-stroke" />
+        ))}
+        {roots.map(([x, y], i) => (
+          <path
+            key={i}
+            className="plant-root"
+            d={`M50 ${p.roots} C ${50 + (x - 50) * 0.15} ${p.roots + 9}, ${50 + (x - 50) * 0.8} ${y - 10}, ${x} ${y}`}
+            vectorEffect="non-scaling-stroke"
+          />
+        ))}
       </svg>
-      {/* the Sky's stars on each line, Living's buds on each branch */}
       <span className={`hub-nodes hub-nodes-${where}`} aria-hidden>
         {SPOKES.flatMap((s, i) =>
-          (curved ? [0.3, 0.7] : [0.4, 0.68]).map((t, k) => {
-            const [px, py] = along(s, where, t, curved);
-            return <span key={`${s.tab}${k}`} className="hub-node" style={{ left: `${px}%`, top: `${py}%`, animationDelay: `${(i * 2 + k) * 0.6}s` }} />;
+          [0.45, 0.75].map((t, k) => {
+            const [x, y] = onBranch(p.at[s.tab], forkOf(s.tab), t);
+            return <span key={`${s.tab}${k}`} className="hub-node" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${(i * 2 + k) * 0.6}s` }} />;
           }),
         )}
       </span>
@@ -61,24 +88,46 @@ function Spokes({ where, curved }: { where: Where; curved: boolean }) {
   );
 }
 
+/** The examination's own emblem as a sphere (as on the Classic page), or the look's mark where it has none. */
+function Centre({ skin, commission, index }: { skin: Skin; commission: Commission; index: number }) {
+  const emblem = emblemFor(commission.slug);
+  if (!emblem) return <ExamMark skin={skin} slug={commission.slug} index={index} size={200} />;
+  const tint = `rgb(${emblem.tint.map((v) => Math.round(v * 255)).join(" ")})`;
+  return (
+    <span className="portal-orb hub-emblem" style={{ ["--emblem" as string]: `url(${emblem.src})`, ["--tint" as string]: tint }}>
+      <span className="portal-seal" />
+    </span>
+  );
+}
+
 /**
- * An examination on the Sky and Living home pages, laid out as on the Classic one: the examination at the centre,
- * its four modules around it — notes and prelims on the left, mains and progress on the right — each a way straight
- * in. Drawn in the look's own terms: in the Sky, portals of night space joined by constellation lines; in Living,
- * the look's emblems joined by branches along which something is always flowing.
+ * An examination on the Sky and Living home pages: its emblem and its four modules, each a way straight in. In the
+ * Sky the modules are portals of night space floating free around the emblem; in Living they grow as a plant - the
+ * examination at the foot with its roots, the modules at the ends of the branches.
  */
 export function ExamHub({ skin, commission, index }: { skin: Skin; commission: Commission; index: number }) {
   const group = commission.tracks[0]?.group;
   const base = group ? `/exams/${commission.slug}/${group}` : `/exams/${commission.slug}`;
-  const curved = skin === "living";
+  const plant = skin === "living";
   const groups = groupsLine(commission);
+  const at = (tab: string, where: Where): Pt => (plant ? PLANT[where].at[tab] : skyAt(tab, where));
+  const hub = (where: Where): Pt => (plant ? PLANT[where].hub : [50, 50]);
   return (
-    <section className={`exam-hub exam-hub-${skin}`} aria-label={`${commission.short_name}: ${commission.name}`}>
-      <Spokes where="wide" curved={curved} />
-      <Spokes where="narrow" curved={curved} />
+    <section
+      className={`exam-hub exam-hub-${skin}`}
+      aria-label={`${commission.short_name}: ${commission.name}`}
+      style={{
+        ["--hx" as string]: `${hub("wide")[0]}%`,
+        ["--hy" as string]: `${hub("wide")[1]}%`,
+        ["--hnx" as string]: `${hub("narrow")[0]}%`,
+        ["--hny" as string]: `${hub("narrow")[1]}%`,
+      }}
+    >
+      {plant && <Plant where="wide" />}
+      {plant && <Plant where="narrow" />}
       <Link href={base} className="hub-centre" data-warp aria-label={`Open ${commission.short_name}`}>
         <span className="hub-centre-mark">
-          <ExamMark skin={skin} slug={commission.slug} index={index} size={200} />
+          <Centre skin={skin} commission={commission} index={index} />
         </span>
         <span className="hub-centre-text">
           {commission.status === "draft" && (
@@ -90,16 +139,17 @@ export function ExamHub({ skin, commission, index }: { skin: Skin; commission: C
           {groups && <span className="hub-centre-groups">{groups}</span>}
         </span>
       </Link>
-      {SPOKES.map((s) => (
+      {SPOKES.map((s, i) => (
         <Link
           key={s.tab}
           href={group ? `${base}/${s.tab}` : base}
-          className={`hub-module ${s.wide[1] < 50 ? "hub-module-top" : ""}`}
+          className={`hub-module ${at(s.tab, "wide")[1] < hub("wide")[1] - 20 ? "hub-module-top" : ""}`}
           style={{
-            ["--x" as string]: `${s.wide[0]}%`,
-            ["--y" as string]: `${s.wide[1]}%`,
-            ["--nx" as string]: `${pos(s, "narrow")[0]}%`,
-            ["--ny" as string]: `${pos(s, "narrow")[1]}%`,
+            ["--x" as string]: `${at(s.tab, "wide")[0]}%`,
+            ["--y" as string]: `${at(s.tab, "wide")[1]}%`,
+            ["--nx" as string]: `${at(s.tab, "narrow")[0]}%`,
+            ["--ny" as string]: `${at(s.tab, "narrow")[1]}%`,
+            ["--float-delay" as string]: `${i * -1.7}s`,
           }}
           data-warp
         >
