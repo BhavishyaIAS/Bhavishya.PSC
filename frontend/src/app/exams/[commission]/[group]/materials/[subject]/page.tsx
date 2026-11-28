@@ -32,7 +32,7 @@ import type {
   TopicNode,
 } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Material / Notes" };
+export const metadata: Metadata = { title: "Notes/Material" };
 
 type Related = {
   how: "mapped" | "matched";
@@ -114,7 +114,7 @@ export default async function SubjectNotes(
   const sectionHref = (id: number) => `${here}${q}&section=${id}`;
   const crumbs = (
     <nav className="crumbs" aria-label="You are here">
-      <Link href={`${home}${q}`}>Material / Notes</Link>›
+      <Link href={`${home}${q}`}>Notes/Material</Link>›
       {sectionId ? (
         <Link href={`${here}${q}`}>{subject.title}</Link>
       ) : (

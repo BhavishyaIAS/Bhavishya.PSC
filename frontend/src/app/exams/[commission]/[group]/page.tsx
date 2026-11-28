@@ -10,7 +10,7 @@ import { getSkin } from "@/lib/skin";
 
 /** The four modules on an exam's home, in the order of the sketch: notes and prelims, then mains and progress. */
 const BLOCKS = [
-  { tab: "materials", name: "Material & Notes", sub: "Syllabus-wise" },
+  { tab: "materials", name: "Notes/Material", sub: "Syllabus-wise" },
   { tab: "prelims", name: "Prelims PYQs", sub: "By year / By paper / By subject" },
   { tab: "mains", name: "Mains PYQs", sub: "With model answers" },
   { tab: "progress", name: "Track Your Progress", sub: "" },
@@ -54,7 +54,7 @@ export default async function ExamHome(props: PageProps<"/exams/[commission]/[gr
             <span className="eh-continue-label">
               <History size={17} aria-hidden /> Continue from where you left
             </span>
-            <span className="eh-continue-meta">Nothing opened yet: start with Material &amp; Notes.</span>
+            <span className="eh-continue-meta">Nothing opened yet: start with Notes/Material.</span>
             <ArrowRight className="eh-continue-go" size={20} aria-hidden />
           </Link>
         )}

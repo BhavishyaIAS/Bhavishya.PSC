@@ -19,7 +19,7 @@ import { getSite } from "@/lib/site";
 import { syllabusTopics, topicIcon, topicTone } from "@/lib/topics";
 import type { NoteKind, SyllabusTree } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Material & Notes" };
+export const metadata: Metadata = { title: "Notes/Material" };
 
 /**
  * Material & Notes. First four blocks, two by two: Syllabus-Wise Material, Prelims Notes (quick revision), Mains
@@ -53,7 +53,7 @@ export default async function MaterialsTab(
     return (
       <div className="material-home">
         <div className="flow-head">
-          <h2 className="flow-title">Material &amp; Notes</h2>
+          <h2 className="flow-title">Notes/Material</h2>
         </div>
         <nav className="material-blocks" aria-label="Material and notes">
           {kinds.map((k) => {
@@ -108,7 +108,7 @@ export default async function MaterialsTab(
   );
 
   const kindLabel =
-    kinds.find((k) => k.key === kind)?.label ?? "Material & Notes";
+    kinds.find((k) => k.key === kind)?.label ?? "Notes/Material";
   return (
     <div>
       <div>

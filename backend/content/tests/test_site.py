@@ -144,7 +144,7 @@ class SiteAdminTests(TestCase):
         site = APIClient().get("/api/site/").json()
         kinds = {k["key"]: k for k in site["note_kinds"]}
         self.assertEqual((kinds["prelims"]["label"], kinds["mains"]["enabled"], kinds["mains"]["label"]), ("Quick Revision", False, "Mains Notes"))
-        self.assertEqual(kinds["comprehensive"]["label"], "Syllabus-Wise Material")
+        self.assertEqual(kinds["comprehensive"]["label"], "Comprehensive Note (Syllabus-Wise)")
         self.assertEqual((site["hero_eyebrow"], site["reader_font"], site["reader_size"], site["show_codes"]), ("UPSC Civil Services", "serif", 3, False))
         # can't switch every type off, or pick a size that doesn't exist
         off = {k: {"enabled": False} for k in ("comprehensive", "prelims", "mains")}

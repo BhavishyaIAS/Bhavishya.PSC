@@ -1019,3 +1019,36 @@
     width: auto;
   }
 }
+
+/* ═══════════ The home pages fit one screen, in every look: the examination's system takes the height that is left
+ * under the name (between 320 and 560px), its marks scale with it, and the footer (with Look and Animations) follows
+ * straight after ═══════════ */
+@media (min-width: 721px) {
+  .exam-system,
+  .exam-hub {
+    aspect-ratio: auto;
+    min-height: 0;
+    height: clamp(320px, calc(100svh - var(--topbar-h, 61px) - 290px), 560px);
+  }
+  .exam-system {
+    --hub: clamp(120px, min(15vw, 24svh), 196px);
+    --planet: clamp(70px, min(8.4vw, 13svh), 116px);
+  }
+  .exam-hub {
+    --hub: clamp(120px, min(15vw, 24svh), 200px);
+    --mod: clamp(70px, min(8.4vw, 13svh), 118px);
+  }
+  .hero,
+  :root:root .hero {
+    padding-bottom: 12px;
+  }
+  .sky-home {
+    padding-bottom: 12px;
+  }
+  :root:is([data-skin="living"], [data-skin="sky"]) .sky-hero h1 {
+    font-size: clamp(2.2rem, min(5vw, 9svh), 3.9rem);
+  }
+  :root:is([data-skin="living"], [data-skin="sky"]) .sky-hero h1 {
+    margin-top: 8px;
+  }
+}
