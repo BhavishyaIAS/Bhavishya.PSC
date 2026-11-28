@@ -2972,3 +2972,190 @@ ul.destinations {
     text-align: center;
   }
 }
+
+/* ═══════════ Classic home: each examination as a small system (ExamOrbit) ═══════════
+ * Its emblem's sphere at the centre in a slow orbit, its four worlds out on spokes: notes and prelims on the
+ * left, mains and progress on the right. The spokes are drawn in % of the box (twice: wide and narrow), and each
+ * world's sphere is centred on the end of its spoke. */
+.exam-systems {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: clamp(28px, 6vh, 64px);
+  width: min(1080px, 100%);
+}
+.exam-system {
+  --hub: clamp(150px, 15vw, 196px);
+  --planet: clamp(84px, 8.4vw, 116px);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.3 / 1;
+  min-height: 420px;
+}
+.xs-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.xs-lines-narrow {
+  display: none;
+}
+.xs-spoke line {
+  stroke: rgb(216 192 140 / 0.5);
+  stroke-width: 1.2;
+  stroke-dasharray: 2 7;
+  stroke-linecap: round;
+}
+.xs-spoke .xs-pulse {
+  stroke: rgb(255 226 170 / 0.95);
+  stroke-width: 2.4;
+  stroke-dasharray: 0.05 1;
+  stroke-dashoffset: 0.05;
+  filter: drop-shadow(0 0 4px rgb(255 210 140 / 0.9));
+  animation: xs-pulse 4.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@keyframes xs-pulse {
+  0% {
+    stroke-dashoffset: 0.05;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  70% {
+    stroke-dashoffset: -0.95;
+    opacity: 1;
+  }
+  85%,
+  100% {
+    stroke-dashoffset: -0.95;
+    opacity: 0;
+  }
+}
+/* the examination at the centre: its sphere is centred on the box */
+.xs-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% calc(-6px - var(--hub) / 2);
+}
+.xs-hub .portal-orb {
+  width: var(--hub);
+}
+.xs-ring {
+  position: absolute;
+  left: 50%;
+  top: calc(6px + var(--hub) / 2);
+  width: calc(var(--hub) * 1.5);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 50%;
+  border: 1px dashed rgb(216 192 140 / 0.3);
+  pointer-events: none;
+  animation: xs-turn 60s linear infinite;
+}
+.xs-ring::after {
+  /* a small moon on the ring */
+  content: "";
+  position: absolute;
+  top: 14%;
+  left: 14%;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: #f3e2bd;
+  box-shadow: 0 0 10px 2px rgb(255 214 150 / 0.7);
+}
+@keyframes xs-turn {
+  to {
+    rotate: 360deg;
+  }
+}
+/* a world: its sphere centred on the end of its spoke, its name beneath */
+.xs-world {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: clamp(150px, 19vw, 230px);
+  translate: -50% calc(var(--planet) / -2);
+  text-align: center;
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.xs-world .globe {
+  --g: var(--planet) !important;
+  transition: transform 0.6s var(--ease), box-shadow 0.6s;
+}
+.xs-world:hover .globe,
+.xs-world:focus-visible .globe {
+  transform: scale(1.08);
+}
+.xs-name {
+  font-family: var(--font-display-serif), Georgia, serif;
+  font-size: clamp(16px, 1.45vw, 21px);
+  font-weight: 500;
+  line-height: 1.25;
+  text-shadow: 0 2px 14px rgb(0 0 0 / 0.85);
+  transition: color 0.3s;
+}
+.xs-world:hover .xs-name,
+.xs-world:focus-visible .xs-name {
+  color: #f6dca4;
+}
+.xs-world:focus-visible {
+  outline: none;
+}
+.xs-world:focus-visible .xs-name {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-ring,
+  .xs-spoke .xs-pulse {
+    animation: none;
+  }
+  .xs-spoke .xs-pulse {
+    display: none;
+  }
+}
+:root[data-motion="off"] :is(.xs-ring, .xs-spoke .xs-pulse) {
+  animation: none;
+}
+:root[data-motion="off"] .xs-spoke .xs-pulse {
+  display: none;
+}
+/* a phone: a taller box, the worlds in the corners above and below the examination */
+@media (max-width: 720px) {
+  .exam-system {
+    --hub: clamp(118px, 34vw, 150px);
+    --planet: clamp(58px, 17vw, 76px);
+    aspect-ratio: 1 / 1.45;
+    min-height: 0;
+  }
+  .xs-ring {
+    width: calc(var(--hub) * 1.3);
+  }
+  .xs-lines-wide {
+    display: none;
+  }
+  .xs-lines-narrow {
+    display: block;
+  }
+  .xs-world {
+    left: var(--nx);
+    top: var(--ny);
+    width: 44%;
+    gap: 8px;
+  }
+  .xs-name {
+    font-size: 14px;
+  }
+}
