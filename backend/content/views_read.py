@@ -76,7 +76,7 @@ def visible_mt_ids(user, track):
 @permission_classes([AllowAny])
 def commissions(request):
     qs = Commission.objects.visible_to(request.user).prefetch_related(
-        Prefetch("tracks", queryset=Track.objects.select_related("commission", "group"))
+        Prefetch("tracks", queryset=Track.objects.visible_to(request.user).select_related("commission", "group"))
     )
     # "has content" = any published micro-theme or question in the track.
     counts = {}
@@ -92,7 +92,7 @@ def commissions(request):
 @permission_classes([AllowAny])
 def track_detail(request, commission, group):
     track = get_track(commission, group, request.user)
-    siblings = Track.objects.filter(commission=track.commission).select_related("commission", "group")
+    siblings = Track.objects.visible_to(request.user).filter(commission=track.commission).select_related("commission", "group")
     return Response({
         **track_ref(track),
         "tagline": track.tagline,

@@ -120,7 +120,7 @@ class ExamGroup(models.Model):
 class TrackQuerySet(models.QuerySet):
     def visible_to(self, user):
         qs = self.filter(commission__is_active=True)
-        return qs if is_admin(user) else qs.filter(commission__status=P)
+        return qs if is_admin(user) else qs.filter(commission__status=P, status=P)
 
 
 class Track(models.Model):
@@ -130,6 +130,8 @@ class Track(models.Model):
     group = models.ForeignKey(ExamGroup, on_delete=models.PROTECT, related_name="tracks")
     tagline = models.CharField(max_length=200, blank=True)
     order = models.PositiveIntegerField(default=0)  # position among its commission's exams
+    # an exam can be hidden from students (draft), as a whole commission can: admins still see it, marked
+    status = models.CharField(max_length=12, choices=Status.choices, default=Status.PUBLISHED, db_index=True)
 
     objects = TrackQuerySet.as_manager()
 
