@@ -19,9 +19,9 @@ export interface Spoke {
 
 // placed symmetrically about the examination at the centre (50, 50): the same distance above and below, left and right
 export const SPOKES: Spoke[] = [
-  { tab: "materials", world: "mars", name: "Material & Notes", wide: [16, 24], narrow: [22, 15] },
-  { tab: "prelims", world: "moon", name: "Prelims PYQs with Solutions", wide: [16, 76], narrow: [22, 85] },
-  { tab: "mains", world: "jupiter", name: "Mains PYQs with Model Answers", wide: [84, 24], narrow: [78, 15] },
+  { tab: "materials", world: "mars", name: "Notes/Material", wide: [16, 24], narrow: [22, 15] },
+  { tab: "prelims", world: "moon", name: "Prelims PYQs", wide: [16, 76], narrow: [22, 85] },
+  { tab: "mains", world: "jupiter", name: "Mains PYQs", wide: [84, 24], narrow: [78, 15] },
   { tab: "progress", world: "earth", name: "Track Your Progress", wide: [84, 76], narrow: [78, 85] },
 ];
 
