@@ -17,6 +17,7 @@ export interface TrackRef {
   group: string;
   group_name: string;
   label: string;
+  status?: "draft" | "published"; // draft: hidden from students (admins see it)
 }
 
 export interface CatalogTrack extends TrackRef {

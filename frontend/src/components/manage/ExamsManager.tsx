@@ -17,6 +17,7 @@ export type Exam = {
   group: string;
   group_name: string;
   label: string;
+  status?: Status;
   tagline: string;
   papers: number;
   sections: number;
@@ -174,7 +175,8 @@ export function ExamsManager({ initial }: { initial: ExamsData }) {
                     {body.exams.map((exam, k) => (
                       <tr key={exam.id}>
                         <td>
-                          <b>{exam.group_name}</b>
+                          <b>{exam.group_name}</b>{" "}
+                          {exam.status === "draft" && <span className="badge badge-warning">Hidden</span>}
                           {exam.tagline && <div className="muted small clamp-2">{exam.tagline}</div>}
                         </td>
                         <td className="num">{exam.sections}</td>
@@ -190,6 +192,21 @@ export function ExamsManager({ initial }: { initial: ExamsData }) {
                         </td>
                         <td>
                           <div className="row" style={{ gap: 4, justifyContent: "flex-end" }}>
+                            <button
+                              type="button"
+                              className="mini-btn"
+                              disabled={busy}
+                              title={exam.status === "draft" ? "Show to students" : "Hide from students"}
+                              onClick={() => {
+                                const hidden = exam.status === "draft";
+                                run(
+                                  () => clientApi(`/manage/exam-tracks/${exam.id}/`, { method: "PATCH", json: { status: hidden ? "published" : "draft" } }),
+                                  `${exam.label} is now ${hidden ? "visible to" : "hidden from"} students`,
+                                );
+                              }}
+                            >
+                              {exam.status === "draft" ? <Eye size={14} aria-hidden /> : <EyeOff size={14} aria-hidden />} {exam.status === "draft" ? "Show" : "Hide"}
+                            </button>
                             <button type="button" className="mini-btn" disabled={busy || k === 0} aria-label={`Move ${exam.group_name} up`} title="Move up" onClick={() => run(() => clientApi(`/manage/exam-tracks/${exam.id}/`, { method: "PATCH", json: { move: "up" } }), "Order saved")}>
                               <ArrowUp size={14} aria-hidden />
                             </button>

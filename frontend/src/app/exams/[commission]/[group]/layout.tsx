@@ -34,6 +34,7 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
                 {track.siblings.map((s) => (
                   <Link key={s.group} href={`/exams/${s.commission}/${s.group}`} aria-current={s.group === group ? "page" : undefined}>
                     {s.group_name}
+                    {s.status === "draft" && <span className="seg-hidden"> · hidden</span>}
                   </Link>
                 ))}
               </div>

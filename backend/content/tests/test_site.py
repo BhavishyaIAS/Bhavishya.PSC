@@ -77,6 +77,26 @@ class SiteAdminTests(TestCase):
         self.assertEqual(a.delete(f"/api/manage/exam-tracks/{track_id}/", {"confirm": "Group 4"}, format="json", **XHR).status_code, 204)
         self.assertTrue(Track.objects.filter(commission__slug="tgpsc", group__slug="group-1").exists())
 
+    def test_an_exam_hidden_from_students(self):
+        from content.models import Track
+
+        a, s = self.admin(), self.student()
+        track = Track.objects.get(commission__slug="appsc", group__slug="group-2")
+        groups = lambda c: [t["group"] for t in next(x for x in c.get("/api/commissions/").json()["results"] if x["slug"] == "appsc")["tracks"]]  # noqa: E731
+        self.assertIn("group-2", groups(s))
+        res = a.patch(f"/api/manage/exam-tracks/{track.id}/", {"status": "draft"}, format="json", **XHR)
+        self.assertEqual(res.status_code, 200, res.content)
+        self.assertEqual(res.json()["status"], "draft")
+        # students: gone from the catalogue and from the exam switcher, and its pages are not found
+        self.assertEqual(groups(s), ["group-1"])
+        self.assertEqual([t["group"] for t in s.get("/api/tracks/appsc/group-1/").json()["siblings"]], ["group-1"])
+        self.assertEqual(s.get("/api/tracks/appsc/group-2/").status_code, 404)
+        # admins still see it, marked
+        self.assertIn("group-2", groups(a))
+        self.assertEqual(a.get("/api/tracks/appsc/group-2/").json()["status"], "draft")
+        a.patch(f"/api/manage/exam-tracks/{track.id}/", {"status": "published"}, format="json", **XHR)
+        self.assertIn("group-2", groups(s))
+
     def test_upsc_starter_and_dedicating_the_platform(self):
         a = self.admin()
         res = a.post("/api/manage/site/starter/", {"kind": "upsc"}, format="json", **XHR)

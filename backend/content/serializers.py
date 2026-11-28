@@ -37,6 +37,7 @@ def track_ref(track: Track):
         "group": track.group.slug,
         "group_name": track.group.name,
         "label": str(track),
+        "status": track.status,  # draft: hidden from students (admins see it, marked)
     }
 
 

@@ -797,3 +797,20 @@
 :root[data-skin="living"] .hub-module-mark {
   color: var(--accent);
 }
+
+/* ═══════════ An exam's name at the head of its pages, as in the Classic look: plain words, no box. A soft glow of
+ * the page's own colour behind them keeps them clear over any scene. ═══════════ */
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-title {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-title :is(h1, .eyebrow) {
+  text-shadow:
+    0 0 18px color-mix(in srgb, var(--w-deep, var(--bg)) 90%, transparent),
+    0 0 42px color-mix(in srgb, var(--w-deep, var(--bg)) 75%, transparent);
+}

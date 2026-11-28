@@ -304,6 +304,8 @@ def exam_detail(request, pk):
             ExamGroup.objects.filter(pk=group.pk).update(name=name)  # same address, new spelling
     if "tagline" in request.data:
         track.tagline = clean_name(request.data["tagline"], 200)
+    if request.data.get("status") in Status.values:  # show to students, or hide from them
+        track.status = request.data["status"]
     track.save()
     ExamGroup.objects.filter(pk=old_group.pk, tracks__isnull=True).delete()
     if request.data.get("move") in ("up", "down"):
