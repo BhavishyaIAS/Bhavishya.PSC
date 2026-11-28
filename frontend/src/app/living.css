@@ -814,3 +814,23 @@
     0 0 18px color-mix(in srgb, var(--w-deep, var(--bg)) 90%, transparent),
     0 0 42px color-mix(in srgb, var(--w-deep, var(--bg)) 75%, transparent);
 }
+
+/* ═══════════ Page and section headings in the Sky and Living looks, as in Classic: plain words, no box (a paper's
+ * heading keeps Classic's fine rule beneath it). A soft glow of the page's own colour keeps them clear over any
+ * scene. ═══════════ */
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.flow-head, .np-head, .vault-head, .page-head, .system-copy) {
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .np-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--text-strong) 16%, transparent);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) :is(.flow-head, .np-head, .vault-head, .page-head, .system-copy) :is(h1, h2, h3, .flow-title, .np-title, .np-index, .np-kicker, .eyebrow) {
+  text-shadow: 0 0 16px color-mix(in srgb, var(--w-deep, var(--bg)) 70%, transparent);
+}
