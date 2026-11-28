@@ -3,6 +3,7 @@ import {
   BookUp,
   ChevronRight,
   ListTree,
+  Newspaper,
   NotebookPen,
   ScrollText,
   Upload,
@@ -18,12 +19,13 @@ import { getSite } from "@/lib/site";
 import { syllabusTopics, topicIcon, topicTone } from "@/lib/topics";
 import type { NoteKind, SyllabusTree } from "@/lib/types";
 
-export const metadata: Metadata = { title: "Material / Notes" };
+export const metadata: Metadata = { title: "Material & Notes" };
 
 /**
- * Material / Notes: every broad subject as a block. A block opens the subject's topics, syllabus-wise; a topic
- * opens its notes. Comprehensive notes by default; where the site offers other types, a small switch above.
- * One request for the syllabus (the Notes module's own, where it has one).
+ * Material & Notes. First four blocks, two by two: Syllabus-Wise Material, Prelims Notes (quick revision), Mains
+ * Notes (Q&A-style) and Current Affairs (coming soon). A type opens its subjects, with the types down the left to
+ * switch between them; a subject opens its topics, syllabus-wise, and a topic its notes. One request for the
+ * syllabus (the Notes module's own, where it has one).
  */
 export default async function MaterialsTab(
   props: PageProps<"/exams/[commission]/[group]/materials">,
@@ -48,7 +50,11 @@ export default async function MaterialsTab(
   // the types of notes down the left; the chosen one's subjects beside them
   const kindNav = (current?: string) => (
     <nav className="topic-side split-side" aria-label="Type of notes">
-      <div className="topic-side-title">Material / Notes</div>
+      <div className="topic-side-title">
+        <Link href={here} className="link-plain">
+          Material &amp; Notes
+        </Link>
+      </div>
       <ul className="side-links">
         {kinds.map((k) => {
           const Icon = KIND_ICONS[k.key];
@@ -70,29 +76,62 @@ export default async function MaterialsTab(
             </li>
           );
         })}
+        <li>
+          <span className="side-link side-link-soon" aria-disabled="true">
+            <span className="kind-tab-icon" aria-hidden>
+              <Newspaper size={20} />
+            </span>
+            <span className="side-link-text">
+              <b>Current Affairs</b>
+              <small>Coming soon</small>
+            </span>
+          </span>
+        </li>
       </ul>
     </nav>
   );
 
-  // First, only the types of notes: a subject list opens once one of them is chosen.
-  if (kinds.length > 1 && !kinds.some((k) => k.key === sp.kind)) {
+  // First, the four blocks: the types of notes, and current affairs to come. A type opens its subjects.
+  if (!kinds.some((k) => k.key === sp.kind)) {
     await requireUser(here);
     return (
-      <div className="topic-layout split">
-        {kindNav()}
-        <div className="split-main">
-          <section className="panel split-invite">
-            <h2 className="flow-title">Material / Notes</h2>
-            <p className="muted">
-              Choose the notes you want to read:{" "}
-              {kinds
-                .map((k) => k.label)
-                .join(", ")
-                .replace(/, ([^,]*)$/, " or $1")}
-              . Their subjects open here.
+      <div className="material-home">
+        <div className="flow-head">
+          <div>
+            <h2 className="flow-title">Material &amp; Notes</h2>
+            <p className="muted" style={{ margin: "4px 0 0" }}>
+              Choose what to read; its subjects open next.
             </p>
-          </section>
+          </div>
         </div>
+        <nav className="material-blocks" aria-label="Material and notes">
+          {kinds.map((k) => {
+            const Icon = KIND_ICONS[k.key];
+            return (
+              <Link key={k.key} href={`${here}?kind=${k.key}`} className={`note-type material-block kind-${k.key}`}>
+                <span className="nt-icon" aria-hidden>
+                  <Icon size={26} />
+                </span>
+                <span className="mb-text">
+                  <b>{k.label}</b>
+                  {KIND_TAGS[k.key] && <span className="mb-tag">{KIND_TAGS[k.key]}</span>}
+                  {k.blurb && <span className="mb-blurb">{k.blurb}</span>}
+                </span>
+                <ChevronRight className="mb-go" size={20} aria-hidden />
+              </Link>
+            );
+          })}
+          <div className="note-type material-block material-block-soon" aria-disabled="true">
+            <span className="nt-icon" aria-hidden>
+              <Newspaper size={26} />
+            </span>
+            <span className="mb-text">
+              <b>Current Affairs</b>
+              <span className="mb-tag">Coming soon</span>
+              <span className="mb-blurb">The month&apos;s events, tied to the syllabus.</span>
+            </span>
+          </div>
+        </nav>
       </div>
     );
   }
@@ -120,10 +159,10 @@ export default async function MaterialsTab(
   );
 
   const kindLabel =
-    kinds.find((k) => k.key === kind)?.label ?? "Material / Notes";
+    kinds.find((k) => k.key === kind)?.label ?? "Material & Notes";
   return (
-    <div className={kinds.length > 1 ? "topic-layout split" : undefined}>
-      {kinds.length > 1 && kindNav(kind)}
+    <div className="topic-layout split">
+      {kindNav(kind)}
       <div className="split-main">
         <div className="flow-head">
           <div>
@@ -261,6 +300,12 @@ const KIND_ICONS = {
   comprehensive: BookMarked,
   prelims: ScrollText,
   mains: NotebookPen,
+};
+
+/** The line under each type's name on the blocks: what kind of reading it is. */
+const KIND_TAGS: Partial<Record<NoteKind, string>> = {
+  prelims: "Quick Revision",
+  mains: "Q&A-style",
 };
 
 /** Papers Material / Notes leaves out: the qualifying languages, the essay, and the mental-ability paper. */

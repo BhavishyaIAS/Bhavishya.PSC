@@ -256,7 +256,7 @@ export interface SearchGroup {
 }
 
 export const NOTE_KINDS: { key: NoteKind; label: string; blurb: string }[] = [
-  { key: "comprehensive", label: "Syllabus-Wise Notes", blurb: "Complete syllabus-linked reference notes" },
+  { key: "comprehensive", label: "Syllabus-Wise Material", blurb: "Complete syllabus-linked reference notes" },
   { key: "prelims", label: "Prelims Notes", blurb: "Concise, fact-focused revision notes per micro-theme" },
   { key: "mains", label: "Mains Notes", blurb: "Condensed analytical notes & answer frameworks" },
 ];

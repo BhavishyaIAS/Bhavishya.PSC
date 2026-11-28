@@ -48,13 +48,13 @@ class Priority(models.TextChoices):
 
 
 class NoteKind(models.TextChoices):
-    COMPREHENSIVE = "comprehensive", "Syllabus-Wise Notes"
+    COMPREHENSIVE = "comprehensive", "Syllabus-Wise Material"
     PRELIMS = "prelims", "Prelims Notes"
     MAINS = "mains", "Mains Notes"
 
 
 class MaterialCategory(models.TextChoices):
-    COMPREHENSIVE = "comprehensive", "Syllabus-Wise Notes"
+    COMPREHENSIVE = "comprehensive", "Syllabus-Wise Material"
     PRELIMS = "prelims", "Prelims Notes"
     MAINS = "mains", "Mains Notes"
 

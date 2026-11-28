@@ -18,7 +18,7 @@ export interface Spoke {
 }
 
 export const SPOKES: Spoke[] = [
-  { tab: "materials", world: "mars", name: "Syllabus-Wise Notes", wide: [15, 25], narrow: [22, 13] },
+  { tab: "materials", world: "mars", name: "Material & Notes", wide: [15, 25], narrow: [22, 13] },
   { tab: "prelims", world: "moon", name: "Prelims PYQs with Solutions", wide: [15, 77], narrow: [22, 79] },
   { tab: "mains", world: "jupiter", name: "Mains PYQs with Model Answers", wide: [85, 25], narrow: [78, 13] },
   { tab: "progress", world: "earth", name: "Track Your Progress", wide: [85, 77], narrow: [78, 79] },

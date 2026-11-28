@@ -529,7 +529,7 @@ def ethics_book(path: str) -> dict:
     )}
 
 
-# Syllabus-Wise Notes → Paper III → Ethics in Public Service and Knowledge of Law (NC-P3-3-<chapter>-<section>), from
+# Syllabus-Wise Material → Paper III → Ethics in Public Service and Knowledge of Law (NC-P3-3-<chapter>-<section>), from
 # "Ethics, Integrity and Aptitude — Complete Notes" (11 chapters, numbered as in the book). The book's chapters are
 # cut by part and placed under the syllabus's own headings; a chapter's revision toolkit goes with its last piece.
 # The book has nothing on chapter 5 (Basic Knowledge of Laws): its nine sections stay empty, to be written later.
