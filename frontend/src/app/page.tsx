@@ -3,9 +3,7 @@ import Link from "next/link";
 
 import { brand } from "@/brand.config";
 import { GroupCards } from "@/components/GroupCards";
-import { DESTINATIONS } from "@/components/space/destinations";
-import { Portal } from "@/components/space/Portal";
-import { Globe } from "@/components/space/Globe";
+import { ExamOrbit } from "@/components/space/ExamOrbit";
 import { SkyHome } from "@/components/sky/SkyHome";
 import { getCommissions } from "@/lib/catalog";
 import { currentUser } from "@/lib/server-api";
@@ -13,19 +11,12 @@ import { getSite } from "@/lib/site";
 import { getSkin } from "@/lib/skin";
 
 /**
- * The arrival: the name, a distant Solar System behind the page (drawn by the renderer, see space/solar.ts,
- * the examinations fixed on their own tracks beyond Pluto), and in front the three examination portals.
- * Everything the old home page did is still here: the greeting, the admin's own
- * headline (Site settings), the dedicated-exam mode, and the way into each module.
+ * The arrival: the name, a distant Solar System behind the page (drawn by the renderer, see space/solar.ts, the
+ * examinations fixed on their own tracks beyond Pluto), and in front each examination as a small system of its own:
+ * its emblem at the centre and its four worlds on spokes around it (ExamOrbit), each a way straight in.
+ * Everything the old home page did is still here: the greeting, the admin's own headline (Site settings), the
+ * dedicated-exam mode, and the way into each module.
  */
-/** The four worlds' names on the landing page. */
-const LANDING_NAMES: Record<string, string> = {
-  materials: "Syllabus-Wise Notes",
-  prelims: "Prelims PYQs with Solutions",
-  mains: "Mains PYQs with Model Answers",
-  progress: "Track Your Progress",
-};
-
 export default async function LandingPage() {
   const [commissions, user, site, skin] = await Promise.all([getCommissions(), currentUser(), getSite(), getSkin()]);
   // An admin can dedicate the platform to one exam (say UPSC): the home page then opens straight on it.
@@ -80,9 +71,9 @@ export default async function LandingPage() {
             )}
           </div>
         ) : (
-          <nav className={`portals portals-${Math.min(shown.length, 3)}`} aria-label="Choose your examination">
+          <nav className="exam-systems" aria-label="Choose your examination">
             {shown.map((c, i) => (
-              <Portal key={c.slug} commission={c} index={i} />
+              <ExamOrbit key={c.slug} commission={c} index={i} />
             ))}
           </nav>
         )}
@@ -119,22 +110,6 @@ export default async function LandingPage() {
             </p>
           )}
           <GroupCards commission={focus} />
-        </section>
-      )}
-
-      {shown.length > 0 && (
-        <section id="worlds" className="page landing-section" aria-labelledby="worlds-h">
-          <h2 id="worlds-h" className="section-title">
-            Four Worlds Inside Each Portal
-          </h2>
-          <ul className="destinations">
-            {DESTINATIONS.filter((d) => d.tab !== "syllabus").map((d) => (
-              <li key={d.tab} className={`destination destination-${d.world}`}>
-                <Globe world={d.world} size={96} />
-                <b>{LANDING_NAMES[d.tab] ?? d.long}</b>
-              </li>
-            ))}
-          </ul>
         </section>
       )}
     </div>
