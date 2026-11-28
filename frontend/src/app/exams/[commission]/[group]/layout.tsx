@@ -20,7 +20,6 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
     <div className="page workspace">
       <div className="ws-head">
         <div className="ws-title">
-          <div className="eyebrow">{track.commission_full_name}</div>
           <h1>
             {track.commission_name}{" "}
             <span className="sep" aria-hidden>

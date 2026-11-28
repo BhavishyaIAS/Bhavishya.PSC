@@ -3224,3 +3224,23 @@ details.topic-chapter[open] .topic-chapter-chev {
     min-height: 0;
   }
 }
+
+/* the Back button: top right of every page but the home page, in line with the page's own edge */
+.back-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 32px 0;
+}
+.back-bar + .page {
+  padding-top: 12px;
+}
+@media (max-width: 720px) {
+  .back-bar {
+    padding: 12px 16px 0;
+  }
+}

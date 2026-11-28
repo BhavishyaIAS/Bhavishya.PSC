@@ -3159,3 +3159,27 @@ ul.destinations {
     font-size: 14px;
   }
 }
+
+/* the worlds float free in the space around the examination: no spokes, a slow drift up and down, each in its
+   own time (still with reduced motion or animations off) */
+.xs-world .globe {
+  animation: xs-float 7s ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+@keyframes xs-float {
+  0%,
+  100% {
+    translate: 0 -7px;
+  }
+  50% {
+    translate: 0 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .xs-world .globe {
+    animation: none;
+  }
+}
+:root[data-motion="off"] .xs-world .globe {
+  animation: none;
+}
