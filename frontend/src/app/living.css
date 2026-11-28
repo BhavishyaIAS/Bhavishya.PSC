@@ -744,3 +744,56 @@
     0 0 18px color-mix(in srgb, var(--w-deep, var(--bg)) 90%, transparent),
     0 0 42px color-mix(in srgb, var(--w-deep, var(--bg)) 75%, transparent);
 }
+
+/* ═══════════ Living home: the examination and its modules joined by branches (ExamHub) ═══════════
+ * The spokes curve like branches; along each, a trail of light flows out from the examination; buds sit on them.
+ * Every name stands on a plate, as all text does in this look. */
+:root[data-skin="living"] .hub-spoke path {
+  stroke: color-mix(in srgb, var(--accent) 55%, transparent);
+  stroke-width: 2;
+}
+:root[data-skin="living"] .hub-spoke .hub-flow {
+  stroke: color-mix(in srgb, var(--accent) 90%, #fff);
+  stroke-width: 4;
+  stroke-dasharray: 0.001 0.045;
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--accent) 70%, transparent));
+  animation: hub-sap 1.6s linear infinite;
+}
+@keyframes hub-sap {
+  to {
+    stroke-dashoffset: -0.046;
+  }
+}
+:root[data-skin="living"] .hub-node {
+  width: 10px;
+  height: 10px;
+  border-radius: 50% 0;
+  rotate: 45deg;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--plate);
+  animation: hub-bud 4s ease-in-out infinite;
+}
+@keyframes hub-bud {
+  50% {
+    scale: 1.25;
+  }
+}
+:root[data-skin="living"] .hub-centre-text {
+  padding: 10px 20px 12px;
+  border-radius: 18px;
+  background: var(--plate);
+  border: 1.5px solid var(--edge);
+  box-shadow: 0 14px 30px -22px rgb(0 0 0 / 0.6);
+}
+:root[data-skin="living"] .hub-module-name {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--plate);
+  border: 1.5px solid var(--edge);
+  box-shadow: 0 10px 24px -18px rgb(0 0 0 / 0.6);
+}
+:root[data-skin="living"] .hub-centre-mark,
+:root[data-skin="living"] .hub-module-mark {
+  color: var(--accent);
+}

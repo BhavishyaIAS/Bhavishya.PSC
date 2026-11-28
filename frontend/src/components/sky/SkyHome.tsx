@@ -1,29 +1,15 @@
 import Link from "next/link";
 
 import { brand } from "@/brand.config";
-import type { Commission, User } from "@/lib/types";
+import type { Commission, Skin, User } from "@/lib/types";
 
-import { ExamMark } from "@/components/living/Mark";
-import type { Skin } from "@/lib/types";
-
-import { MODULES } from "./portals";
+import { ExamHub } from "./ExamHub";
 import { SkyGenesis } from "./SkyGenesis";
 
-/** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
-function region(name: string) {
-  return name.replace(/\s*Public Service Commission.*$/i, "").trim() || name;
-}
-
-function groupsLine(c: Commission) {
-  const names = c.tracks.map((t) => t.group_name);
-  if (names.length === 0) return "";
-  if (names.length === 1) return names[0];
-  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
-
 /**
- * The home page in the Sky style: the name, then one gateway per examination, each a round portal
- * of night space; below, the five portals every exam opens into. Behind it all, the Big Bang goes on (SkyGenesis).
+ * The home page in the Sky and Living looks: the name, then each examination as on the Classic home page — the
+ * examination at the centre and its four modules around it, each a way straight in (ExamHub), drawn in the look's
+ * own terms. Behind it all, the Big Bang goes on (SkyGenesis).
  */
 export function SkyHome({
   skin,
@@ -65,31 +51,9 @@ export function SkyHome({
             )}
           </div>
         ) : (
-          <nav className="sky-gates" aria-label="Choose your examination">
+          <nav className="exam-hubs" aria-label="Choose your examination">
             {commissions.map((c, i) => (
-              <Link
-                key={c.slug}
-                href={
-                  c.tracks[0]
-                    ? `/exams/${c.slug}/${c.tracks[0].group}`
-                    : `/exams/${c.slug}`
-                }
-                className="sky-gate"
-                data-warp
-              >
-                <ExamMark skin={skin} slug={c.slug} index={i} size={168} />
-                <div>
-                  <div className="sky-eyebrow">{region(c.name)}</div>
-                  <h2>{c.short_name}</h2>
-                  {groupsLine(c) && (
-                    <div className="sky-full">{groupsLine(c)}</div>
-                  )}
-                  <p>{c.description || c.name}</p>
-                  <span className="sky-enter">
-                    {skin === "living" ? "Enter" : c.slug === "upsc" ? "Enter the wormhole" : "Open the portal"}
-                  </span>
-                </div>
-              </Link>
+              <ExamHub key={c.slug} skin={skin} commission={c} index={i} />
             ))}
           </nav>
         )}
@@ -105,20 +69,6 @@ export function SkyHome({
           </p>
         )}
       </div>
-
-      {commissions.length > 0 && (
-        <section className="sky-features" aria-labelledby="sky-features-h">
-          <h2 id="sky-features-h">Inside every exam</h2>
-          <ul>
-            {MODULES.map((m) => (
-              <li key={m.tab}>
-                <b>{m.name}</b>
-                <span>{m.blurb}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
     </div>
   );
 }
