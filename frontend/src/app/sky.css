@@ -847,8 +847,8 @@
     left: var(--hnx, 50%);
     top: var(--hny, 50%);
   }
-  /* in the Sky the upper modules' names go above them, clear of the emblem */
-  .exam-hub-sky .hub-module-top {
+  /* the upper modules' names go above them, clear of the emblem */
+  .hub-module-top {
     flex-direction: column-reverse;
     translate: -50% calc(-100% + var(--mod) / 2);
   }
@@ -895,15 +895,15 @@
     0 24px 40px -18px rgb(0 0 0 / 0.6);
 }
 /* the Sky: the module portals float free in the night around it, each in its own time */
-.exam-hub-sky .hub-module-mark {
+.exam-hub .hub-module-mark {
   animation: xs-float 7s ease-in-out infinite;
   animation-delay: var(--float-delay, 0s);
 }
 @media (prefers-reduced-motion: reduce) {
-  .exam-hub-sky .hub-module-mark {
+  .exam-hub .hub-module-mark {
     animation: none;
   }
 }
-:root[data-motion="off"] .exam-hub-sky .hub-module-mark {
+:root[data-motion="off"] .exam-hub .hub-module-mark {
   animation: none;
 }

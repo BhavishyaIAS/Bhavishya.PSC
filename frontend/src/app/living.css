@@ -835,45 +835,6 @@
   text-shadow: 0 0 16px color-mix(in srgb, var(--w-deep, var(--bg)) 70%, transparent);
 }
 
-/* ═══════════ Living home: the examination as a plant (ExamHub) - its emblem at the foot with roots beneath it, a
- * trunk rising, and the four modules at the ends of the branches, a leaf or two on each ═══════════ */
-.exam-hub-living {
-  aspect-ratio: 2 / 1;
-  min-height: 500px;
-}
-.plant path {
-  fill: none;
-  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
-  stroke-linecap: round;
-}
-.plant .plant-trunk {
-  stroke-width: 5;
-}
-.plant .plant-branch {
-  stroke-width: 3;
-}
-.plant .plant-root {
-  stroke-width: 2.2;
-  stroke: color-mix(in srgb, var(--accent) 45%, transparent);
-}
-.exam-hub-living .hub-emblem::before {
-  background: conic-gradient(from 0deg, var(--accent), color-mix(in srgb, var(--accent) 25%, transparent), var(--accent));
-  filter: none;
-}
-.exam-hub-living .hub-centre-mark {
-  border-radius: 50%;
-  box-shadow: 0 0 0 10px color-mix(in srgb, var(--plate) 55%, transparent);
-}
-@media (max-width: 720px) {
-  .exam-hub-living {
-    aspect-ratio: 1 / 1.9;
-    min-height: 0;
-  }
-}
-/* two plants one above the other: room for the roots of the first */
-.exam-hubs:has(.exam-hub-living) {
-  gap: clamp(80px, 12vh, 130px);
-}
 /* ═══════════ Compact: less empty space between the menu bar, a page's title and what follows, in every look ═══════════ */
 .page {
   padding-top: 22px;
@@ -915,10 +876,6 @@
   aspect-ratio: 2.6 / 1;
   min-height: 380px;
 }
-.exam-hub-living {
-  aspect-ratio: 2.2 / 1;
-  min-height: 450px;
-}
 @media (max-width: 720px) {
   .page {
     padding-top: 14px;
@@ -934,8 +891,131 @@
     aspect-ratio: 1 / 1.6;
     min-height: 0;
   }
-  .exam-hub-living {
-    aspect-ratio: 1 / 1.8;
-    min-height: 0;
+}
+
+/* ═══════════ The menu bar, in every look: the logo at the left, the examinations as buttons in the very middle,
+ * search and the account's actions at the right ═══════════ */
+.topbar-inner,
+.topbar-inner:has(.topbar-exams) {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+}
+.topbar-inner > .brand-mark {
+  justify-self: start;
+}
+.topbar-exams {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.topbar-actions {
+  justify-self: end;
+}
+.topbar-actions .topbar-center .topbar-search,
+.topbar-inner:has(.topbar-exams) .topbar-actions .topbar-center .topbar-search {
+  width: clamp(180px, 20vw, 300px);
+  max-width: none;
+  margin: 0;
+}
+.topbar-exams a.exam-pill,
+:root[data-skin] .topbar-exams a.exam-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--accent, var(--brand-primary)) 70%, transparent);
+  background: color-mix(in srgb, var(--accent, var(--brand-primary)) 14%, var(--surface));
+  color: var(--text-strong);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-decoration: none;
+  box-shadow: 0 4px 14px -8px color-mix(in srgb, var(--accent, var(--brand-primary)) 80%, transparent);
+  transition: background 0.2s, transform 0.2s, border-color 0.2s;
+}
+.topbar-exams a.exam-pill:hover,
+.topbar-exams a.exam-pill:focus-visible {
+  background: color-mix(in srgb, var(--accent, var(--brand-primary)) 26%, var(--surface));
+  border-color: var(--accent, var(--brand-primary));
+  transform: translateY(-1px);
+}
+/* narrower screens: the search box gives way to its icon, the buttons stay in the middle */
+@media (max-width: 1240px) {
+  .topbar-actions .topbar-center {
+    display: none;
+  }
+  .topbar-actions .search-link {
+    display: inline-grid;
+  }
+}
+@media (max-width: 1040px) {
+  .topbar-exams {
+    display: flex;
+  }
+}
+@media (max-width: 560px) {
+  .topbar-exams a.exam-pill,
+  :root[data-skin] .topbar-exams a.exam-pill {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+  }
+}
+
+/* the line above the home page's name, white: it is read over dark scenes (a soft shadow keeps it clear on light ones) */
+.hero-eyebrow,
+:root:root:root:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow {
+  color: #fff;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 0.55), 0 0 18px rgb(0 0 0 / 0.45);
+}
+.hero-eyebrow::before,
+.hero-eyebrow::after {
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.85));
+}
+/* the right-hand group keeps to its half of the bar: the search box gives way first */
+.topbar-actions {
+  width: 100%;
+  min-width: 0;
+}
+.topbar-actions .topbar-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+.topbar-actions .topbar-center .topbar-search,
+.topbar-inner:has(.topbar-exams) .topbar-actions .topbar-center .topbar-search {
+  width: 100%;
+  max-width: 300px;
+  min-width: 0;
+}
+/* a phone: the logo alone at the left (the bottom bar has search), the exams' buttons in the middle */
+@media (max-width: 560px) {
+  .topbar-inner > .brand-mark .brand-words,
+  .topbar-actions .search-link {
+    display: none;
+  }
+  /* the upper modules' names sit above them: room for them under the home page's name, and between systems */
+  .exam-hubs {
+    margin-top: 48px;
+    gap: 96px;
+  }
+}
+/* white, with a firm shadow so it reads over light scenes as well as dark */
+.hero-eyebrow,
+:root:root:root:root:is([data-skin="living"], [data-skin="sky"]) .sky-hero .sky-eyebrow {
+  text-shadow:
+    0 0 1px rgb(0 0 0 / 0.9),
+    0 1px 3px rgb(0 0 0 / 0.7),
+    0 0 16px rgb(0 0 0 / 0.45);
+}
+@media (max-width: 560px) {
+  .topbar-inner,
+  .topbar-inner:has(.topbar-exams) {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .topbar-actions {
+    width: auto;
   }
 }
