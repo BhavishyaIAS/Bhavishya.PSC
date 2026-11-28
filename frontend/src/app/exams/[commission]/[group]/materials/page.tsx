@@ -70,7 +70,7 @@ export default async function MaterialsTab(
                 </span>
                 <span className="side-link-text">
                   <b>{k.label}</b>
-                  <small>{k.blurb}</small>
+                  {KIND_TAGS[k.key] && <small>{KIND_TAGS[k.key]}</small>}
                 </span>
               </Link>
             </li>
@@ -97,12 +97,7 @@ export default async function MaterialsTab(
     return (
       <div className="material-home">
         <div className="flow-head">
-          <div>
-            <h2 className="flow-title">Material &amp; Notes</h2>
-            <p className="muted" style={{ margin: "4px 0 0" }}>
-              Choose what to read; its subjects open next.
-            </p>
-          </div>
+          <h2 className="flow-title">Material &amp; Notes</h2>
         </div>
         <nav className="material-blocks" aria-label="Material and notes">
           {kinds.map((k) => {
@@ -115,7 +110,6 @@ export default async function MaterialsTab(
                 <span className="mb-text">
                   <b>{k.label}</b>
                   {KIND_TAGS[k.key] && <span className="mb-tag">{KIND_TAGS[k.key]}</span>}
-                  {k.blurb && <span className="mb-blurb">{k.blurb}</span>}
                 </span>
                 <ChevronRight className="mb-go" size={20} aria-hidden />
               </Link>
@@ -128,7 +122,6 @@ export default async function MaterialsTab(
             <span className="mb-text">
               <b>Current Affairs</b>
               <span className="mb-tag">Coming soon</span>
-              <span className="mb-blurb">The month&apos;s events, tied to the syllabus.</span>
             </span>
           </div>
         </nav>
@@ -165,12 +158,7 @@ export default async function MaterialsTab(
       {kindNav(kind)}
       <div className="split-main">
         <div className="flow-head">
-          <div>
-            <h2 className="flow-title">{kindLabel}</h2>
-            <p className="muted" style={{ margin: "4px 0 0" }}>
-              Choose a subject, then a topic, to read its notes.
-            </p>
-          </div>
+          <h2 className="flow-title">{kindLabel}</h2>
           <div className="row" style={{ gap: 8, alignItems: "center" }}>
             {isAdmin && (
               <>

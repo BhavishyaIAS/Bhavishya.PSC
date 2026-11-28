@@ -9,6 +9,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { Dashboard, type DashboardData } from "@/components/Dashboard";
 import { SubjectBars, subjectStats } from "@/components/SyllabusCharts";
 import { SyllabusOutline } from "@/components/SyllabusOutline";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/components/ui/bits";
 import { stageLabel } from "@/lib/format";
 import { currentUser, load } from "@/lib/server-api";
+import { getSite } from "@/lib/site";
 import type { Coverage, SyllabusTree } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Progress Tracker" };
@@ -28,11 +30,14 @@ export default async function ProgressTab(
 ) {
   const { commission, group } = await props.params;
   const base = `/tracks/${commission}/${group}`;
-  const [cov, tree, user] = await Promise.all([
+  const [cov, tree, user, site] = await Promise.all([
     load<Coverage>(`${base}/coverage/`),
     load<SyllabusTree>(`${base}/syllabus/`),
     currentUser(),
+    getSite(),
   ]);
+  // the student's own record (what is next, what is due, kept topics, Prelims answers), where the tools are on
+  const dash = site.study_tools && user ? await load<DashboardData>(`${base}/dashboard/`) : null;
   const isAdmin = user?.role === "admin";
 
   if (!cov.has_content) {
@@ -103,6 +108,7 @@ export default async function ProgressTab(
         )}
       </aside>
       <div className="split-main">
+        {dash && <Dashboard d={dash} commission={commission} group={group} />}
         <section className="panel" aria-labelledby="per-paper">
           <div className="panel-head">
             <h2 id="per-paper">Paper-wise coverage</h2>

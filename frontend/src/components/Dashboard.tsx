@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { trackPath } from "@/lib/format";
 
-type Ref = {
+export type Ref = {
   code: string;
   id: number;
   title: string;
@@ -30,7 +30,7 @@ export type DashboardData = {
 };
 
 /** Where a topic opens: its notes (a Notes module's section) or its topic page (the general syllabus). */
-function topicHref(c: string, g: string, r: Ref, resume = false) {
+export function topicHref(c: string, g: string, r: Ref, resume = false) {
   const kind = r.note_kind || r.notes_kind;
   return kind
     ? trackPath(c, g, `materials/${r.subject_id}?kind=${kind}&section=${r.id}${resume ? "&resume=1" : ""}`)
@@ -60,7 +60,7 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
 
       {fresh ? (
         <div className="dash-card dash-start">
-          <b>Begin here.</b> Open <Link href={trackPath(commission, group, "materials")}>Material / Notes</Link> and read a topic, or answer a few{" "}
+          <b>Begin here.</b> Open <Link href={trackPath(commission, group, "materials")}>Material &amp; Notes</Link> and read a topic, or answer a few{" "}
           <Link href={trackPath(commission, group, "prelims?mine=unattempted")}>Prelims questions</Link>. Your progress, what is due for revision and where you
           are strong or weak will appear here as you go.
         </div>
@@ -81,7 +81,7 @@ export function Dashboard({ d, commission, group }: { d: DashboardData; commissi
                 ))}
               </ol>
             ) : (
-              <p className="muted">You are up to date. Pick a new topic in Material / Notes.</p>
+              <p className="muted">You are up to date. Pick a new topic in Material &amp; Notes.</p>
             )}
           </div>
 

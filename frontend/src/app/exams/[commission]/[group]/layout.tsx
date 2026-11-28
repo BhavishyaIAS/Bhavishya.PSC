@@ -1,4 +1,3 @@
-import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 import { SkyTabs } from "@/components/sky/SkyTabs";
@@ -39,9 +38,6 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
                 ))}
               </div>
             )}
-            <Link href="/" className="btn btn-ghost btn-sm">
-              <ArrowLeft size={15} aria-hidden /> All exams
-            </Link>
           </div>
         </div>
         {/* Where this world is drawn: the planet sits here, or the horizon runs under it (components/space). */}
