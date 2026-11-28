@@ -636,3 +636,244 @@
   --accent-soft: color-mix(in srgb, var(--accent) 13%, var(--w-glass));
   color: var(--text);
 }
+
+/* ═══════════ home (Sky and Living): each examination with its four modules around it (ExamHub) ═══════════
+ * As on the Classic home page: the examination at the centre, notes and prelims on the left, mains and progress on
+ * the right, each joined to it by a spoke. The spokes and the points on them are laid out in % of the box, twice
+ * (wide, narrow); every mark is centred on the end of its spoke. The Living look's own touches are in living.css. */
+.exam-hubs {
+  display: grid;
+  gap: clamp(28px, 6vh, 64px);
+  margin-top: 18px;
+}
+.exam-hub {
+  --hub: clamp(150px, 15vw, 200px);
+  --mod: clamp(84px, 8.4vw, 118px);
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2.3 / 1;
+  min-height: 440px;
+}
+.hub-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.hub-lines-narrow,
+.hub-nodes-narrow {
+  display: none;
+}
+.hub-spoke path {
+  fill: none;
+  stroke: rgba(var(--star), 0.42);
+  stroke-width: 1.2;
+}
+.hub-spoke .hub-flow {
+  stroke: rgb(255 226 170 / 0.95);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-dasharray: 0.05 1;
+  stroke-dashoffset: 0.05;
+  filter: drop-shadow(0 0 4px rgb(255 210 140 / 0.9));
+  animation: hub-mote 4.4s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+@keyframes hub-mote {
+  0% {
+    stroke-dashoffset: 0.05;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  70% {
+    stroke-dashoffset: -0.95;
+    opacity: 1;
+  }
+  85%,
+  100% {
+    stroke-dashoffset: -0.95;
+    opacity: 0;
+  }
+}
+.hub-nodes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* the Sky: stars on the constellation lines, twinkling */
+.hub-node {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: rgb(var(--star));
+  box-shadow: 0 0 8px 2px rgba(var(--star), 0.6);
+  animation: hub-twinkle 3.2s ease-in-out infinite;
+}
+@keyframes hub-twinkle {
+  50% {
+    opacity: 0.35;
+    scale: 0.7;
+  }
+}
+/* the examination at the centre */
+.hub-centre {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: 300px;
+  translate: -50% calc(var(--hub) / -2);
+  text-align: center;
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.hub-centre-mark,
+.hub-module-mark {
+  display: block;
+  border-radius: 50%;
+  transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hub-centre-mark :is(canvas, svg) {
+  display: block;
+  width: var(--hub) !important;
+  height: var(--hub) !important;
+}
+.hub-module-mark :is(canvas, svg) {
+  display: block;
+  width: var(--mod) !important;
+  height: var(--mod) !important;
+}
+.hub-centre:hover .hub-centre-mark,
+.hub-centre:focus-visible .hub-centre-mark,
+.hub-module:hover .hub-module-mark,
+.hub-module:focus-visible .hub-module-mark {
+  transform: scale(1.06);
+}
+.hub-centre-text {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+.hub-centre-name {
+  font-family: var(--font-heading);
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+}
+.hub-centre-groups {
+  font-size: 0.92rem;
+  color: var(--muted);
+}
+.hub-hidden {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+/* a module, centred on the end of its spoke, its name beneath */
+.hub-module {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: clamp(150px, 19vw, 230px);
+  translate: -50% calc(var(--mod) / -2);
+  text-align: center;
+  color: var(--text-strong);
+  text-decoration: none;
+}
+.hub-module-name {
+  font-family: var(--font-heading);
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.25;
+  transition: color 0.3s;
+}
+.hub-module:hover .hub-module-name,
+.hub-module:focus-visible .hub-module-name,
+.hub-centre:hover .hub-centre-name,
+.hub-centre:focus-visible .hub-centre-name {
+  color: var(--accent);
+}
+.hub-module:focus-visible,
+.hub-centre:focus-visible {
+  outline: none;
+}
+.hub-module:focus-visible .hub-module-name,
+.hub-centre:focus-visible .hub-centre-name {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hub-spoke .hub-flow {
+    display: none;
+  }
+  .hub-node {
+    animation: none;
+  }
+}
+:root[data-motion="off"] .hub-spoke .hub-flow {
+  display: none;
+}
+:root[data-motion="off"] .hub-node {
+  animation: none;
+}
+/* a phone: a taller box, the modules in the corners above and below the examination */
+@media (max-width: 720px) {
+  .exam-hub {
+    --hub: clamp(112px, 32vw, 140px);
+    --mod: clamp(58px, 17vw, 74px);
+    aspect-ratio: 1 / 1.75;
+    min-height: 0;
+  }
+  /* the upper modules' names go above them, so the spokes reach the marks without crossing any words */
+  .hub-module-top {
+    flex-direction: column-reverse;
+    translate: -50% calc(-100% + var(--mod) / 2);
+  }
+  .hub-lines-wide,
+  .hub-nodes-wide {
+    display: none;
+  }
+  .hub-lines-narrow,
+  .hub-nodes-narrow {
+    display: block;
+  }
+  .hub-module {
+    left: var(--nx);
+    top: var(--ny);
+    width: 44%;
+    gap: 8px;
+  }
+  .hub-module-name {
+    font-size: 0.9rem;
+  }
+  .hub-centre {
+    gap: 8px;
+  }
+  .hub-centre-name {
+    font-size: 1.3rem;
+  }
+}
+/* the Sky: the night gathers behind the examination's name, so the spokes fade beneath the words (no box) */
+.exam-hub-sky .hub-centre-text {
+  padding: 10px 30px 14px;
+  background: radial-gradient(closest-side, rgb(8 5 28 / 0.92) 55%, rgb(8 5 28 / 0));
+}

@@ -5,8 +5,11 @@ import type { Commission } from "@/lib/types";
 import { Globe } from "./Globe";
 import { Portal } from "./Portal";
 
-/** Where each world sits around the examination, in % of the orbit's box: on a wide screen and on a phone. */
-interface Spoke {
+/**
+ * The four modules around an examination, and where each sits, in % of the box: on a wide screen and on a phone.
+ * Shared by every look's home page (the Sky and Living ones build theirs from it too, see sky/ExamHub.tsx).
+ */
+export interface Spoke {
   tab: string;
   world: string;
   name: string;
@@ -14,7 +17,7 @@ interface Spoke {
   narrow: [number, number];
 }
 
-const SPOKES: Spoke[] = [
+export const SPOKES: Spoke[] = [
   { tab: "materials", world: "mars", name: "Syllabus-Wise Notes", wide: [15, 25], narrow: [22, 13] },
   { tab: "prelims", world: "moon", name: "Prelims PYQs with Solutions", wide: [15, 77], narrow: [22, 79] },
   { tab: "mains", world: "jupiter", name: "Mains PYQs with Model Answers", wide: [85, 25], narrow: [78, 13] },
