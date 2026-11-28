@@ -10,7 +10,7 @@ import { ManageLink } from "./ManageLink";
 import { SkyThemeSwitch } from "./sky/SkyThemeSwitch";
 import { ThemeToggle } from "./ThemeToggle";
 
-/** Logo left · the examinations · search · account actions right. Phones navigate with the bottom bar. */
+/** Logo left · the examinations as buttons in the middle · search and account actions right. */
 export function Header({ user, exams = [], sky = false }: { user: User | null; exams?: { slug: string; short_name: string; tracks?: { group: string }[] }[]; sky?: boolean }) {
   return (
     <header className="topbar">
@@ -26,19 +26,17 @@ export function Header({ user, exams = [], sky = false }: { user: User | null; e
           </div>
         </Link>
 
-        {exams.length > 0 && (
-          <nav className="topbar-exams" aria-label="Examinations">
-            {exams.map((e) => (
-              <Link key={e.slug} href={e.tracks?.[0] ? `/exams/${e.slug}/${e.tracks[0].group}` : `/exams/${e.slug}`}>
-                {e.short_name}
-              </Link>
-            ))}
-          </nav>
-        )}
-
-        <div className="topbar-center">{user && <HeaderSearch />}</div>
+        {/* the examinations as buttons, in the middle of the bar */}
+        <nav className="topbar-exams" aria-label="Examinations">
+          {exams.map((e) => (
+            <Link key={e.slug} href={e.tracks?.[0] ? `/exams/${e.slug}/${e.tracks[0].group}` : `/exams/${e.slug}`} className="exam-pill">
+              {e.short_name}
+            </Link>
+          ))}
+        </nav>
 
         <div className="topbar-actions">
+          <div className="topbar-center">{user && <HeaderSearch />}</div>
           {user && (
             <Link href="/search" className="icon-btn search-link" aria-label="Search notes, glossary and PYQs">
               <Search size={18} aria-hidden />
