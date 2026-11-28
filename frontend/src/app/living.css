@@ -834,3 +834,63 @@
 :root:is([data-skin="living"], [data-skin="sky"]) :is(.flow-head, .np-head, .vault-head, .page-head, .system-copy) :is(h1, h2, h3, .flow-title, .np-title, .np-index, .np-kicker, .eyebrow) {
   text-shadow: 0 0 16px color-mix(in srgb, var(--w-deep, var(--bg)) 70%, transparent);
 }
+
+/* ═══════════ Living home: the examination as a plant (ExamHub) - its emblem at the foot with roots beneath it, a
+ * trunk rising, and the four modules at the ends of the branches, a leaf or two on each ═══════════ */
+.exam-hub-living {
+  aspect-ratio: 2 / 1;
+  min-height: 500px;
+}
+.plant path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--accent) 70%, transparent);
+  stroke-linecap: round;
+}
+.plant .plant-trunk {
+  stroke-width: 5;
+}
+.plant .plant-branch {
+  stroke-width: 3;
+}
+.plant .plant-root {
+  stroke-width: 2.2;
+  stroke: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.exam-hub-living .hub-emblem::before {
+  background: conic-gradient(from 0deg, var(--accent), color-mix(in srgb, var(--accent) 25%, transparent), var(--accent));
+  filter: none;
+}
+.exam-hub-living .hub-centre-mark {
+  border-radius: 50%;
+  box-shadow: 0 0 0 10px color-mix(in srgb, var(--plate) 55%, transparent);
+}
+@media (max-width: 720px) {
+  .exam-hub-living {
+    aspect-ratio: 1 / 1.9;
+    min-height: 0;
+  }
+}
+/* the Sky and Living looks have no modules' tabs under the exam's name: Back stands opposite the name, level with it */
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-back {
+  position: static;
+  flex: none;
+}
+/* two plants one above the other: room for the roots of the first */
+.exam-hubs:has(.exam-hub-living) {
+  gap: clamp(80px, 12vh, 130px);
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-head {
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+:root:is([data-skin="living"], [data-skin="sky"]) .ws-head .ws-title {
+  width: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+}

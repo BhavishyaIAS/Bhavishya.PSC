@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { SkyTabs } from "@/components/sky/SkyTabs";
+import { BackButton } from "@/components/BackBar";
 import { WorkspaceTabs } from "@/components/WorkspaceTabs";
 import { load, requireUser } from "@/lib/server-api";
 import { getSkin } from "@/lib/skin";
@@ -42,8 +42,11 @@ export default async function WorkspaceLayout(props: LayoutProps<"/exams/[commis
         </div>
         {/* Where this world is drawn: the planet sits here, or the horizon runs under it (components/space). */}
         <div className="ws-stage" data-stage aria-hidden />
+        {/* Back: opposite the exam's name, at the right, just above the modules' tabs */}
+        <BackButton className="ws-back" />
       </div>
-      {skin !== "classic" ? <SkyTabs commission={commission} group={group} skin={skin} /> : <WorkspaceTabs commission={commission} group={group} />}
+      {/* the modules' tabs in Classic; the Sky and Living looks go between modules through the exam's home and Back */}
+      {skin === "classic" && <WorkspaceTabs commission={commission} group={group} />}
       {props.children}
     </div>
   );

@@ -15,17 +15,13 @@ function parent(path: string) {
   return `/${parts.join("/")}`;
 }
 
-/**
- * The "Back" button at the top right of every page but the home page: back to the page before, when the student
- * came from inside the site; otherwise (a link from outside, a reload) one level up.
- */
-export function BackBar() {
+/** The "Back" button: back to the page before when the student came from inside the site, else one level up. */
+export function BackButton({ className = "" }: { className?: string }) {
   const path = usePathname();
   const router = useRouter();
   useEffect(() => {
     moves += 1;
   }, [path]);
-  if (path === "/") return null;
   const back = () => {
     let fromHere = moves > 1;
     if (!fromHere && document.referrer) {
@@ -39,10 +35,22 @@ export function BackBar() {
     else router.push(parent(path));
   };
   return (
+    <button type="button" className={`btn btn-ghost btn-sm back-btn ${className}`} onClick={back}>
+      <ArrowLeft size={15} aria-hidden /> Back
+    </button>
+  );
+}
+
+/**
+ * The Back button at the top right of the pages that have no head of their own for it: not the home page, and not
+ * an exam's pages (theirs sits opposite the exam's name, see the exam layout).
+ */
+export function BackBar() {
+  const path = usePathname();
+  if (path === "/" || /^\/exams\/[^/]+\/[^/]+/.test(path)) return null;
+  return (
     <div className="back-bar">
-      <button type="button" className="btn btn-ghost btn-sm back-btn" onClick={back}>
-        <ArrowLeft size={15} aria-hidden /> Back
-      </button>
+      <BackButton />
     </div>
   );
 }

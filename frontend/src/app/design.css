@@ -3244,3 +3244,13 @@ details.topic-chapter[open] .topic-chapter-chev {
     padding: 12px 16px 0;
   }
 }
+/* an exam's pages: Back opposite the exam's name, at the right edge of the head, just above the modules' tabs */
+.ws-head {
+  position: relative;
+}
+.ws-back {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  z-index: 2;
+}
