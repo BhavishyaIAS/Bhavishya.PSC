@@ -47,50 +47,6 @@ export default async function MaterialsTab(
   const site = await getSite();
   const kinds = site.note_kinds.filter((k) => k.enabled);
 
-  // the types of notes down the left; the chosen one's subjects beside them
-  const kindNav = (current?: string) => (
-    <nav className="topic-side split-side" aria-label="Type of notes">
-      <div className="topic-side-title">
-        <Link href={here} className="link-plain">
-          Material &amp; Notes
-        </Link>
-      </div>
-      <ul className="side-links">
-        {kinds.map((k) => {
-          const Icon = KIND_ICONS[k.key];
-          return (
-            <li key={k.key}>
-              <Link
-                href={`${here}?kind=${k.key}`}
-                className={`side-link kind-${k.key}`}
-                aria-current={k.key === current ? "page" : undefined}
-              >
-                <span className="kind-tab-icon" aria-hidden>
-                  <Icon size={20} />
-                </span>
-                <span className="side-link-text">
-                  <b>{k.label}</b>
-                  {KIND_TAGS[k.key] && <small>{KIND_TAGS[k.key]}</small>}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-        <li>
-          <span className="side-link side-link-soon" aria-disabled="true">
-            <span className="kind-tab-icon" aria-hidden>
-              <Newspaper size={20} />
-            </span>
-            <span className="side-link-text">
-              <b>Current Affairs</b>
-              <small>Coming soon</small>
-            </span>
-          </span>
-        </li>
-      </ul>
-    </nav>
-  );
-
   // First, the four blocks: the types of notes, and current affairs to come. A type opens its subjects.
   if (!kinds.some((k) => k.key === sp.kind)) {
     await requireUser(here);
@@ -154,9 +110,8 @@ export default async function MaterialsTab(
   const kindLabel =
     kinds.find((k) => k.key === kind)?.label ?? "Material & Notes";
   return (
-    <div className="topic-layout split">
-      {kindNav(kind)}
-      <div className="split-main">
+    <div>
+      <div>
         <div className="flow-head">
           <h2 className="flow-title">{kindLabel}</h2>
           <div className="row" style={{ gap: 8, alignItems: "center" }}>

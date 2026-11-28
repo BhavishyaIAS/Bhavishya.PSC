@@ -29,6 +29,7 @@ import { isScene, sceneForPath, WORLD_COOKIE } from "@/components/living/scenes"
 import { WorldPicker } from "@/components/living/WorldPicker";
 import { PortalMotion } from "@/components/sky/PortalMotion";
 import { SkyBackdrop } from "@/components/sky/SkyBackdrop";
+import { BackBar } from "@/components/BackBar";
 import { SpaceLayer } from "@/components/space/SpaceLayer";
 import { worldForPath } from "@/components/space/worlds";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -148,7 +149,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <Interactions />
         <ToastProvider>
           <Header sky={calm} user={user} exams={site.focus ? commissions.filter((c) => c.slug === site.focus) : commissions} />
-          <main id="main">{children}</main>
+          <main id="main">
+            <BackBar />
+            {children}
+          </main>
           <footer className="site-footer">
             <span>
               {brand.name} {brand.suffix}

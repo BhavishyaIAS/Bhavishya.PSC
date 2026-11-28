@@ -17,55 +17,29 @@ export interface Spoke {
   narrow: [number, number];
 }
 
+// placed symmetrically about the examination at the centre (50, 50): the same distance above and below, left and right
 export const SPOKES: Spoke[] = [
-  { tab: "materials", world: "mars", name: "Material & Notes", wide: [15, 25], narrow: [22, 13] },
-  { tab: "prelims", world: "moon", name: "Prelims PYQs with Solutions", wide: [15, 77], narrow: [22, 79] },
-  { tab: "mains", world: "jupiter", name: "Mains PYQs with Model Answers", wide: [85, 25], narrow: [78, 13] },
-  { tab: "progress", world: "earth", name: "Track Your Progress", wide: [85, 77], narrow: [78, 79] },
+  { tab: "materials", world: "mars", name: "Material & Notes", wide: [16, 24], narrow: [22, 15] },
+  { tab: "prelims", world: "moon", name: "Prelims PYQs with Solutions", wide: [16, 76], narrow: [22, 85] },
+  { tab: "mains", world: "jupiter", name: "Mains PYQs with Model Answers", wide: [84, 24], narrow: [78, 15] },
+  { tab: "progress", world: "earth", name: "Track Your Progress", wide: [84, 76], narrow: [78, 85] },
 ];
-
-function Lines({ which }: { which: "wide" | "narrow" }) {
-  return (
-    <svg className={`xs-lines xs-lines-${which}`} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
-      {SPOKES.map((s, i) => {
-        const [x, y] = s[which];
-        return (
-          <g key={s.tab} className={`xs-spoke xs-spoke-${s.world}`}>
-            <line x1="50" y1="50" x2={x} y2={y} vectorEffect="non-scaling-stroke" />
-            {/* a mote of light travelling out from the examination to the world */}
-            <line
-              className="xs-pulse"
-              x1="50"
-              y1="50"
-              x2={x}
-              y2={y}
-              pathLength={1}
-              vectorEffect="non-scaling-stroke"
-              style={{ animationDelay: `${i * 1.1}s` }}
-            />
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
 
 /**
  * An examination on the home page as a small system: its emblem's sphere at the centre, a slow orbit around it,
- * and its four worlds out on spokes, each a way straight into that module (of the examination's first group).
+ * and its four worlds floating free in the space about it, symmetrically placed, each a way straight into that
+ * module (of the examination's first group).
  */
 export function ExamOrbit({ commission, index }: { commission: Commission; index: number }) {
   const group = commission.tracks[0]?.group;
   const href = (tab: string) => (group ? `/exams/${commission.slug}/${group}/${tab}` : `/exams/${commission.slug}`);
   return (
     <section className="exam-system" aria-label={`${commission.short_name}: ${commission.name}`}>
-      <Lines which="wide" />
-      <Lines which="narrow" />
       <div className="xs-hub">
         <span className="xs-ring" aria-hidden />
         <Portal commission={commission} index={index} />
       </div>
-      {SPOKES.map((s) => (
+      {SPOKES.map((s, i) => (
         <Link
           key={s.tab}
           href={href(s.tab)}
@@ -75,6 +49,7 @@ export function ExamOrbit({ commission, index }: { commission: Commission; index
             ["--y" as string]: `${s.wide[1]}%`,
             ["--nx" as string]: `${s.narrow[0]}%`,
             ["--ny" as string]: `${s.narrow[1]}%`,
+            ["--float-delay" as string]: `${i * -1.7}s`,
           }}
           data-warp
         >

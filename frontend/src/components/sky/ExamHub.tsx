@@ -5,11 +5,6 @@ import { ExamMark, ModuleMark } from "@/components/living/Mark";
 import { SPOKES, type Spoke } from "@/components/space/ExamOrbit";
 import type { Commission, Skin } from "@/lib/types";
 
-/** "Andhra Pradesh Public Service Commission" → "Andhra Pradesh"; "Union Public Service Commission" → "Union". */
-function region(name: string) {
-  return name.replace(/\s*Public Service Commission.*$/i, "").trim() || name;
-}
-
 function groupsLine(c: Commission) {
   const names = c.tracks.map((t) => t.group_name);
   if (names.length <= 1) return names[0] ?? "";
@@ -91,7 +86,6 @@ export function ExamHub({ skin, commission, index }: { skin: Skin; commission: C
               <EyeOff size={11} aria-hidden /> Hidden from students
             </span>
           )}
-          <span className="sky-eyebrow">{region(commission.name)}</span>
           <b className="hub-centre-name">{commission.short_name}</b>
           {groups && <span className="hub-centre-groups">{groups}</span>}
         </span>
